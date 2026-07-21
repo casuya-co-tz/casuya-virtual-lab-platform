@@ -6,14 +6,30 @@
 
 ## STATUS
 
-**Early development.** The project currently contains:
+**Alpha.** The project contains a complete codebase with all planned components, API routes, types, and database schema implemented. See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the full audit and completion log.
 
-- Directory scaffold (`src/`, `supabase/`)
-- `.env.example` (environment template)
-- `.gitignore`
-- `LICENSE` (proprietary)
+### What's implemented
 
-No source code, configuration files, or database schema have been implemented yet. See [Implementation Phases](#implementation-phases) for the development roadmap.
+- **Root config**: package.json, next.config.js, tailwind.config.js, postcss.config.js, tsconfig.json, .env.example, .gitignore
+- **App routes**: 26 pages (home, auth, auth/recovery, student dashboard/subjects/lab/profile/settings, admin dashboard/labs/lab-editor/new-lab/users/billing/audit/analytics/api-keys/docs/settings, developer portal/docs, search, payment, error boundary, 404)
+- **API routes**: 35+ endpoints (auth login/signup/logout, labs CRUD, lab code, profile, progress, admin stats/activity/audit, M-Pesa/Tigo payments, developer registration/credentials, public/enterprise v1 API, settings, search, subjects, subtopics, embed, vitals)
+- **UI design system**: Button, Input, Card, Badge, Table, Modal, Select, Tabs, Toggle, Skeleton, Toast
+- **Layout components**: Navbar (responsive with mobile drawer), Sidebar, MobileDrawer, Footer
+- **Home sections**: Hero, SubjectCards, Features, Stats
+- **Student components**: CurriculumBanner, SubjectCatalog, SyllabusTree, LabCard, LabRunner, LabSkeleton
+- **Admin components**: StatsGrid, LabEditor, LivePreview, CurriculumBuilder, DataTable, UserTable, BillingTable, APIKeyManager, DocsEditor, EditorSkeleton
+- **Shared components**: LanguageToggle, RoleGuard, SearchBar, EmptyState, ThemeProvider, WebVitals
+- **Simulation**: LabSimulation — Three.js lab simulation component with per-subject 3D objects
+- **Lib utilities**: supabase client, auth, auth-guard, i18n (EN/SW), lab-manager, lab-processor (DOMPurify sanitization), rate-limiter, crypto, validators, db (PostgreSQL pool), api-tracker, audit-logger
+- **Custom hooks**: useAuth, useLabs, useLanguage, useRateLimit, useMediaQuery
+- **TypeScript types**: Full type system with models (profile, lab, school, subscription), API requests/responses, subject-specific types (physics, chemistry, biology), database row types
+- **Database**: Supabase migrations with 15+ tables, indexes, RLS policies, NECTA-aligned seed data, payments table
+- **Middleware**: API key validation, rate limiting, session-based route protection, CSP nonce generation
+- **Security**: Content-Security-Policy with per-request nonces (middleware-generated), Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection
+- **Monitoring**: Sentry error tracking (client + server + edge), web vitals (LCP, INP, CLS, TTFB), audit logging
+- **Error boundaries**: Client error.tsx with retry, global-error.tsx with isolated CSS + Sentry, not-found.tsx
+- **Design tokens**: Light mode CSS variables + dark mode for lab execution
+- **PWA**: Service worker (sw.js), manifest.json
 
 ---
 
@@ -188,35 +204,73 @@ casuya-virtual-lab-platform/
 │   │   │
 │   │   ├── auth/
 │   │   │   ├── page.tsx                  # Login / Signup hub
-│   │   │   └── recovery.tsx              # Password reset
+│   │   │   └── recovery/
+│   │   │       └── page.tsx              # Password reset
 │   │   │
 │   │   ├── student/
 │   │   │   ├── layout.tsx                # Student shell (nav + sidebar)
 │   │   │   ├── page.tsx                  # Dashboard overview
 │   │   │   ├── [subject]/page.tsx        # Subject labs list
-│   │   │   └── lab/[id]/page.tsx         # Live lab execution
+│   │   │   ├── [subject]/[lab]/page.tsx  # Live lab execution
+│   │   │   ├── profile/
+│   │   │   │   └── page.tsx              # Student profile
+│   │   │   └── settings/
+│   │   │       └── page.tsx              # Student settings
 │   │   │
 │   │   ├── admin/
 │   │   │   ├── layout.tsx                # Admin shell (nav + sidebar)
 │   │   │   ├── page.tsx                  # Admin dashboard
+│   │   │   ├── analytics/page.tsx        # Analytics dashboard
+│   │   │   ├── audit/page.tsx            # Audit log viewer
 │   │   │   ├── labs/page.tsx             # All labs manager
 │   │   │   ├── labs/[id]/page.tsx        # Single lab editor
+│   │   │   ├── labs/new/page.tsx         # New lab creator
 │   │   │   ├── users/page.tsx            # User management
 │   │   │   ├── billing/page.tsx          # Payment control
 │   │   │   ├── api-keys/page.tsx         # API key vault
 │   │   │   ├── docs/page.tsx             # Docs editor
 │   │   │   └── settings/page.tsx         # Global config
 │   │   │
-│   │   └── api/                          # API route handlers
-│   │       ├── auth/[...]/route.ts       # Auth endpoints
-│   │       ├── labs/route.ts             # Labs CRUD
-│   │       ├── labs/[id]/route.ts        # Single lab ops
-│   │       ├── labs/[id]/code/route.ts   # Serve lab HTML (secure)
-│   │       ├── admin/route.ts            # Admin operations
-│   │       ├── embed/[id]/route.ts       # External embed
-│   │       ├── v1/public/route.ts        # Free API
-│   │       ├── v1/enterprise/route.ts    # Enterprise API
-│   │       └── settings/route.ts         # Platform settings
+│   │   ├── api/                          # API route handlers
+│   │   │   ├── auth/login/route.ts       # Login
+│   │   │   ├── auth/signup/route.ts      # Signup
+│   │   │   ├── auth/logout/route.ts      # Logout
+│   │   │   ├── labs/route.ts             # Labs CRUD
+│   │   │   ├── labs/[id]/route.ts        # Single lab ops
+│   │   │   ├── labs/[id]/code/route.ts   # Serve lab HTML (secure)
+│   │   │   ├── admin/stats/route.ts      # Admin stats
+│   │   │   ├── admin/activity/route.ts   # Admin activity
+│   │   │   ├── admin/audit/route.ts      # Admin audit
+│   │   │   ├── embed/[id]/route.ts       # External embed
+│   │   │   ├── profile/route.ts          # User profile
+│   │   │   ├── progress/route.ts         # User progress
+│   │   │   ├── lab-progress/route.ts     # Lab progress
+│   │   │   ├── subjects/route.ts         # Subject listing
+│   │   │   ├── subtopics/route.ts        # Subtopic listing
+│   │   │   ├── users/route.ts            # User management
+│   │   │   ├── settings/route.ts         # Platform settings
+│   │   │   ├── vitals/route.ts           # Web vitals
+│   │   │   ├── developer/profile/route.ts    # Dev profile
+│   │   │   ├── developer/register/route.ts   # Dev registration
+│   │   │   ├── developer/credentials/route.ts # API credentials
+│   │   │   ├── developer/credentials/[id]/route.ts # Single credential
+│   │   │   ├── payments/mpesa/route.ts   # M-Pesa webhook
+│   │   │   ├── payments/tigo/route.ts    # Tigo webhook
+│   │   │   ├── v1/public/route.ts        # Free API
+│   │   │   ├── v1/labs/route.ts          # v1 labs list
+│   │   │   ├── v1/labs/[id]/route.ts     # v1 single lab
+│   │   │   ├── v1/search/route.ts        # v1 search
+│   │   │   ├── v1/enterprise/route.ts    # Enterprise API
+│   │   │   └── v1/enterprise/keys/[id]/revoke/route.ts # Key revocation
+│   │   │
+│   │   ├── developer/
+│   │   │   └── docs/page.tsx             # API documentation
+│   │   │
+│   │   ├── payment/
+│   │   │   └── page.tsx                  # Payment page
+│   │   │
+│   │   └── search/
+│   │       └── page.tsx                  # Search page
 │   │
 │   ├── components/                       # React components
 │   │   ├── ui/                           # Design system primitives
@@ -301,17 +355,41 @@ casuya-virtual-lab-platform/
 │   │   │   └── biology.ts
 │   │   └── database.ts
 │   │
+│   ├── app/
+│   │   ├── error.tsx                      # Client error boundary
+│   │   ├── global-error.tsx               # Root error boundary
+│   │   └── not-found.tsx                  # 404 page
+│   │
+│   ├── components/
+│   │   ├── simulation/
+│   │   │   └── LabSimulation.tsx           # Three.js 3D simulation
+│   │   ├── shared/
+│   │   │   ├── ThemeProvider.tsx           # Light/dark theme context
+│   │   │   └── WebVitals.tsx              # Web vitals collector
+│   │   ├── student/
+│   │   │   └── LabSkeleton.tsx            # Lab loading skeleton
+│   │   └── admin/
+│   │       └── EditorSkeleton.tsx         # Editor loading skeleton
+│   │
+│   ├── instrumentation.ts                 # Sentry server init
 │   └── middleware.ts
 │
 ├── public/
 │   ├── favicon.svg
+│   ├── manifest.json                      # PWA manifest
+│   ├── sw.js                             # Service worker
 │   └── js/
+│       ├── init.js                        # Dark mode init + SW registration
 │       └── three.min.js
 │
 ├── supabase/
 │   └── migrations/
-│       └── 001_initial_schema.sql
+│       ├── 001_initial_schema.sql
+│       ├── 002_seed_subjects.sql
+│       └── 002_add_payments_table.sql
 │
+├── sentry.client.config.ts
+├── vitest.config.ts
 ├── .env.example
 ├── .gitignore
 ├── next.config.js
@@ -902,31 +980,14 @@ A weekly CI job (GitHub Actions) runs the following:
 
 ### CSP Nonce Implementation
 
-The CSP header uses per-request nonces to allow only authorized inline scripts:
+The CSP header uses per-request nonces generated in middleware to allow only authorized inline scripts:
 
-1. **Nonce Generation**: Server generates a cryptographically random 16-byte nonce per request using `crypto.randomBytes(16).toString('base64')`
-2. **Injection Point**: Nonce is set in `layout.tsx` via Next.js `headers()` API:
-```ts
-// src/app/layout.tsx
-import { headers } from 'next/headers'
-import { randomBytes } from 'crypto'
-
-export default async function RootLayout({ children }) {
-  const nonce = randomBytes(16).toString('base64')
-  return (
-    <html>
-      <head>
-        <meta httpEquiv="Content-Security-Policy"
-          content={`script-src 'self' 'nonce-${nonce}'; ...`} />
-      </head>
-      <body>{children}</body>
-    </html>
-  )
-}
-```
-3. **Client Component Access**: Nonce passed via `NextScriptNonce` context provider for client components
-4. **Three.js Exception**: Lab `<iframe srcDoc>` runs with its own isolated CSP (no nonce needed since code is server-rendered)
-5. **Fallback**: If nonce generation fails, request is rejected with 500 (never falls back to unsafe-inline)
+1. **Nonce Generation**: Middleware generates a cryptographically random 16-byte nonce per HTML page request using `crypto.getRandomValues()` at the edge
+2. **Injection Point**: Nonce is set in the `Content-Security-Policy` HTTP header by middleware, and passed to `layout.tsx` via a custom `x-nonce` response header
+3. **Script Tag Usage**: `layout.tsx` reads the `x-nonce` header and applies it to `<script>` tags using the `nonce` attribute
+4. **Source**: See `src/middleware.ts` — `generateNonce()` and `addCspHeaders()` functions; `src/app/layout.tsx` — reads `x-nonce` from `headers()` and applies to `<script src="/js/init.js" nonce={nonce}>`
+5. **Three.js Exception**: Lab `<iframe srcDoc>` runs with its own isolated CSP set in `/api/labs/[id]/code` (no nonce needed since code is server-rendered)
+6. **Fallback**: If nonce generation fails, request is rejected with 500 (never falls back to unsafe-inline)
 
 ### Security Event Types
 

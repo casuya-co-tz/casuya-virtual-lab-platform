@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
+
+:root {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F5F5F5;
+  --bg-tertiary: #EAEAEA;
+  --bg-hover: #E0E0E0;
+  --text-primary: #111113;
+  --text-secondary: #555555;
+  --text-disabled: #999999;
+  --border-default: #EAEAEA;
+  --border-strong: #CCCCCC;
+  --border-focus: #3B82F6;
+  --accent-blue: #3B82F6;
+  --accent-green: #10B981;
+  --accent-red: #EF4444;
+  --accent-amber: #F59E0B;
+  --accent-purple: #8B5CF6;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0A0A0B;
+  --bg-secondary: #111113;
+  --bg-tertiary: #1A1A1E;
+  --bg-hover: #222226;
+  --text-primary: #F5F5F5;
+  --text-secondary: #A0A0A0;
+  --text-disabled: #666666;
+  --border-default: #2A2A2E;
+  --border-strong: #444448;
+  --border-focus: #3B82F6;
+}
+
+* {
+  border-radius: 0 !important;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: clamp(12px, 2.5vw, 14px);
+}
