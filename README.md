@@ -25,37 +25,58 @@ Every pixel is deliberate. Every edge is sharp. Every interaction is instant. Th
 ```
 BORDER RADIUS:     0px (all elements)
 BORDER WIDTH:      1px (standard) / 2px (emphasis) / 3px (active)
-BUTTON HEIGHT:     36px (compact) / 44px (standard) / 52px (large)
-INPUT HEIGHT:      36px (compact) / 40px (standard)
-CARD MIN-WIDTH:    280px
+BUTTON HEIGHT:     clamp(36px, 5vw, 44px) (compact)
+                   clamp(40px, 6vw, 52px) (standard)
+INPUT HEIGHT:      clamp(36px, 5vw, 40px)
+CARD MIN-WIDTH:    clamp(240px, 80vw, 280px)
 GRID GAP:          8px (dense) / 12px (standard) / 16px (spacious)
 SHADOW:            none (default) / 0 0 0 2px var(--accent) (focus)
 TRANSITION:        120ms ease-out (all interactions)
+FONT SIZE:         clamp(12px, 2.5vw, 14px) (body)
+                   clamp(28px, 6vw, 48px) (headline)
+                   clamp(20px, 4vw, 32px) (sub-headline)
 FONT:              Inter (system) / JetBrains Mono (code)
 ```
 
-### Color System
+All sizing uses `CSS clamp()` for fluid scaling — adapts from 360px Android phones to 1440px desktops without breakpoints.
+
+### Color System — Dual Theme
+
+The platform ships with **light mode as default** (matching NECTA exam paper aesthetics) and an optional dark mode for lab execution environments only.
 
 ```
+LIGHT MODE (default — classroom-friendly):
+--bg-primary:      #FFFFFF       (paper white)
+--bg-secondary:    #F5F5F5       (card surfaces)
+--bg-tertiary:     #EAEAEA       (elevated surfaces)
+--bg-hover:        #E0E0E0       (hover states)
+
+--text-primary:    #111113       (near-black)
+--text-secondary:  #555555       (muted text)
+--text-disabled:   #999999       (inactive text)
+
+--border-default:  #EAEAEA       (subtle borders)
+--border-strong:   #CCCCCC       (visible borders)
+--border-focus:    #3B82F6       (focus rings)
+
+DARK MODE (lab execution only):
 --bg-primary:      #0A0A0B       (deepest black)
 --bg-secondary:    #111113       (card surfaces)
 --bg-tertiary:     #1A1A1E       (elevated surfaces)
---bg-hover:        #222228       (hover states)
-
 --text-primary:    #F5F5F5       (main text)
 --text-secondary:  #A0A0A0       (muted text)
---text-disabled:   #555555       (inactive text)
-
 --border-default:  #2A2A2E       (subtle borders)
 --border-strong:   #444448       (visible borders)
---border-focus:    #3B82F6       (focus rings)
 
+ACCENT COLORS (shared):
 --accent-blue:     #3B82F6       (primary actions)
 --accent-green:    #10B981       (success states)
 --accent-red:      #EF4444       (danger states)
 --accent-amber:    #F59E0B       (warning states)
 --accent-purple:   #8B5CF6       (premium/developer)
 ```
+
+Light mode reduces visual fatigue under poor classroom lighting and eliminates astigmatism reading difficulty.
 
 ---
 
@@ -275,10 +296,21 @@ casuya-virtual-lab-platform/
 │   │   ├── useRateLimit.ts               # Client-side rate awareness
 │   │   └── useMediaQuery.ts             # Responsive breakpoints
 │   │
-│   ├── types/                            # TypeScript definitions
-│   │   ├── index.ts                      # All shared types
-│   │   ├── database.ts                   # Supabase-generated types
-│   │   └── api.ts                        # API request/response types
+│   ├── types/                            # TypeScript definitions (modular)
+│   │   ├── index.ts                      # Root re-export barrel
+│   │   ├── models/                       # Database entity types
+│   │   │   ├── profile.ts
+│   │   │   ├── lab.ts
+│   │   │   ├── school.ts
+│   │   │   └── subscription.ts
+│   │   ├── api/                          # API request/response types
+│   │   │   ├── requests.ts
+│   │   │   └── responses.ts
+│   │   ├── labs/                         # Lab engine types
+│   │   │   ├── physics.ts
+│   │   │   ├── chemistry.ts
+│   │   │   └── biology.ts
+│   │   └── database.ts                   # Supabase-generated types
 │   │
 │   └── middleware.ts                      # Route protection + role checks
 │
@@ -307,7 +339,7 @@ casuya-virtual-lab-platform/
 | **Flat `components/ui/`** | Every primitive in one folder. Find any component in 2 seconds. |
 | **Page-per-folder** | Each route is a single `page.tsx`. No file proliferation. |
 | **`lib/` over `utils/`** | These are services, not helpers. Each file is a complete module. |
-| **Single `types/index.ts`** | One file for all shared types. No import chains. |
+| **Modular `types/`** | Split by domain (models, api, labs). Root `index.ts` re-exports cleanly. No merge conflicts. |
 | **`api/` mirrors routes** | API file path matches URL path exactly. |
 
 ---
@@ -467,10 +499,21 @@ VARIANTS:
 | Requirement | Implementation |
 |-------------|---------------|
 | **Code Protection** | Server pulls `html_threejs_code` from DB, streams into `<iframe srcDoc sandbox="allow-scripts">`. Code is **never** sent to client as JSON/text. |
+| **Code Obfuscation** | All lab scripts are **minified and variable-scrambled** at save time using build-time obfuscation before writing to DB. Intercepted DOM code is virtually impossible to reverse-engineer. |
+| **XSS Prevention** | All admin-injected lab code passes through **server-side DOMPurify sanitization** in `lab-processor.ts` before database write. Script tags, event handlers, and dangerous attributes are stripped. `security_score` is computed automatically, not manually set. |
 | **Anti-Scraping** | `onContextMenu={(e) => e.preventDefault()}` on dashboard layout. No right-click, no source inspection. |
 | **Low-Data Matrix** | Three.js core bundled as immutable, long-term-cached static asset. After first load, only tiny encrypted state packets fetched. |
 | **Offline Storage** | IndexedDB cache managed by service worker. Lab state + student choices queued locally if connection drops. |
-| **Grade Reconciliation** | On `window.online` restore, queued metrics pushed via `upsert` (`ON CONFLICT DO UPDATE`) to Supabase, verifying authentic timestamps. |
+| **Grade Reconciliation** | On `window.online` restore, queued metrics pushed via `upsert` with **server-side timestamp validation** and **sync_version counter** (see Offline Infrastructure below). |
+
+### Offline Infrastructure — Fraud Prevention & Sync
+
+| Threat | Countermeasure |
+|--------|---------------|
+| **Clock manipulation** | Server compares client-reported offline window against `last_server_ts`. Suspicious discrepancies (>5 min drift) are flagged and dropped. |
+| **Destructive sync conflicts** | `sync_version INT` monotonic counter ensures server only accepts updates where `incoming_version > current_version`. Multi-device sync never overwrites newer data with stale records. |
+| **Grade falsification** | Offline scores are encrypted in IndexedDB with a device-bound key. On sync, server validates score progression (scores can only increase, never decrease). |
+| **Multi-device conflict** | Highest `sync_version` wins. If versions match, highest score is kept. Student sees conflict resolution banner on next login. |
 
 ### Admin Dashboard
 
@@ -513,7 +556,7 @@ CREATE TABLE profiles (
   id            UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
   full_name     TEXT NOT NULL,
   role          TEXT CHECK (role IN ('admin','student','developer')) DEFAULT 'student',
-  school_id     UUID,
+  school_id     UUID REFERENCES schools(id) ON DELETE SET NULL,
   language      TEXT CHECK (language IN ('en','sw')) DEFAULT 'en',
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
@@ -565,6 +608,8 @@ CREATE TABLE lab_progress (
   status            TEXT CHECK (status IN ('not_started','in_progress','completed')) DEFAULT 'not_started',
   score             INT DEFAULT 0,
   completion_data   JSONB,
+  sync_version      INT DEFAULT 0,               -- monotonic counter for conflict resolution
+  last_server_ts    TIMESTAMPTZ,                  -- server-set timestamp for fraud detection
   started_at        TIMESTAMPTZ,
   completed_at      TIMESTAMPTZ,
   UNIQUE(student_id, lab_id)
@@ -613,6 +658,20 @@ CREATE TABLE biology_assets (
 -- API & BILLING
 -- ==========================================
 
+CREATE TABLE schools (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name                  TEXT NOT NULL,
+  billing_contact_email TEXT,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE school_seats (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id             UUID REFERENCES schools(id) ON DELETE CASCADE,
+  subscription_id       UUID REFERENCES subscriptions(id) ON DELETE CASCADE,
+  allocated_profile_id  UUID REFERENCES profiles(id) ON DELETE SET NULL
+);
+
 CREATE TABLE developer_profiles (
   id                    UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
   company_or_school     TEXT NOT NULL,
@@ -641,6 +700,8 @@ CREATE TABLE api_usage (
   status_code       INT NOT NULL,
   ip_address        INET,
   accessed_at       TIMESTAMPTZ DEFAULT NOW()
+  -- NOTE: Real-time traffic logged to Redis first, batch-written here asynchronously
+  -- Prevents connection pool exhaustion under 500K concurrent load
 );
 
 CREATE TABLE subscriptions (
@@ -648,6 +709,8 @@ CREATE TABLE subscriptions (
   user_id           UUID REFERENCES profiles(id) ON DELETE CASCADE,
   tier              TEXT CHECK (tier IN ('free','premium','enterprise')) DEFAULT 'free',
   status            TEXT CHECK (status IN ('active','expired','pending','cancelled')) DEFAULT 'active',
+  storage_used_bytes BIGINT DEFAULT 0,            -- tracked per-user for quota enforcement
+  storage_limit_bytes BIGINT DEFAULT 524288000,   -- 500MB free tier cap
   provider          TEXT,
   transaction_id    TEXT,
   amount            NUMERIC(10,2),
@@ -703,16 +766,63 @@ CREATE POLICY "Own credentials" ON api_credentials FOR ALL
 
 ---
 
+## MONETIZATION & STORAGE QUOTAS
+
+To prevent unsustainable bandwidth costs from 500K free-tier users, the platform enforces strict storage and bandwidth gates.
+
+| Tier | Storage | Bandwidth | Labs Access | 3D Assets |
+|------|---------|-----------|-------------|-----------|
+| **Free** | 500MB total | 1GB/month | Basic simulations only | Compressed only |
+| **Premium** | 5GB total | 50GB/month | All labs + exam prep | Full Draco .glb |
+| **Enterprise** | Unlimited | Unlimited | All + custom embeds | Full + priority CDN |
+
+### Free Tier Gates
+
+- Basic physics/chemistry simulations (lightweight HTML/JS) are always free
+- **High-bandwidth biology .glb models** require premium membership
+- **Exam-prep practical labs** require M-Pesa verified subscription
+- Daily data quota enforced per-user via `storage_used_bytes` in subscriptions table
+- When quota exceeded: student sees upgrade prompt, lab pauses, progress saved locally
+
+### Premium Unlock Flow
+
+```
+[ Student clicks premium lab ]
+         │
+         ▼
+[ Check subscriptions.storage_used_bytes < storage_limit_bytes ]
+         │
+    ┌────┴────┐
+    ▼         ▼
+  Under      Over
+  quota      quota
+    │         │
+    ▼         ▼
+ [ Load ]  [ "Upgrade to unlock" ]
+             │
+             ▼
+           [ M-Pesa STK Push ]
+             │
+             ▼
+           [ Webhook confirms ]
+             │
+             ▼
+           [ quota increased, lab loads ]
+```
+
+---
+
 ## IMPLEMENTATION PHASES
 
 ### Phase 1: Foundation
 - [ ] `.gitignore` + restore working directory
-- [ ] Config files: `tailwind.config.js` (sharp tokens), `postcss.config.js`, `.env.example`
+- [ ] Config files: `tailwind.config.js` (sharp tokens + light mode), `postcss.config.js`, `.env.example`
 - [ ] Supabase client setup + type generation
-- [ ] Database schema deployment (all tables above)
+- [ ] Database schema deployment (all tables including `schools`, `school_seats`, `sync_version`)
 - [ ] Auth system (email/password + **mobile OTP gateway**)
 - [ ] UI component library (`components/ui/` — all 11 primitives)
 - [ ] Middleware (role-based route protection)
+- [ ] **Light mode default theme** with fluid `clamp()` typography
 
 ### Phase 2: Home Page
 - [ ] Dynamic favicon (admin upload → storage → route)
@@ -740,9 +850,12 @@ CREATE POLICY "Own credentials" ON api_credentials FOR ALL
 
 ### Phase 5: Lab Editor
 - [ ] Curriculum builder (topic → subtopic → lab)
-- [ ] Monaco Editor workspace (syntax highlight, dark theme, line numbers, error flagging)
+- [ ] Monaco Editor workspace (syntax highlight, light theme, line numbers, error flagging)
 - [ ] Live preview (split-screen: code left, `<iframe srcDoc sandbox="allow-scripts">` right)
 - [ ] Save Draft (→ `html_threejs_code`, no state change) / Publish (flips `is_published`)
+- [ ] **Server-side DOMPurify sanitization** before every code write to DB
+- [ ] **Build-time code obfuscation** (minify + variable scramble) before storage
+- [ ] **Automatic security_score computation** (replace manual INT)
 - [ ] Distribution matrix (auto-generated embed links: `/api/embed/{uuid}`)
 
 ### Phase 6: Student Dashboard
@@ -751,6 +864,9 @@ CREATE POLICY "Own credentials" ON api_credentials FOR ALL
 - [ ] Subject catalog + syllabus tree (▶ **Fungua Maabara / Open Lab** trigger)
 - [ ] Secure lab runner (server streams code into `sandbox="allow-scripts"` iframe; never sent as JSON/text)
 - [ ] Anti-scraping (`onContextMenu` disabled, no right-click)
+- [ ] **Offline sync with `sync_version` counter** (monotonic, conflict-safe)
+- [ ] **Server-side timestamp validation** (clock manipulation detection)
+- [ ] **Storage quota display** (free/premium tier limits shown in sidebar)
 
 ### Phase 7: API Hub
 - [ ] Free tier (`/api/v1/public/labs`, edge-cached, **decoupled from primary DB**, 60 req/min/IP)
@@ -767,17 +883,19 @@ CREATE POLICY "Own credentials" ON api_credentials FOR ALL
 - [ ] Score/completion webhooks
 
 ### Phase 9: Payments
-- [ ] Subscription tables
+- [ ] Subscription tables + `storage_used_bytes` / `storage_limit_bytes` tracking
 - [ ] M-Pesa / Tigo Pesa integration
 - [ ] Billing dashboard
-- [ ] Institutional account management
+- [ ] Institutional account management (`schools` + `school_seats` allocation)
+- [ ] **Free tier quota enforcement** (storage cap, bandwidth cap, premium lab gate)
 
 ### Phase 10: Scale
 - [ ] PgBouncer + read replicas (Scale Matrix)
 - [ ] Edge CDN (static assets + favicons)
 - [ ] Offline support (**IndexedDB + service worker queue**, low-data immutable Three.js cache)
-- [ ] Grade reconciliation webhook (**ON CONFLICT DO UPDATE** upsert)
+- [ ] Grade reconciliation webhook (**ON CONFLICT DO UPDATE** upsert + `sync_version` validation)
 - [ ] Dynamic code splitting for 3D (defer until lab click)
+- [ ] **Redis batch-write for API metrics** (`api_usage` table written async to avoid connection pool exhaustion)
 
 ### Phase 11: Launch
 - [ ] Unit tests
