@@ -6,20 +6,37 @@ import { t } from '@/lib/i18n'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
+import { LivePreview } from '@/components/admin/LivePreview'
 
 export default function EditLabPage() {
   const router = useRouter()
   const params = useParams()
   const { lang } = useLanguage()
   const [subtopics, setSubtopics] = useState<{ id: string; title: string }[]>([])
-  const [form, setForm] = useState({ subtopic_id: '', title: '', title_sw: '', description: '', subject: 'physics', is_published: false })
+  const [form, setForm] = useState({
+    subtopic_id: '',
+    title: '',
+    title_sw: '',
+    description: '',
+    html_threejs_code: '',
+    subject: 'physics',
+    is_published: false,
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
     fetch('/api/subtopics').then(r => r.json()).then(setSubtopics)
     fetch(`/api/labs/${params.id}`).then(r => r.json()).then(data => {
-      setForm({ subtopic_id: data.subtopic_id || '', title: data.title || '', title_sw: data.title_sw || '', description: data.description || '', subject: data.subject || 'physics', is_published: data.is_published || false })
+      setForm({
+        subtopic_id: data.subtopic_id || '',
+        title: data.title || '',
+        title_sw: data.title_sw || '',
+        description: data.description || '',
+        html_threejs_code: data.html_threejs_code || '',
+        subject: data.subject || 'physics',
+        is_published: data.is_published || false,
+      })
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [params.id])
@@ -48,6 +65,15 @@ export default function EditLabPage() {
           <Input label={t('admin.titleSwahili', lang)} value={form.title_sw} onChange={e => setForm({ ...form, title_sw: e.target.value })} />
           <label className="text-[12px] font-bold uppercase text-text-secondary">{t('admin.description', lang)}</label>
           <textarea className="w-full border border-border-DEFAULT bg-bg-primary text-text-primary p-3 text-[14px]" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+          <label className="text-[12px] font-bold uppercase text-text-secondary">Lab HTML / Three.js Code</label>
+          <textarea
+            className="w-full border border-border-DEFAULT bg-bg-primary text-text-primary p-3 text-[14px] font-mono"
+            rows={10}
+            value={form.html_threejs_code}
+            onChange={e => setForm({ ...form, html_threejs_code: e.target.value })}
+            placeholder="Paste your lab HTML or Three.js code here..."
+          />
+          <LivePreview code={form.html_threejs_code} />
           <label className="text-[12px] font-bold uppercase text-text-secondary">{t('admin.subject', lang)}</label>
           <select className="w-full border border-border-DEFAULT bg-bg-primary text-text-primary p-3 text-[14px]" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })}>
             <option value="physics">Physics</option>

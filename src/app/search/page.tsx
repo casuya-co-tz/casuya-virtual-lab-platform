@@ -26,7 +26,7 @@ export default function SearchPage() {
     setLoading(true)
     setSearched(true)
     try {
-      const res = await fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
       const data = await res.json()
       setResults(data.data || [])
     } catch {

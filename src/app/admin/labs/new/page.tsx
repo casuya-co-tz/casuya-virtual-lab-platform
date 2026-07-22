@@ -6,6 +6,7 @@ import { t } from '@/lib/i18n'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
+import { LivePreview } from '@/components/admin/LivePreview'
 
 interface Subtopic {
   id: string
@@ -17,7 +18,15 @@ export default function NewLabPage() {
   const router = useRouter()
   const { lang } = useLanguage()
   const [subtopics, setSubtopics] = useState<Subtopic[]>([])
-  const [form, setForm] = useState({ subtopic_id: '', title: '', title_sw: '', description: '', subject: 'physics', is_published: false })
+  const [form, setForm] = useState({
+    subtopic_id: '',
+    title: '',
+    title_sw: '',
+    description: '',
+    html_threejs_code: '',
+    subject: 'physics',
+    is_published: false,
+  })
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -54,6 +63,15 @@ export default function NewLabPage() {
             value={form.description}
             onChange={e => setForm({ ...form, description: e.target.value })}
           />
+          <label className="text-[12px] font-bold uppercase text-text-secondary">Lab HTML / Three.js Code</label>
+          <textarea
+            className="w-full border border-border-DEFAULT bg-bg-primary text-text-primary p-3 text-[14px] font-mono"
+            rows={10}
+            value={form.html_threejs_code}
+            onChange={e => setForm({ ...form, html_threejs_code: e.target.value })}
+            placeholder="Paste your lab HTML or Three.js code here..."
+          />
+          <LivePreview code={form.html_threejs_code} />
           <label className="text-[12px] font-bold uppercase text-text-secondary">{t('admin.subject', lang)}</label>
           <select
             className="w-full border border-border-DEFAULT bg-bg-primary text-text-primary p-3 text-[14px]"
