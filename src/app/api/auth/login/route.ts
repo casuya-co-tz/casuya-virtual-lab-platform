@@ -50,6 +50,13 @@ export async function POST(req: Request) {
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
     })
+    cookieStore.set('role', user.role, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    })
 
     await logAuditEvent({ userId: user.id, action: 'login', entityType: 'user', ipAddress: ip })
 

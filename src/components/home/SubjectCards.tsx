@@ -1,5 +1,7 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
+import { useAuth } from '@/hooks/useAuth'
 import { t } from '@/lib/i18n'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -11,7 +13,18 @@ const subjects = [
 ]
 
 export function SubjectCards() {
+  const router = useRouter()
   const { lang } = useLanguage()
+  const { user, loading } = useAuth()
+
+  function handleClick(id: string) {
+    if (loading) return
+    if (user) {
+      router.push(`/student/${id}`)
+    } else {
+      router.push(`/auth?redirect=/student/${id}`)
+    }
+  }
 
   return (
     <section className="px-6 py-12 max-w-6xl mx-auto">
@@ -20,7 +33,7 @@ export function SubjectCards() {
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {subjects.map(s => (
-          <Card key={s.id} hover interactive>
+          <Card key={s.id} hover interactive onClick={() => handleClick(s.id)}>
             <div className="flex items-start gap-3">
               <span className="text-[32px]">{s.icon}</span>
               <div className="flex-1 min-w-0">

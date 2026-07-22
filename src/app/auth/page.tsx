@@ -1,13 +1,15 @@
 'use client'
-import { useState, FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, FormEvent, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
-export default function AuthPage() {
+function AuthForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect')
   const { lang } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -33,7 +35,7 @@ export default function AuthPage() {
         setError(data.error || t('auth.somethingWrong', lang))
         return
       }
-      router.push(data.user.role === 'admin' ? '/admin' : '/student')
+      router.push(redirect || (data.user.role === 'admin' ? '/admin' : '/student'))
       router.refresh()
     } catch {
       setError(t('auth.networkError', lang))
@@ -74,5 +76,13 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-bg-secondary px-4"><div className="w-full max-w-md bg-bg-primary border border-border-DEFAULT p-8 text-center text-text-secondary">Loading...</div></div>}>
+      <AuthForm />
+    </Suspense>
   )
 }

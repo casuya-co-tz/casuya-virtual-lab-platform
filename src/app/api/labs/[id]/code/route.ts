@@ -33,7 +33,7 @@ export async function GET(_request: NextRequest, { params }: Props) {
     return new NextResponse(sanitized, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'",
+        'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
       },

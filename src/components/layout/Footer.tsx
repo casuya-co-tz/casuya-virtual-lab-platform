@@ -5,7 +5,7 @@ export function Footer() {
         <p className="text-[12px] text-text-secondary">&copy; {new Date().getFullYear()} Casuya Technologies</p>
         <div className="flex gap-4">
           <a href="/docs" className="text-[12px] text-text-secondary hover:text-text-primary">Documentation</a>
-          <a href="/api" className="text-[12px] text-text-secondary hover:text-text-primary">API</a>
+          <a href="/developer/docs" className="text-[12px] text-text-secondary hover:text-text-primary">API</a>
           <a href="/contact" className="text-[12px] text-text-secondary hover:text-text-primary">Contact</a>
         </div>
       </div>

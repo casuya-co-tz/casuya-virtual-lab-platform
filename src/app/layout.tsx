@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
-import { headers } from 'next/headers'
 import { WebVitals } from '@/components/shared/WebVitals'
 import './globals.css'
 
@@ -27,15 +26,13 @@ export const viewport = {
   themeColor: '#3B82F6',
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const headersList = await headers()
-  const nonce = headersList.get('x-nonce') ?? ''
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <body className="font-sans">
         {children}
         <WebVitals />
-        <script src="/js/init.js" nonce={nonce} />
+        <script src="/js/init.js" />
       </body>
     </html>
   )

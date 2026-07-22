@@ -45,7 +45,7 @@ export function Navbar() {
         <a href="/search" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
           Search
         </a>
-        <a href="/developer" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
+        <a href="/developer/docs" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
           API
         </a>
       </div>
@@ -72,7 +72,7 @@ export function Navbar() {
             {user && <a href={dashboardHref} className="text-[14px] text-text-secondary">{t('nav.dashboard', lang)}</a>}
             <a href="/student/physics" className="text-[14px] text-text-secondary">{t('nav.subjects', lang)}</a>
             <a href="/search" className="text-[14px] text-text-secondary">Search</a>
-            <a href="/developer" className="text-[14px] text-text-secondary">API</a>
+            <a href="/developer/docs" className="text-[14px] text-text-secondary">API</a>
             <LanguageToggle lang={lang} onToggle={toggle} />
             {user ? (
               <>

@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  if (!request.url.startsWith('http')) return
+  if (!request.url.startsWith(self.location.origin)) return
 
   event.respondWith(
     caches.match(request).then((cached) => {
@@ -50,8 +50,8 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
         }
         return response
-      })
+      }).catch(() => cached)
       return cached || fetched
-    })
+    }).catch(() => {})
   )
 })
