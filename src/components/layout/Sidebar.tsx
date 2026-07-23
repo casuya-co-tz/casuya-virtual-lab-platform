@@ -26,6 +26,7 @@ export function Sidebar({ userRole: overrideRole }: SidebarProps) {
 
   const adminItems = [
     { icon: '📊', label: t('admin.dashboard', lang), href: '/admin', active: pathname === '/admin' },
+    { icon: '📚', label: t('admin.curriculum', lang), href: '/admin/curriculum', active: pathname.startsWith('/admin/curriculum') },
     { icon: '🧪', label: t('admin.labs', lang), href: '/admin/labs', active: pathname.startsWith('/admin/labs') },
     { icon: '👥', label: t('admin.users', lang), href: '/admin/users', active: pathname === '/admin/users' },
     { icon: '💳', label: t('admin.billing', lang), href: '/admin/billing', active: pathname === '/admin/billing' },

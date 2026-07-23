@@ -34,23 +34,32 @@ export function SubjectCards() {
   }
 
   return (
-    <section className="px-6 py-12 max-w-6xl mx-auto">
-      <h2 className="text-[clamp(20px,4vw,32px)] font-bold text-text-primary mb-8">
-        {t('nav.subjects', lang)}
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {subjects.map(s => (
-          <Card key={s.id} hover interactive onClick={() => handleClick(s.id)}>
-            <div className="flex items-start gap-3">
-              <span className="text-[32px]">{s.icon}</span>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-[16px] font-bold text-text-primary">{t(`subject.${s.id}`, lang)}</h3>
-                <p className="text-[14px] text-text-secondary mt-1 line-clamp-2">{s.desc}</p>
-                <Badge variant="info" className="mt-3">{s.labs} Labs Active</Badge>
+    <section className="px-6 py-24 bg-bg-primary border-b border-border-default">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-[clamp(28px,5vw,40px)] font-extrabold text-text-primary mb-12 tracking-tight">
+          {t('nav.subjects', lang)}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {subjects.map(s => (
+            <div key={s.id} className="flex flex-col p-8 bg-bg-secondary border border-border-strong hover:-translate-y-1 transition-transform h-full">
+              <div className="flex items-center justify-center w-16 h-16 bg-bg-tertiary border border-border-default text-[32px] mb-6">
+                {s.icon}
+              </div>
+              <h3 className="text-[20px] font-bold text-text-primary mb-3">{t(`subject.${s.id}`, lang)}</h3>
+              <p className="text-[14px] text-text-secondary leading-relaxed mb-6 flex-1">{s.desc}</p>
+              
+              <div className="flex items-center justify-between border-t border-border-default pt-6 mt-auto">
+                <Badge variant="info" className="!rounded-none">{s.labs} Labs Active</Badge>
+                <button 
+                  onClick={() => handleClick(s.id)}
+                  className="text-[14px] font-bold text-text-primary hover:text-accent-blue transition-colors uppercase tracking-widest"
+                >
+                  Start Lab →
+                </button>
               </div>
             </div>
-          </Card>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   )

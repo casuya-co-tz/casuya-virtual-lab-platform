@@ -75,8 +75,6 @@ export async function middleware(req: NextRequest) {
     }
 
     if (pathname.startsWith('/auth')) {
-      const user = await getSessionUser(req)
-      if (user) return NextResponse.redirect(new URL(user.role === 'admin' ? '/admin' : '/student', req.url))
       return addCspHeaders(NextResponse.next())
     }
 

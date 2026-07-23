@@ -7,10 +7,10 @@ export function LanguageToggle({ lang, onToggle }: LanguageToggleProps) {
   return (
     <button
       onClick={onToggle}
-      className="flex items-center h-8 border-2 border-border-strong text-[12px] font-bold uppercase tracking-[0.5px]"
+      className="flex items-center h-9 bg-bg-secondary border border-border-default rounded-xl overflow-hidden text-[12px] font-bold uppercase tracking-[0.5px] transition-shadow hover:shadow-sm"
     >
-      <span className={`px-2 py-1 transition-all duration-120 ${lang === 'en' ? 'bg-accent-blue text-white' : 'text-text-secondary'}`}>EN</span>
-      <span className={`px-2 py-1 transition-all duration-120 ${lang === 'sw' ? 'bg-accent-blue text-white' : 'text-text-secondary'}`}>SW</span>
+      <span className={`flex items-center justify-center w-8 h-full transition-all duration-300 ${lang === 'en' ? 'bg-gradient-to-r from-accent-blue to-accent-purple text-white' : 'text-text-secondary hover:text-text-primary'}`}>EN</span>
+      <span className={`flex items-center justify-center w-8 h-full transition-all duration-300 ${lang === 'sw' ? 'bg-gradient-to-r from-accent-blue to-accent-purple text-white' : 'text-text-secondary hover:text-text-primary'}`}>SW</span>
     </button>
   )
 }

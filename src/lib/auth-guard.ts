@@ -20,6 +20,25 @@ export async function requireAdmin() {
   }
 }
 
+export async function requireTeacher() {
+  const cookieStore = await cookies()
+  const sid = cookieStore.get('sid')?.value
+  if (!sid) return null
+
+  try {
+    const result = await query(
+      "SELECT role FROM profiles WHERE id = $1",
+      [sid]
+    )
+    if (result.rows.length === 0 || result.rows[0].role !== 'teacher') {
+      return null
+    }
+    return sid
+  } catch {
+    return null
+  }
+}
+
 export async function requireAuth() {
   const cookieStore = await cookies()
   const sid = cookieStore.get('sid')?.value

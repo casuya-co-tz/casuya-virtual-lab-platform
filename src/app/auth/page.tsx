@@ -17,6 +17,7 @@ function AuthForm() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [role, setRole] = useState<'student' | 'teacher'>(searchParams.get('role') === 'teacher' ? 'teacher' : 'student')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -24,7 +25,8 @@ function AuthForm() {
     setLoading(true)
     try {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/signup'
-      const body = mode === 'login' ? { email, password } : { email, password, fullName }
+      const schoolId = searchParams.get('school_id')
+      const body = mode === 'login' ? { email, password } : { email, password, fullName, role, schoolId }
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,7 +37,8 @@ function AuthForm() {
         setError(data.error || t('auth.somethingWrong', lang))
         return
       }
-      router.push(redirect || (data.user.role === 'admin' ? '/admin' : '/student'))
+      const dest = data.user.role === 'admin' ? '/admin' : data.user.role === 'teacher' ? '/teacher' : '/student'
+      router.push(redirect || dest)
       router.refresh()
     } catch {
       setError(t('auth.networkError', lang))
@@ -55,7 +58,19 @@ function AuthForm() {
         </p>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {mode === 'signup' && (
-            <Input label={t('auth.fullName', lang)} value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            <>
+              <Input label={t('auth.fullName', lang)} value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              <div className="flex gap-4 mb-2">
+                <label className="flex items-center gap-2 cursor-pointer text-[14px] text-text-primary">
+                  <input type="radio" name="role" value="student" checked={role === 'student'} onChange={() => setRole('student')} className="accent-accent-blue" />
+                  Student
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-[14px] text-text-primary">
+                  <input type="radio" name="role" value="teacher" checked={role === 'teacher'} onChange={() => setRole('teacher')} className="accent-accent-blue" />
+                  Teacher
+                </label>
+              </div>
+            </>
           )}
           <Input label={t('auth.email', lang)} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input label={t('auth.password', lang)} type="password" value={password} onChange={(e) => setPassword(e.target.value)} />

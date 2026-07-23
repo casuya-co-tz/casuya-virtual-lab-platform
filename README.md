@@ -1,4 +1,4 @@
-﻿# CASUYA VIRTUAL LABORATORY PLATFORM
+# CASUYA VIRTUAL LABORATORY PLATFORM
 
 > Virtual science laboratory platform for Tanzanian secondary school students. NECTA-aligned simulations with Swahili support, M-Pesa payments, and offline capability.
 
@@ -6,7 +6,7 @@
 
 ## STATUS
 
-**Alpha.** The project contains a complete codebase with all planned components, API routes, types, and database schema implemented. See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the full audit and completion log.
+**Alpha.** The project contains a complete codebase with all planned components, API routes, types, and database schema implemented. We have completed Phase 12: Full UI i18n & Auth Overhaul. See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the full audit and completion log.
 
 ### What's implemented
 
@@ -20,7 +20,7 @@
 - **Admin components**: StatsGrid, LabEditor, LivePreview, CurriculumBuilder, DataTable, UserTable, BillingTable, APIKeyManager, DocsEditor, EditorSkeleton
 - **Shared components**: LanguageToggle, RoleGuard, SearchBar, EmptyState, ThemeProvider, WebVitals
 - **Simulation**: LabSimulation — Three.js lab simulation component with per-subject 3D objects
-- **Lib utilities**: supabase client, auth, auth-guard, i18n (EN/SW), lab-manager, lab-processor (DOMPurify sanitization), rate-limiter, crypto, validators, db (PostgreSQL pool), api-tracker, audit-logger
+- **Lib utilities**: supabase client, auth (custom `sid` cookie strategy via raw SQL), auth-guard, i18n (EN/SW 100% UI coverage), lab-manager, lab-processor (DOMPurify sanitization), rate-limiter, crypto, validators, db (PostgreSQL pool), api-tracker, audit-logger
 - **Custom hooks**: useAuth, useLabs, useLanguage, useRateLimit, useMediaQuery
 - **TypeScript types**: Full type system with models (profile, lab, school, subscription), API requests/responses, subject-specific types (physics, chemistry, biology), database row types
 - **Database**: Supabase migrations with 15+ tables, indexes, RLS policies, NECTA-aligned seed data, payments table

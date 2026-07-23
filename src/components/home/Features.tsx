@@ -7,16 +7,16 @@ export function Features() {
   ]
 
   return (
-    <section className="px-6 py-12 bg-bg-secondary border-y border-border-DEFAULT">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-[clamp(20px,4vw,32px)] font-bold text-text-primary mb-8 text-center">
+    <section className="px-6 py-24 bg-bg-secondary border-b border-border-default">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-[clamp(28px,5vw,40px)] font-extrabold text-text-primary mb-12 text-center tracking-tight">
           BUILT FOR TANZANIA
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {features.map(f => (
-            <div key={f.title} className="p-4 bg-bg-primary border border-border-DEFAULT text-center">
-              <h3 className="text-[14px] font-bold uppercase tracking-[0.5px] text-text-primary">{f.title}</h3>
-              <p className="text-[12px] text-text-secondary mt-2">{f.desc}</p>
+            <div key={f.title} className="p-8 bg-bg-primary border border-border-strong text-center flex flex-col items-center">
+              <h3 className="text-[16px] font-bold uppercase tracking-[0.5px] text-accent-blue mb-4">{f.title}</h3>
+              <p className="text-[14px] text-text-secondary leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>

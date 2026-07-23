@@ -7,7 +7,7 @@ interface TableProps extends TableHTMLAttributes<HTMLTableElement> {
 export function Table({ headers, className = '', children, ...props }: TableProps) {
   return (
     <div className="overflow-x-auto">
-      <table className={`w-full border-collapse ${className}`} {...props}>
+      <table className={`w-full min-w-[600px] border-collapse ${className}`} {...props}>
         <thead>
           <tr className="bg-bg-tertiary">
             {headers.map((h, i) => (

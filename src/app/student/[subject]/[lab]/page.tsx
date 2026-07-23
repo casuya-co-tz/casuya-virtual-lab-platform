@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tabs } from '@/components/ui/Tabs'
+import { SimulationWrapper } from '@/components/student/SimulationWrapper'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 
@@ -167,13 +168,7 @@ export default function LabPlayer({ params }: Props) {
                   <span className="text-[12px] text-text-secondary uppercase">{t('student.labEnvironment', lang)}</span>
                   <Button variant="ghost" onClick={() => setPreviewKey(k => k + 1)}>{t('student.refresh', lang)}</Button>
                 </div>
-                <iframe
-                  key={previewKey}
-                  srcDoc={labData!.html_threejs_code!}
-                  sandbox="allow-scripts"
-                  className="w-full h-[60vh] max-h-[500px] bg-white"
-                  title="Lab Simulation"
-                />
+                <SimulationWrapper htmlCode={labData!.html_threejs_code!} previewKey={previewKey} />
               </div>
             ) : (
               <div className="bg-bg-secondary border border-border-DEFAULT h-[60vh] max-h-[500px] flex items-center justify-center">

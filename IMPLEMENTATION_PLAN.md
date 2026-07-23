@@ -101,6 +101,11 @@
 - [x] `src/app/layout.tsx` — Added `<WebVitals />` to root layout
 - [x] `package.json` — Added `sanitize-html`, `web-vitals`, `@types/sanitize-html`
 
+### P14 - Full UI i18n & Auth Overhaul
+
+- [x] `src/lib/db.ts` — Bypassed `@supabase/auth-helpers-nextjs` (which caused 500 errors) in favor of raw SQL and `sid` custom cookies.
+- [x] UI strings refactored to use `useLanguage()` across the codebase: Teacher dashboard, Footer, Admin elements, home page voices, and static docs.
+
 ---
 
 ## COMPLETION LOG
@@ -136,3 +141,5 @@
 | 2026-07-21 | DOMPurify (sanitize-html) server-side HTML sanitization in lab-processor | Done |
 | 2026-07-21 | WebVitals client library (LCP, INP, CLS, TTFB) integrated with /api/vitals | Done |
 | 2026-07-21 | Build verification (49 routes, 9 tests) after Phase 11 | Done |
+| 2026-07-23 | Auth overhaul — Bypassed @supabase/auth-helpers-nextjs due to 500 errors, implemented raw SQL & custom sid cookies | Done |
+| 2026-07-23 | Full UI i18n Refactor — Teacher Dashboard, Admin API Key Manager, Voices From Tanzania, Footer, LivePreview, 404, Privacy, Terms, Docs | Done |

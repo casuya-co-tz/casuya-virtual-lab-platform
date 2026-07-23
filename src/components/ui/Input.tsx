@@ -1,3 +1,4 @@
+'use client'
 import { InputHTMLAttributes, forwardRef } from 'react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -16,10 +17,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <input
           ref={ref}
-          className={`h-[clamp(36px,5vw,40px)] px-3 bg-bg-secondary border text-[14px] text-text-primary
-            placeholder:text-text-disabled transition-all duration-120 ease-out
-            focus:outline-none focus:ring-2 focus:ring-border-focus
-            ${error ? 'border-accent-red' : 'border-border-DEFAULT'}
+          className={`rounded-xl h-[clamp(36px,5vw,40px)] px-3 bg-bg-secondary border text-[14px] text-text-primary
+            placeholder:text-text-disabled transition-all duration-300 ease-out
+            focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:border-accent-blue
+            ${error ? 'border-accent-red' : 'border-border-strong'}
             ${props.disabled ? 'bg-bg-tertiary text-text-disabled' : ''}
             ${className}`}
           {...props}
