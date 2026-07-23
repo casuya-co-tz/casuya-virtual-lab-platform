@@ -27,7 +27,7 @@ export function Hero() {
         <Button variant="secondary" className="!h-[52px] !px-8" onClick={() => router.push('/developer/docs')}>{t('cta.explore', lang)}</Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-8 mt-12 w-full max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-12 w-full max-w-2xl">
         {stats.map(s => (
           <div key={s.label} className="text-center">
             <p className="text-[clamp(24px,5vw,32px)] font-bold text-text-primary">{s.value}</p>

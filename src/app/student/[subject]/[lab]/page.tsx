@@ -103,12 +103,12 @@ export default function LabPlayer({ params }: Props) {
                   key={previewKey}
                   srcDoc={labData!.html_threejs_code!}
                   sandbox="allow-scripts"
-                  className="w-full h-[500px] bg-white"
+                  className="w-full h-[60vh] max-h-[500px] bg-white"
                   title="Lab Simulation"
                 />
               </div>
             ) : (
-              <div className="bg-bg-secondary border border-border-DEFAULT h-[500px] flex items-center justify-center">
+              <div className="bg-bg-secondary border border-border-DEFAULT h-[60vh] max-h-[500px] flex items-center justify-center">
                 <div className="text-center">
                   <p className="text-[14px] text-text-secondary mb-2">No lab code available for this experiment.</p>
                   <p className="text-[12px] text-text-disabled">Contact your instructor to deploy the lab simulation.</p>
@@ -145,7 +145,7 @@ export default function LabPlayer({ params }: Props) {
         ]}
       />
 
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Button variant="primary" onClick={handleSubmit} disabled={saving}>
           {saving ? 'Saving...' : 'Submit Lab'}
         </Button>

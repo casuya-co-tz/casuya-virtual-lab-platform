@@ -96,7 +96,7 @@ export default function DeveloperPage() {
         <Button variant="primary" onClick={() => setShowCreate(true)}>{t('dev.newApiKey', lang)}</Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card><p className="text-[12px] uppercase text-text-secondary">{t('dev.tier', lang)}</p><p className="text-[20px] font-bold text-text-primary mt-1">{devProfile.api_tier}</p></Card>
         <Card><p className="text-[12px] uppercase text-text-secondary">{t('dev.monthlyLimit', lang)}</p><p className="text-[20px] font-bold text-text-primary mt-1">{devProfile.monthly_request_limit.toLocaleString()}</p></Card>
         <Card><p className="text-[12px] uppercase text-text-secondary">{t('dev.activeKeys', lang)}</p><p className="text-[20px] font-bold text-text-primary mt-1">{credentials.filter(c => c.is_active).length}</p></Card>

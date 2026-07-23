@@ -32,7 +32,7 @@ export function Sidebar({ userRole: overrideRole }: SidebarProps) {
   const items = userRole === 'student' ? studentItems : adminItems
 
   return (
-    <aside className="w-64 bg-bg-tertiary flex flex-col border-r border-border-strong">
+    <aside className="w-64 bg-bg-tertiary flex flex-col border-r border-border-strong hidden md:flex">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 bg-accent-blue/20 flex items-center justify-center">
