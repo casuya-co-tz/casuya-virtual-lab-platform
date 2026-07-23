@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 import { APIKeyManager } from '@/components/admin/APIKeyManager'
-import { EmptyState } from '@/components/shared/EmptyState'
 
 interface ApiKey {
   id: string
@@ -28,20 +27,31 @@ export default function AdminApiKeysPage() {
   }, [])
 
   async function handleCreate(scopes: string[]) {
-    const res = await fetch('/api/developer/credentials', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scopes }),
-    })
-    if (res.ok) {
-      const newKey = await res.json()
-      setKeys(prev => [...prev, newKey])
+    try {
+      const res = await fetch('/api/developer/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scopes }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const newKey = data.credential || data
+        setKeys(prev => [...prev, newKey])
+      }
+    } catch {
+      // Network error
     }
   }
 
   async function handleRevoke(id: string) {
-    await fetch(`/api/developer/credentials/${id}`, { method: 'DELETE' })
-    setKeys(prev => prev.filter(k => k.id !== id))
+    try {
+      const res = await fetch(`/api/developer/credentials/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setKeys(prev => prev.filter(k => k.id !== id))
+      }
+    } catch {
+      // Network error
+    }
   }
 
   if (loading) return <p className="text-text-secondary">{t('admin.loading', lang)}</p>

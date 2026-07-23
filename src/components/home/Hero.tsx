@@ -24,7 +24,7 @@ export function Hero() {
       </p>
       <div className="flex flex-col sm:flex-row gap-3 mt-8">
         <Button variant="primary" className="!h-[52px] !px-8" onClick={() => router.push('/student/physics')}>{t('cta.launch', lang)}</Button>
-        <Button variant="secondary" className="!h-[52px] !px-8" onClick={() => router.push('/developer/docs')}>{t('cta.explore', lang)}</Button>
+        <Button variant="secondary" className="!h-[52px] !px-8" onClick={() => router.push('/developer')}>{t('cta.explore', lang)}</Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-12 w-full max-w-2xl">

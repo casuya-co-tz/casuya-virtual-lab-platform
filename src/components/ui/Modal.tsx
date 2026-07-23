@@ -1,12 +1,14 @@
+'use client'
 import { HTMLAttributes, useEffect, useRef } from 'react'
 
 interface ModalProps extends HTMLAttributes<HTMLDivElement> {
   open: boolean
   onClose: () => void
+  onConfirm?: () => void
   title?: string
 }
 
-export function Modal({ open, onClose, title, className = '', children, ...props }: ModalProps) {
+export function Modal({ open, onClose, onConfirm, title, className = '', children, ...props }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export function Modal({ open, onClose, title, className = '', children, ...props
         <div className="px-6 py-4">{children}</div>
         <div className="flex justify-end gap-2 px-6 py-4 bg-bg-tertiary border-t border-border-DEFAULT">
           <button onClick={onClose} className="px-4 py-2 text-[14px] text-text-secondary border border-border-strong">Cancel</button>
-          <button onClick={onClose} className="px-4 py-2 text-[14px] text-white bg-accent-blue border border-accent-blue">Confirm</button>
+          <button onClick={onConfirm || onClose} className="px-4 py-2 text-[14px] text-white bg-accent-blue border border-accent-blue">Confirm</button>
         </div>
       </div>
     </div>

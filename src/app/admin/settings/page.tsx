@@ -20,26 +20,38 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     fetch('/api/settings')
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : [])
       .then(data => setSettings(Array.isArray(data) ? data : []))
-      .catch(() => {})
+      .catch(() => setSettings([]))
   }, [])
 
   async function addSetting() {
     if (!newKey || !newValue) return
-    await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: newKey, value: { value: newValue } }),
-    })
-    setSettings([...settings, { key: newKey, value: { value: newValue } }])
-    setNewKey('')
-    setNewValue('')
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: newKey, value: { value: newValue } }),
+      })
+      if (res.ok) {
+        setSettings([...settings, { key: newKey, value: { value: newValue } }])
+        setNewKey('')
+        setNewValue('')
+      }
+    } catch {
+      // Network error
+    }
   }
 
   async function removeSetting(key: string) {
-    await fetch(`/api/settings?key=${key}`, { method: 'DELETE' })
-    setSettings(settings.filter(s => s.key !== key))
+    try {
+      const res = await fetch(`/api/settings?key=${key}`, { method: 'DELETE' })
+      if (res.ok) {
+        setSettings(settings.filter(s => s.key !== key))
+      }
+    } catch {
+      // Network error
+    }
   }
 
   return (

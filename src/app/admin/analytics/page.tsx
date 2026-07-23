@@ -47,7 +47,7 @@ export default function AnalyticsPage() {
     <div>
       <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">{t('admin.analytics', lang)}</h1>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <Card><p className="text-[12px] uppercase text-text-secondary">{t('stats.students', lang)}</p><p className="text-[24px] font-bold text-text-primary mt-1">{stats?.total_students ?? 0}</p></Card>
         <Card><p className="text-[12px] uppercase text-text-secondary">{t('admin.publishedLabs', lang)}</p><p className="text-[24px] font-bold text-text-primary mt-1">{stats?.published_labs ?? 0}/{stats?.total_labs ?? 0}</p></Card>
         <Card><p className="text-[12px] uppercase text-text-secondary">{t('admin.completionRate', lang)}</p><p className="text-[24px] font-bold text-text-primary mt-1">{stats?.total_progress ? Math.round((stats.completed_labs / stats.total_progress) * 100) : 0}%</p></Card>

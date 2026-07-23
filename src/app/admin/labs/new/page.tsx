@@ -31,9 +31,9 @@ export default function NewLabPage() {
 
   useEffect(() => {
     fetch('/api/subtopics')
-      .then(r => r.json())
-      .then(setSubtopics)
-      .catch(() => {})
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setSubtopics(Array.isArray(data) ? data : []))
+      .catch(() => setSubtopics([]))
   }, [])
 
   async function handleSubmit(e: FormEvent) {

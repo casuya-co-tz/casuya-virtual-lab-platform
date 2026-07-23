@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import Link from 'next/link'
+import { useLanguage } from '@/hooks/useLanguage'
+import { t } from '@/lib/i18n'
 
 interface Lab {
   id: string
@@ -16,6 +18,7 @@ interface Lab {
 }
 
 export default function SearchPage() {
+  const { lang } = useLanguage()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Lab[]>([])
   const [loading, setLoading] = useState(false)
@@ -37,28 +40,32 @@ export default function SearchPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-2">Search Labs</h1>
-      <p className="text-[14px] text-text-secondary mb-6">Find physics, chemistry, and biology lab simulations</p>
+      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-2">{t('nav.subjects', lang)}</h1>
+      <p className="text-[14px] text-text-secondary mb-6">{t('student.searchPlaceholder', lang)}</p>
 
       <div className="flex gap-3 mb-6">
         <Input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search labs, topics, subtopics..."
+          placeholder={t('student.searchPlaceholder', lang)}
           className="flex-1"
           onKeyDown={e => e.key === 'Enter' && handleSearch()}
         />
         <button
           onClick={handleSearch}
           disabled={loading}
-          className="px-6 py-3 bg-accent-blue text-white text-[14px] font-bold uppercase tracking-[0.5px] hover:opacity-90 transition-opacity"
+          className="px-6 py-3 bg-accent-blue text-white text-[14px] font-bold uppercase tracking-[0.5px] hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {loading ? '...' : 'Search'}
+          {loading ? (
+            <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            t('common.search', lang)
+          )}
         </button>
       </div>
 
       {searched && results.length === 0 && !loading && (
-        <p className="text-[14px] text-text-secondary">No results found for &quot;{query}&quot;</p>
+        <p className="text-[14px] text-text-secondary">{t('student.noResults', lang)} &quot;{query}&quot;</p>
       )}
 
       <div className="flex flex-col gap-3">

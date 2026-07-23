@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { query } from './db'
 
 export async function requireAdmin() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const sid = cookieStore.get('sid')?.value
   if (!sid) return null
 
@@ -21,7 +21,7 @@ export async function requireAdmin() {
 }
 
 export async function requireAuth() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const sid = cookieStore.get('sid')?.value
   if (!sid) return null
 

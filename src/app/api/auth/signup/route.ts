@@ -6,8 +6,18 @@ import { logAuditEvent } from '@/lib/audit-logger'
 
 export async function POST(req: Request) {
   try {
-    const { email, password, fullName } = await req.json()
+    const body = await req.json()
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+    const password = typeof body.password === 'string' ? body.password : ''
+    const fullName = typeof body.fullName === 'string' ? body.fullName.trim() : ''
     const ip = req.headers.get('x-forwarded-for') || 'unknown'
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
+    }
+    if (!password || password.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
+    }
 
     const existing = await query('SELECT id FROM auth.users WHERE email = $1', [email])
     if (existing.rows.length > 0) {
@@ -27,17 +37,18 @@ export async function POST(req: Request) {
       [userId, fullName || email.split('@')[0], 'student', 'en']
     )
 
+    const isProd = process.env.NODE_ENV === 'production'
     const cookieStore = await cookies()
     cookieStore.set('sid', userId, {
       httpOnly: true,
-      secure: false,
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
     })
     cookieStore.set('role', 'student', {
       httpOnly: true,
-      secure: false,
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7,

@@ -6,8 +6,17 @@ import { logAuditEvent } from '@/lib/audit-logger'
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json()
+    const body = await req.json()
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+    const password = typeof body.password === 'string' ? body.password : ''
     const ip = req.headers.get('x-forwarded-for') || 'unknown'
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
+    }
+    if (!password || password.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+    }
 
     const userResult = await query(
       'SELECT id, email, encrypted_password, role FROM auth.users WHERE email = $1',
@@ -42,17 +51,18 @@ export async function POST(req: Request) {
     }
 
     const user = profileResult.rows[0]
+    const isProd = process.env.NODE_ENV === 'production'
     const cookieStore = await cookies()
     cookieStore.set('sid', user.id, {
       httpOnly: true,
-      secure: false,
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
     })
     cookieStore.set('role', user.role, {
       httpOnly: true,
-      secure: false,
+      secure: isProd,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7,

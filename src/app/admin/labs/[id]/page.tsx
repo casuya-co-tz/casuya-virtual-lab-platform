@@ -26,8 +26,12 @@ export default function EditLabPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch('/api/subtopics').then(r => r.json()).then(setSubtopics)
-    fetch(`/api/labs/${params.id}`).then(r => r.json()).then(data => {
+    fetch('/api/subtopics').then(r => r.ok ? r.json() : []).then(data => setSubtopics(Array.isArray(data) ? data : []))
+    fetch(`/api/labs/${params.id}`).then(r => {
+      if (!r.ok) { setError('Lab not found'); setLoading(false); return }
+      return r.json()
+    }).then(data => {
+      if (!data) return
       setForm({
         subtopic_id: data.subtopic_id || '',
         title: data.title || '',

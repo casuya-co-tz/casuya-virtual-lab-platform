@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
-import { useAuth } from '@/hooks/useAuth'
 import { t } from '@/lib/i18n'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -15,11 +15,18 @@ const subjects = [
 export function SubjectCards() {
   const router = useRouter()
   const { lang } = useLanguage()
-  const { user, loading } = useAuth()
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then(r => { if (r.ok) return r.json(); throw new Error() })
+      .then(() => setIsLoggedIn(true))
+      .catch(() => setIsLoggedIn(false))
+  }, [])
 
   function handleClick(id: string) {
-    if (loading) return
-    if (user) {
+    if (isLoggedIn === null) return
+    if (isLoggedIn) {
       router.push(`/student/${id}`)
     } else {
       router.push(`/auth?redirect=/student/${id}`)

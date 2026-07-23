@@ -3,12 +3,12 @@ import { NextResponse, NextRequest } from 'next/server'
 import { sanitizeLabCode } from '@/lib/lab-processor'
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export async function GET(_request: NextRequest, { params }: Props) {
   try {
-    const { id } = await params
+    const { id } = params
     const result = await query(
       `SELECT l.title, l.html_threejs_code, l.is_published, l.subject,
               s.name AS subject_name
@@ -35,13 +35,14 @@ export async function GET(_request: NextRequest, { params }: Props) {
     }
 
     const sanitized = sanitizeLabCode(lab.html_threejs_code)
+    const escapedTitle = lab.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
     const wrapper = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${lab.title}</title>
+  <title>${escapedTitle}</title>
   <style>body{margin:0;padding:0;overflow:hidden;font-family:system-ui,sans-serif}</style>
 </head>
 <body>${sanitized}</body>
@@ -50,7 +51,7 @@ export async function GET(_request: NextRequest, { params }: Props) {
     return new NextResponse(wrapper, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'X-Frame-Options': 'ALLOWALL',
+        'X-Frame-Options': 'ALLOW-FROM',
         'Content-Security-Policy': "frame-ancestors *",
       },
     })

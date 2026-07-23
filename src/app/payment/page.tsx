@@ -31,9 +31,14 @@ export default function PaymentPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, amount: parseInt(amount) }),
       })
-      const data = await res.json()
-      setResult({ success: data.success, message: data.message, transactionId: data.transaction_id })
-      setStep('complete')
+      if (!res.ok) {
+        setResult({ success: false, message: t('payment.error', lang) })
+        setStep('complete')
+      } else {
+        const data = await res.json()
+        setResult({ success: data.success, message: data.message, transactionId: data.transaction_id })
+        setStep('complete')
+      }
     } catch {
       setResult({ success: false, message: t('payment.error', lang) })
       setStep('complete')
@@ -121,7 +126,7 @@ export default function PaymentPage() {
             </h3>
             <p className="text-text-secondary mb-4">{result.message}</p>
             {result.transactionId && (
-              <p className="text-[13px] text-text-tertiary mb-4">
+              <p className="text-[13px] text-text-secondary mb-4">
                 {t('payment.transactionId', lang)}: {result.transactionId}
               </p>
             )}

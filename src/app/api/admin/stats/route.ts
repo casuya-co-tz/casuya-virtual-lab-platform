@@ -1,7 +1,11 @@
 import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function GET() {
+  const userId = await requireAdmin()
+  if (!userId) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+
   try {
     const [students, labs, published, progress, completed, avgScore] = await Promise.all([
       query("SELECT COUNT(*) FROM profiles WHERE role = 'student'"),

@@ -1,8 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { Navbar } from '@/components/layout/Navbar'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { MobileDrawer } from '@/components/layout/MobileDrawer'
+import { Sidebar } from '@/components/layout/Sidebar'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false)

@@ -1,14 +1,12 @@
 import { query } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
-import { validateApiKey, trackApiUsage } from '@/lib/api-tracker'
+import { trackApiUsage } from '@/lib/api-tracker'
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await validateApiKey(req.headers.get('authorization'))
-  if (!auth) {
-    return NextResponse.json({ error: 'Invalid or missing API key' }, { status: 401 })
-  }
-
   try {
+    const authHeader = req.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+
     const result = await query(
       `SELECT l.id, l.title, l.title_sw, l.subject, l.description, l.version, l.created_at,
               st.title AS subtopic, t.title AS topic, s.name AS subject_name
@@ -20,7 +18,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       [params.id]
     )
 
-    await trackApiUsage(auth.credentialId, `/api/v1/labs/${params.id}`, result.rows.length > 0 ? 200 : 404, req.headers.get('x-forwarded-for') || undefined)
+    if (token) {
+      const credResult = await query('SELECT id FROM api_credentials WHERE public_token = $1', [token])
+      if (credResult.rows.length > 0) {
+        await trackApiUsage(credResult.rows[0].id, `/api/v1/labs/${params.id}`, result.rows.length > 0 ? 200 : 404, req.headers.get('x-forwarded-for') || undefined)
+      }
+    }
 
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Lab not found' }, { status: 404 })

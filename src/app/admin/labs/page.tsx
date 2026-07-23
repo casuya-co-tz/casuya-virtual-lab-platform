@@ -29,15 +29,21 @@ export default function AdminLabsPage() {
 
   useEffect(() => {
     fetch('/api/labs')
-      .then(r => r.json())
-      .then(data => { setLabs(data); setLoading(false) })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { setLabs(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
   async function handleDelete(id: string) {
     if (!confirm(t('admin.deleteConfirm', lang))) return
-    await fetch(`/api/labs/${id}`, { method: 'DELETE' })
-    setLabs(labs.filter(l => l.id !== id))
+    try {
+      const res = await fetch(`/api/labs/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setLabs(labs.filter(l => l.id !== id))
+      }
+    } catch {
+      // Network error - do not update UI
+    }
   }
 
   if (loading) return <p className="text-text-secondary">{t('admin.loading', lang)}</p>

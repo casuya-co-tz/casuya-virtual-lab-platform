@@ -1,7 +1,11 @@
 import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function GET() {
+  const userId = await requireAdmin()
+  if (!userId) return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+
   try {
     const result = await query(
       `SELECT p.full_name, l.title, l.subject, lp.status, lp.score, lp.last_server_ts

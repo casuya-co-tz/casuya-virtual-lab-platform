@@ -3,8 +3,21 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-guard'
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
+  const adminId = await requireAdmin()
+  if (adminId) {
+    try {
+      const result = await query('SELECT * FROM labs WHERE id = $1', [params.id])
+      if (result.rows.length === 0) {
+        return NextResponse.json({ error: 'Not found' }, { status: 404 })
+      }
+      return NextResponse.json(result.rows[0])
+    } catch {
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+  }
+
   try {
-    const result = await query('SELECT * FROM labs WHERE id = $1', [params.id])
+    const result = await query('SELECT * FROM labs WHERE id = $1 AND is_published = true', [params.id])
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
@@ -22,11 +35,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
   try {
     const body = await req.json()
+    if (!body.title || !body.subtopic_id || !body.subject) {
+      return NextResponse.json({ error: 'Missing required fields: title, subtopic_id, subject' }, { status: 400 })
+    }
     const result = await query(
       `UPDATE labs SET subtopic_id = $1, title = $2, title_sw = $3, description = $4, subject = $5,
        html_threejs_code = $6, is_published = $7, version = version + 1, updated_at = NOW()
        WHERE id = $8 RETURNING *`,
-      [body.subtopic_id, body.title, body.title_sw, body.description, body.subject,
+      [body.subtopic_id, body.title, body.title_sw || '', body.description || '', body.subject,
        body.html_threejs_code || null, body.is_published, params.id]
     )
     if (result.rows.length === 0) {

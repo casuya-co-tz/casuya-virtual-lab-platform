@@ -26,8 +26,24 @@ export default function AdminDocsPage() {
 
   useEffect(() => {
     fetch('/api/settings')
-      .then(r => r.json())
-      .then(() => { setDocs([]); setLoading(false) })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) {
+          const docEntries = data
+            .filter((s: { key: string }) => s.key?.startsWith('doc:'))
+            .map((s: { key: string; value: Record<string, string> }) => ({
+              id: s.key,
+              slug: s.key.replace('doc:', ''),
+              title: s.value?.title || s.key.replace('doc:', ''),
+              content: s.value?.content || '',
+              category: s.value?.category || 'general',
+              published: true,
+              updated_at: '',
+            }))
+          setDocs(docEntries)
+        }
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [])
 
@@ -39,6 +55,27 @@ export default function AdminDocsPage() {
     })
     setEditing(null)
     setCreating(false)
+    setLoading(true)
+    fetch('/api/settings')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) {
+          const docEntries = data
+            .filter((s: { key: string }) => s.key?.startsWith('doc:'))
+            .map((s: { key: string; value: Record<string, string> }) => ({
+              id: s.key,
+              slug: s.key.replace('doc:', ''),
+              title: s.value?.title || s.key.replace('doc:', ''),
+              content: s.value?.content || '',
+              category: s.value?.category || 'general',
+              published: true,
+              updated_at: '',
+            }))
+          setDocs(docEntries)
+        }
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }
 
   if (loading) return <p className="text-text-secondary">{t('admin.loading', lang)}</p>

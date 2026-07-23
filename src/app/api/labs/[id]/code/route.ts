@@ -3,12 +3,12 @@ import { NextResponse, NextRequest } from 'next/server'
 import { sanitizeLabCode } from '@/lib/lab-processor'
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export async function GET(_request: NextRequest, { params }: Props) {
   try {
-    const { id } = await params
+    const { id } = params
     const result = await query(
       'SELECT html_threejs_code, is_published FROM labs WHERE id = $1',
       [id]

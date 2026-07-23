@@ -34,7 +34,9 @@ export async function GET(request: NextRequest) {
         `SELECT l.id, l.title, l.title_sw, l.description, l.subject, l.version, l.security_score,
                 l.created_at, s.name AS subject_name
          FROM labs l
-         LEFT JOIN subjects s ON LOWER(s.name) = LOWER(l.subject)
+         LEFT JOIN subtopics st ON st.id = l.subtopic_id
+         LEFT JOIN topics t ON t.id = st.topic_id
+         LEFT JOIN subjects s ON s.id = t.subject_id
          WHERE l.is_published = true
          ORDER BY l.created_at DESC
          LIMIT 100`

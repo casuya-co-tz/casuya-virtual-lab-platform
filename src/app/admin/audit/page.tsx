@@ -31,7 +31,7 @@ export default function AdminAuditPage() {
     const params = new URLSearchParams({ page: String(page), limit: '20' })
     if (actionFilter) params.set('action', actionFilter)
     fetch(`/api/admin/audit?${params}`)
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : { logs: [] })
       .then(data => { setLogs(Array.isArray(data.logs) ? data.logs : []); setLoading(false) })
       .catch(() => { setLogs([]); setLoading(false) })
   }, [page, actionFilter])
@@ -42,7 +42,7 @@ export default function AdminAuditPage() {
 
   const actionColors: Record<string, string> = {
     login: 'text-accent-green',
-    logout: 'text-accent-yellow',
+    logout: 'text-accent-amber',
     create: 'text-accent-blue',
     update: 'text-accent-purple',
     delete: 'text-accent-red',
@@ -55,7 +55,7 @@ export default function AdminAuditPage() {
       <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">{t('admin.audit', lang)}</h1>
 
       <div className="flex gap-2 mb-6 flex-wrap">
-        {['', 'login', 'logout', 'create', 'update', 'delete', 'api_key_create', 'api_key_revoke'].map(a => (
+        {['', 'login', 'login_failed', 'logout', 'create', 'update', 'delete', 'api_key_create', 'api_key_revoke'].map(a => (
           <button
             key={a}
             onClick={() => { setActionFilter(a); setPage(1) }}
@@ -92,7 +92,7 @@ export default function AdminAuditPage() {
                     </span>
                   </Td>
                   <Td>
-                    <span className="text-[12px] text-text-tertiary">
+                    <span className="text-[12px] text-text-secondary">
                       {log.entity_type}{log.entity_id ? ` #${log.entity_id.slice(0, 8)}` : ''}
                     </span>
                   </Td>

@@ -53,7 +53,7 @@ export default function DeveloperDocsPage() {
                 <Card>
                   <div className="flex items-center gap-3 mb-2">
                     <Badge variant="success">GET</Badge>
-                    <code className="text-[14px] font-mono text-text-primary">/api/v1/subjects</code>
+                    <code className="text-[14px] font-mono text-text-primary">/api/subjects</code>
                   </div>
                   <p className="text-[14px] text-text-secondary">List all subjects with their topics and subtopics.</p>
                 </Card>

@@ -22,19 +22,22 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetch('/api/users')
-      .then(r => r.json())
-      .then(data => { setUsers(data); setLoading(false) })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { setUsers(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
   async function toggleRole(id: string, currentRole: string) {
     const newRole = currentRole === 'admin' ? 'student' : 'admin'
-    await fetch('/api/users', {
+    if (!confirm(currentRole === 'admin' ? 'Demote this user to student?' : 'Promote this user to admin?')) return
+    const res = await fetch('/api/users', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, role: newRole }),
     })
-    setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u))
+    if (res.ok) {
+      setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u))
+    }
   }
 
   if (loading) return <p className="text-text-secondary">{t('admin.loading', lang)}</p>

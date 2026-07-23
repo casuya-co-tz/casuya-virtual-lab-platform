@@ -32,7 +32,7 @@ export async function logAuditEvent(params: {
 }) {
   try {
     await query(
-      `INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, created_at)
+      `INSERT INTO audit_log (actor_id, action, target_type, target_id, old_value, new_value, ip_address, created_at)
        VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, NOW())`,
       [
         params.userId,

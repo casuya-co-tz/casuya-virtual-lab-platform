@@ -8,8 +8,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const subject = searchParams.get('subject')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100)
-    const offset = parseInt(searchParams.get('offset') || '0')
+    const limitRaw = parseInt(searchParams.get('limit') || '20')
+    const offsetRaw = parseInt(searchParams.get('offset') || '0')
+    const limit = isNaN(limitRaw) ? 20 : Math.min(limitRaw, 100)
+    const offset = isNaN(offsetRaw) ? 0 : Math.max(offsetRaw, 0)
 
     let sql = `
       SELECT l.id, l.title, l.title_sw, l.subject, l.description, l.version, l.created_at,

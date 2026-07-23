@@ -15,14 +15,3 @@ export function sanitizeLabCode(code: string): string {
     allowVulnerableTags: true,
   })
 }
-
-export function computeSecurityScore(code: string): number {
-  let score = 100
-  if (/<script/i.test(code)) score -= 30
-  if (/on\w+\s*=/i.test(code)) score -= 20
-  if (/eval\s*\(/i.test(code)) score -= 20
-  if (/document\.write/i.test(code)) score -= 15
-  if (/innerHTML\s*=/i.test(code)) score -= 10
-  if (score < 0) score = 0
-  return score
-}

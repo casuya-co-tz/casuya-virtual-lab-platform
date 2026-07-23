@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   cookieStore.set('sid', '', { httpOnly: true, path: '/', maxAge: 0 })
   cookieStore.set('role', '', { httpOnly: true, path: '/', maxAge: 0 })
   return NextResponse.json({ ok: true })

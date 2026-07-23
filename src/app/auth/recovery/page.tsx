@@ -34,7 +34,7 @@ export default function RecoveryPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg-secondary px-4">
-      <div className="w-full max-w-md bg-bg-primary border border-border-default p-8">
+      <div className="w-full max-w-md bg-bg-primary border border-border-DEFAULT p-8">
         <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-2">{t('auth.recovery', lang)}</h1>
         <p className="text-[14px] text-text-secondary mb-6">{t('auth.resetDesc', lang)}</p>
         {sent ? (

@@ -29,6 +29,10 @@ export async function PUT(req: Request) {
 
   try {
     const { id, role } = await req.json()
+    const validRoles = ['admin', 'student', 'developer']
+    if (!validRoles.includes(role)) {
+      return NextResponse.json({ error: 'Invalid role. Must be admin, student, or developer' }, { status: 400 })
+    }
     const result = await query(
       'UPDATE profiles SET role = $1 WHERE id = $2 RETURNING id, full_name, role, language',
       [role, id]

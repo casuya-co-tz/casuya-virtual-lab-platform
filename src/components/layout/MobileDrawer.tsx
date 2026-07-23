@@ -1,4 +1,6 @@
-import { useState } from 'react'
+'use client'
+import { useLanguage } from '@/hooks/useLanguage'
+import { t } from '@/lib/i18n'
 
 interface MobileDrawerProps {
   isOpen: boolean
@@ -7,24 +9,28 @@ interface MobileDrawerProps {
 }
 
 export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
+  const { lang } = useLanguage()
+
   if (!isOpen) return null
 
   const studentItems = [
-    { icon: '📊', label: 'Dashboard', href: '/student' },
-    { icon: '🔬', label: 'Physics', href: '/student/physics' },
-    { icon: '🧪', label: 'Chemistry', href: '/student/chemistry' },
-    { icon: '🦠', label: 'Biology', href: '/student/biology' },
-    { icon: '⚙️', label: 'Settings', href: '/student/settings' },
+    { icon: '📊', label: t('nav.dashboard', lang), href: '/student' },
+    { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: '/student/physics' },
+    { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: '/student/chemistry' },
+    { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: '/student/biology' },
+    { icon: '⚙️', label: t('nav.settings', lang), href: '/student/settings' },
   ]
 
   const adminItems = [
-    { icon: '📊', label: 'Dashboard', href: '/admin' },
-    { icon: '🧪', label: 'Labs', href: '/admin/labs' },
-    { icon: '👥', label: 'Users', href: '/admin/users' },
-    { icon: '💳', label: 'Billing', href: '/admin/billing' },
-    { icon: '🔑', label: 'API Keys', href: '/admin/api-keys' },
-    { icon: '📄', label: 'Docs', href: '/admin/docs' },
-    { icon: '⚙️', label: 'Settings', href: '/admin/settings' },
+    { icon: '📊', label: t('admin.dashboard', lang), href: '/admin' },
+    { icon: '🧪', label: t('admin.labs', lang), href: '/admin/labs' },
+    { icon: '👥', label: t('admin.users', lang), href: '/admin/users' },
+    { icon: '💳', label: t('admin.billing', lang), href: '/admin/billing' },
+    { icon: '🔑', label: t('admin.apiKeys', lang), href: '/admin/api-keys' },
+    { icon: '📄', label: t('admin.docs', lang), href: '/admin/docs' },
+    { icon: '🔍', label: t('admin.audit', lang), href: '/admin/audit' },
+    { icon: '📈', label: t('admin.analytics', lang), href: '/admin/analytics' },
+    { icon: '⚙️', label: t('admin.settings', lang), href: '/admin/settings' },
   ]
 
   const items = userRole === 'student' ? studentItems : adminItems

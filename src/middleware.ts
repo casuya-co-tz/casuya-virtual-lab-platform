@@ -48,8 +48,8 @@ export async function middleware(req: NextRequest) {
         }
 
         const token = authHeader.slice(7)
-        const envKey = process.env.API_KEY || 'demo-key'
-        if (token !== envKey) {
+        const envKey = process.env.API_KEY
+        if (!envKey || token !== envKey) {
           return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
         }
       }
@@ -98,16 +98,14 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL('/admin', req.url))
       }
 
-      if (isDeveloperPage && !['admin', 'developer'].includes(user.role)) {
-        return NextResponse.redirect(new URL('/student', req.url))
-      }
+      // developer page is accessible to any authenticated user
 
       return addCspHeaders(NextResponse.next())
     }
 
     return addCspHeaders(NextResponse.next())
   } catch {
-    return NextResponse.next()
+    return NextResponse.redirect(new URL('/auth', req.url))
   }
 }
 

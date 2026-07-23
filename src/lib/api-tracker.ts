@@ -4,7 +4,7 @@ export async function trackApiUsage(credentialId: string, endpoint: string, stat
   try {
     await query(
       'INSERT INTO api_usage (credential_id, endpoint, status_code, ip_address) VALUES ($1, $2, $3, $4)',
-      [credentialId, endpoint, statusCode, ipAddress || null]
+      [credentialId, endpoint, statusCode, ipAddress && /^[0-9.:]+$/.test(ipAddress) ? ipAddress : null]
     )
     await query(
       'UPDATE api_credentials SET request_count = request_count + 1, last_used_at = NOW() WHERE id = $1',

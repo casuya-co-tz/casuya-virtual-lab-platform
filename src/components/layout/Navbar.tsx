@@ -39,14 +39,16 @@ export function Navbar() {
             {t('nav.dashboard', lang)}
           </a>
         )}
-        <a href="/student/physics" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
-          {t('nav.subjects', lang)}
-        </a>
+        {(!user || user.role === 'student' || user.role === 'admin') && (
+          <a href="/student" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
+            {t('nav.subjects', lang)}
+          </a>
+        )}
         <a href="/search" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
-          Search
+          {t('nav.search', lang)}
         </a>
-        <a href="/developer/docs" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
-          API
+        <a href="/developer" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
+          {t('nav.developer', lang)}
         </a>
       </div>
 
@@ -54,7 +56,7 @@ export function Navbar() {
         <LanguageToggle lang={lang} onToggle={toggle} />
         {user ? (
           <div className="hidden md:flex items-center gap-3">
-            <a href={user.role === 'admin' ? '/admin' : '/student/profile'} className="text-[14px] text-text-primary font-bold">
+            <a href={user.role === 'admin' ? '/admin' : '/student/settings'} className="text-[14px] text-text-primary font-bold">
               {user.full_name}
             </a>
             <button onClick={handleLogout} className="text-[12px] text-accent-blue underline">Logout</button>
@@ -70,13 +72,15 @@ export function Navbar() {
           <button className="text-[20px] text-text-primary mb-6" onClick={() => setMenuOpen(false)}>x</button>
           <div className="flex flex-col gap-4">
             {user && <a href={dashboardHref} className="text-[14px] text-text-secondary">{t('nav.dashboard', lang)}</a>}
-            <a href="/student/physics" className="text-[14px] text-text-secondary">{t('nav.subjects', lang)}</a>
-            <a href="/search" className="text-[14px] text-text-secondary">Search</a>
-            <a href="/developer/docs" className="text-[14px] text-text-secondary">API</a>
+            {(!user || user.role === 'student' || user.role === 'admin') && (
+              <a href="/student" className="text-[14px] text-text-secondary">{t('nav.subjects', lang)}</a>
+            )}
+            <a href="/search" className="text-[14px] text-text-secondary">{t('nav.search', lang)}</a>
+            <a href="/developer" className="text-[14px] text-text-secondary">{t('nav.developer', lang)}</a>
             <LanguageToggle lang={lang} onToggle={toggle} />
             {user ? (
               <>
-                <a href="/student/profile" className="text-[14px] text-text-primary font-bold">{user.full_name}</a>
+                <a href="/student/settings" className="text-[14px] text-text-primary font-bold">{user.full_name}</a>
                 <button onClick={handleLogout} className="text-[12px] text-accent-blue underline text-left">Logout</button>
               </>
             ) : (

@@ -64,8 +64,8 @@ export default function DeveloperPage() {
 
   async function handleRevoke(id: string) {
     if (!confirm(t('dev.revokeConfirm', lang))) return
-    await fetch(`/api/developer/credentials/${id}`, { method: 'DELETE' })
-    setCredentials(credentials.filter(c => c.id !== id))
+    const res = await fetch(`/api/developer/credentials/${id}`, { method: 'DELETE' })
+    if (res.ok) setCredentials(credentials.filter(c => c.id !== id))
   }
 
   if (loading) return <p className="text-text-secondary">{t('admin.loading', lang)}</p>
