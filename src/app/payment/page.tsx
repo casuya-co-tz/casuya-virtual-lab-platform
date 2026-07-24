@@ -26,7 +26,7 @@ export default function PaymentPage() {
     setLoading(true)
     setStep('processing')
     try {
-      const res = await fetch('/api/payments/mpesa', {
+      const res = await fetch('/api/payments/azampesa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, amount: parseInt(amount) }),
@@ -36,14 +36,50 @@ export default function PaymentPage() {
         setStep('complete')
       } else {
         const data = await res.json()
-        setResult({ success: data.success, message: data.message, transactionId: data.transaction_id })
-        setStep('complete')
+        if (data.transaction_id) {
+          pollPaymentStatus(data.transaction_id)
+        } else {
+          setResult({ success: data.success, message: data.message, transactionId: data.transaction_id })
+          setStep('complete')
+        }
       }
     } catch {
       setResult({ success: false, message: t('payment.error', lang) })
       setStep('complete')
     }
     setLoading(false)
+  }
+
+  async function pollPaymentStatus(txId: string) {
+    let attempts = 0
+    const maxAttempts = 30
+    const interval = 3000
+
+    const poll = async () => {
+      if (attempts >= maxAttempts) {
+        setResult({ success: false, message: t('payment.timeout', lang) || 'Payment timed out. Please check your phone.', transactionId: txId })
+        setStep('complete')
+        return
+      }
+      attempts++
+      try {
+        const res = await fetch(`/api/payments/status/${txId}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.status === 'completed') {
+            setResult({ success: true, message: t('payment.successTitle', lang), transactionId: txId })
+            setStep('complete')
+            return
+          } else if (data.status === 'failed') {
+            setResult({ success: false, message: t('payment.failTitle', lang), transactionId: txId })
+            setStep('complete')
+            return
+          }
+        }
+      } catch {}
+      setTimeout(poll, interval)
+    }
+    poll()
   }
 
   function selectPlan(planId: string) {

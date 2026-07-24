@@ -23,6 +23,7 @@ interface DevProfile {
   company_or_school: string
   api_tier: string
   monthly_request_limit: number
+  max_api_keys: number | null
   created_at: string
 }
 
@@ -93,7 +94,13 @@ export default function DeveloperPage() {
           <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary">{t('dev.portal', lang)}</h1>
           <p className="text-[14px] text-text-secondary">{devProfile.company_or_school} &middot; {devProfile.api_tier}</p>
         </div>
-        <Button variant="primary" onClick={() => setShowCreate(true)}>{t('dev.newApiKey', lang)}</Button>
+        {devProfile.max_api_keys !== null && credentials.filter(c => c.is_active).length >= devProfile.max_api_keys ? (
+          <a href="/pricing?section=developer">
+            <Button variant="secondary">{t('dev.upgradeForMoreKeys', lang)}</Button>
+          </a>
+        ) : (
+          <Button variant="primary" onClick={() => setShowCreate(true)}>{t('dev.newApiKey', lang)}</Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

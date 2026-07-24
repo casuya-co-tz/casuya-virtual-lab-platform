@@ -26,9 +26,9 @@ export default function PrivacyPolicyPage() {
                 Data yako inatumika pekee kufuatilia maendeleo yako ya elimu, kusawazisha vipindi vyako vya maabara vya nje ya mtandao, na kutoa uchambuzi kwa wasimamizi wa shule yako iliyosajiliwa. Hatuiuizi data yako ya kibinafsi kwa watangazaji wa tatu.
               </p>
 
-              <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">3. Usalama wa Data & M-Pesa</h2>
+              <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">3. Usalama wa Data & AzamPesa</h2>
               <p className="text-[16px] text-text-secondary leading-relaxed mb-4">
-                Usindikaji wa malipo unashughulikiwa kwa usalama kupitia M-Pesa. Casuya haihifadhi nenosiri lako (PIN) la pesa za mtandaoni au maelezo nyeti ya kifedha kwenye seva zetu. Trafiki yote imesimbwa kupitia HTTPS.
+                Usindikaji wa malipo unashughulikiwa kwa usalama kupitia AzamPesa. Casuya haihifadhi nenosiri lako (PIN) la pesa za mtandaoni au maelezo nyeti ya kifedha kwenye seva zetu. Trafiki yote imesimbwa kupitia HTTPS.
               </p>
 
               <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">4. Haki Zako</h2>
@@ -51,9 +51,9 @@ export default function PrivacyPolicyPage() {
                 Your data is used exclusively to track your educational progress, synchronize your offline lab sessions, and provide analytics to your registered school administrators. We do not sell your personal data to third-party advertisers.
               </p>
 
-              <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">3. Data Security & M-Pesa</h2>
+              <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">3. Data Security & AzamPesa</h2>
               <p className="text-[16px] text-text-secondary leading-relaxed mb-4">
-                Payment processing is handled securely via M-Pesa. Casuya does not store your mobile money PINs or sensitive financial details on our servers. All traffic is encrypted via HTTPS.
+                Payment processing is handled securely via AzamPesa. Casuya does not store your mobile money PINs or sensitive financial details on our servers. All traffic is encrypted via HTTPS.
               </p>
 
               <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">4. Your Rights</h2>

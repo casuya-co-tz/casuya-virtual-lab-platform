@@ -59,6 +59,8 @@ class SimpleRateLimiter {
   }
 }
 
+export { SimpleRateLimiter }
+
 export const endpointRateLimiters = {
   '/api/v1': new SimpleRateLimiter(60000, 100), // 1 minute, 100 requests
   '/api/v1/labs': new SimpleRateLimiter(60000, 200), // 1 minute, 200 requests

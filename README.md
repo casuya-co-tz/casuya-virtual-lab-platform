@@ -1,6 +1,6 @@
 # CASUYA VIRTUAL LABORATORY PLATFORM
 
-> Virtual science laboratory platform for Tanzanian secondary school students. NECTA-aligned simulations with Swahili support, M-Pesa payments, and offline capability.
+> Virtual science laboratory platform for Tanzanian secondary school students. NECTA-aligned simulations with Swahili support, AzamPesa payments, and offline capability.
 
 ---
 
@@ -12,7 +12,7 @@
 
 - **Root config**: package.json, next.config.js, tailwind.config.js, postcss.config.js, tsconfig.json, .env.example, .gitignore
 - **App routes**: 26 pages (home, auth, auth/recovery, student dashboard/subjects/lab/profile/settings, admin dashboard/labs/lab-editor/new-lab/users/billing/audit/analytics/api-keys/docs/settings, developer portal/docs, search, payment, error boundary, 404)
-- **API routes**: 35+ endpoints (auth login/signup/logout, labs CRUD, lab code, profile, progress, admin stats/activity/audit, M-Pesa/Tigo payments, developer registration/credentials, public/enterprise v1 API, settings, search, subjects, subtopics, embed, vitals)
+- **API routes**: 35+ endpoints (auth login/signup/logout, labs CRUD, lab code, profile, progress, admin stats/activity/audit, AzamPesa payments, developer registration/credentials, public/enterprise v1 API, settings, search, subjects, subtopics, embed, vitals)
 - **UI design system**: Button, Input, Card, Badge, Table, Modal, Select, Tabs, Toggle, Skeleton, Toast
 - **Layout components**: Navbar (responsive with mobile drawer), Sidebar, MobileDrawer, Footer
 - **Home sections**: Hero, SubjectCards, Features, Stats
@@ -159,7 +159,7 @@ ACCENT COLORS (shared):
 │  ─────────────────                                           │
 │                                                              │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
-│  │ SWAHILI  │ │ OFFLINE  │ │ M-PESA   │ │ NECTA    │       │
+│  │ SWAHILI  │ │ OFFLINE  │ │ AZAMPESA │ │ NECTA    │       │
 │  │ NATIVE   │ │ READY    │ │ PAYMENTS │ │ ALIGNED  │       │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
 │                                                              │
@@ -254,8 +254,7 @@ casuya-virtual-lab-platform/
 │   │   │   ├── developer/register/route.ts   # Dev registration
 │   │   │   ├── developer/credentials/route.ts # API credentials
 │   │   │   ├── developer/credentials/[id]/route.ts # Single credential
-│   │   │   ├── payments/mpesa/route.ts   # M-Pesa webhook
-│   │   │   ├── payments/tigo/route.ts    # Tigo webhook
+│   │   │   ├── payments/azampesa/route.ts   # AzamPesa webhook
 │   │   │   ├── v1/public/route.ts        # Free API
 │   │   │   ├── v1/labs/route.ts          # v1 labs list
 │   │   │   ├── v1/labs/[id]/route.ts     # v1 single lab
@@ -869,7 +868,7 @@ CREATE POLICY "Admins read audit" ON audit_log FOR SELECT
 
 - Basic physics/chemistry simulations (lightweight HTML/JS) are always free
 - High-bandwidth biology .glb models require premium membership
-- Exam-prep practical labs require M-Pesa verified subscription
+- Exam-prep practical labs require AzamPesa verified subscription
 - Daily data quota enforced per-user via `storage_used_bytes`
 - When quota exceeded: student sees upgrade prompt, lab pauses, progress saved locally
 
@@ -1002,7 +1001,7 @@ The CSP header uses per-request nonces generated in middleware to allow only aut
 | `admin.subscription_override` | HIGH | Manual subscription tier change | Log + require 2nd admin approval |
 | `api.rate_exceeded` | LOW | Rate limit hit | Log + HTTP 429 |
 | `api.key_compromised` | CRITICAL | API key used from unknown source | Revoke key + notify developer |
-| `payment.webhook_invalid` | HIGH | M-Pesa webhook signature fails | Log + alert + do not process |
+| `payment.webhook_invalid` | HIGH | AzamPesa webhook signature fails | Log + alert + do not process |
 | `data.export_large` | MEDIUM | Bulk data export > 1000 rows | Log + require admin approval |
 
 ### Audit Trail
@@ -1051,7 +1050,7 @@ All privileged actions are logged to the `audit_log` table with actor, action, t
 | **Database** | Supabase Dashboard + pg_stat | Query latency, connection count, cache hit ratio |
 | **API** | Redis counters + `/api/usage` table | Request rate, error rate, P50/P95/P99 latency |
 | **Client** | Web Vitals via `web-vitals` library | LCP, INP, CLS, FCP, TTFB |
-| **Payments** | M-Pesa webhook status | Transaction success/fail rate |
+| **Payments** | AzamPesa webhook status | Transaction success/fail rate |
 | **Alerts** | Email + SMS (Africa's Talking) | Any CRITICAL event within 60 seconds |
 
 ### Incident Response
@@ -1086,7 +1085,7 @@ All privileged actions are logged to the `audit_log` table with actor, action, t
 | **SOC 2 Type II** | Not started | 12 months post-launch | Demonstrates sustained controls |
 | **GDPR** | Partial | At launch | Student data deletion, export, consent flows |
 | **Tanzania DPA** | Not started | 6 months post-launch | Data Protection Act 2022 compliance |
-| **PCI DSS** | N/A | N/A | Payments handled by M-Pesa (no card data stored) |
+| **PCI DSS** | N/A | N/A | Payments handled by AzamPesa (no card data stored) |
 
 - SOC 2 readiness required for schools/institutions with > 1,000 students
 - Tanzania Data Protection Act (2022) requires data localization for student PII
@@ -1452,7 +1451,7 @@ When a school bell rings and 500 students login at the same time:
 - [ ] Chemistry labs (presets grid)
 - [ ] Biology labs (Draco .glb upload, vector coordinate nodes)
 - [ ] Physics labs (constants table)
-- [ ] Billing control (M-Pesa/Tigo Pesa webhook monitor)
+- [ ] Billing control (AzamPesa webhook monitor)
 - [ ] API keys vault (scopes, expiration, request counters)
 - [ ] Docs editor (markdown → documentation table → static pages)
 - [ ] Settings (favicon upload, cache flush)
@@ -1489,7 +1488,7 @@ When a school bell rings and 500 students login at the same time:
 
 ### Phase 9: Payments
 - [ ] Subscription tables + storage tracking
-- [ ] M-Pesa / Tigo Pesa integration
+- [ ] AzamPesa integration
 - [ ] Billing dashboard
 - [ ] Institutional account management (schools + seats allocation)
 
@@ -1542,11 +1541,10 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 JWT_SECRET=
-MPESA_CONSUMER_KEY=
-MPESA_CONSUMER_SECRET=
-MPESA_SHORTCODE=
-MPESA_PASSKEY=
-MPESA_CALLBACK_URL=
+AZAMPESA_API_KEY=
+AZAMPESA_SECRET_KEY=
+AZAMPESA_SHORTCODE=
+AZAMPESA_CALLBACK_URL=
 REDIS_URL=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_WS_URL=ws://localhost:8080

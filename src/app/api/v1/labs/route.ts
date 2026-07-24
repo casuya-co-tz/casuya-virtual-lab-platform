@@ -1,10 +1,18 @@
 import { query } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
-import { validateApiKey, trackApiUsage } from '@/lib/api-tracker'
+import { validateApiKey, trackApiUsage, enforceDeveloperQuota } from '@/lib/api-tracker'
 
 export async function GET(req: NextRequest) {
   const auth = await validateApiKey(req.headers.get('authorization'))
   const { searchParams } = new URL(req.url)
+
+  if (auth) {
+    const devResult = await query('SELECT developer_id FROM api_credentials WHERE id = $1', [auth.credentialId])
+    if (devResult.rows.length > 0) {
+      const quotaError = await enforceDeveloperQuota(devResult.rows[0].developer_id, 0)
+      if (quotaError) return quotaError
+    }
+  }
 
   try {
     const subject = searchParams.get('subject')

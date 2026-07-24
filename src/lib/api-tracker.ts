@@ -1,4 +1,34 @@
 import { query } from '@/lib/db'
+import { NextResponse } from 'next/server'
+
+export async function enforceDeveloperQuota(developerId: string, currentUsage: number) {
+  const result = await query(
+    `SELECT pp.rate_limit_per_min, pp.slug
+     FROM developer_profiles dp
+     JOIN pricing_plans pp ON pp.id = dp.plan_id
+     WHERE dp.id = $1`,
+    [developerId]
+  )
+
+  if (result.rows.length === 0) {
+    return NextResponse.json({ error: 'UNVERIFIED_DEVELOPER_CREDENTIALS' }, { status: 403 })
+  }
+
+  const limit = result.rows[0].rate_limit_per_min
+
+  if (limit !== null && currentUsage >= limit) {
+    return NextResponse.json(
+      {
+        error: 'RESOURCE_POOL_EXHAUSTED',
+        message: 'Your developer tier rate limit has been exceeded.',
+        upgradeUrl: '/pricing?section=developer',
+      },
+      { status: 429 }
+    )
+  }
+
+  return null
+}
 
 export async function trackApiUsage(credentialId: string, endpoint: string, statusCode: number, ipAddress?: string) {
   try {

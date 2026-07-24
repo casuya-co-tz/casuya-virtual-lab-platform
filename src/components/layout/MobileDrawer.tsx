@@ -5,7 +5,7 @@ import { t } from '@/lib/i18n'
 interface MobileDrawerProps {
   isOpen: boolean
   onClose: () => void
-  userRole: 'student' | 'admin'
+  userRole: 'student' | 'admin' | 'teacher'
 }
 
 export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
@@ -18,6 +18,7 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
     { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: '/student/physics' },
     { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: '/student/chemistry' },
     { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: '/student/biology' },
+    { icon: '💳', label: t('nav.pricing', lang), href: '/pricing' },
     { icon: '⚙️', label: t('nav.settings', lang), href: '/student/settings' },
   ]
 
@@ -25,6 +26,8 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
     { icon: '📊', label: t('admin.dashboard', lang), href: '/admin' },
     { icon: '🧪', label: t('admin.labs', lang), href: '/admin/labs' },
     { icon: '👥', label: t('admin.users', lang), href: '/admin/users' },
+    { icon: '💬', label: t('admin.reviews', lang), href: '/admin/reviews' },
+    { icon: '🚩', label: t('admin.viewReports', lang), href: '/admin/reports' },
     { icon: '💳', label: t('admin.billing', lang), href: '/admin/billing' },
     { icon: '🔑', label: t('admin.apiKeys', lang), href: '/admin/api-keys' },
     { icon: '📄', label: t('admin.docs', lang), href: '/admin/docs' },
@@ -33,7 +36,16 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
     { icon: '⚙️', label: t('admin.settings', lang), href: '/admin/settings' },
   ]
 
-  const items = userRole === 'student' ? studentItems : adminItems
+  const teacherItems = [
+    { icon: '📊', label: t('nav.dashboard', lang), href: '/teacher' },
+    { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: '/student/physics' },
+    { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: '/student/chemistry' },
+    { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: '/student/biology' },
+    { icon: '💳', label: t('nav.pricing', lang), href: '/pricing' },
+    { icon: '⚙️', label: t('nav.settings', lang), href: '/student/settings' },
+  ]
+
+  const items = userRole === 'admin' ? adminItems : userRole === 'teacher' ? teacherItems : studentItems
 
   return (
     <div className="fixed inset-0 z-50">

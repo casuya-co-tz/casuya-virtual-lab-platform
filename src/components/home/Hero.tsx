@@ -20,11 +20,6 @@ export function Hero() {
         
         {/* Left Side: Content & CTAs */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-bg-secondary border border-border-strong text-text-primary text-[12px] uppercase font-bold tracking-[0.5px]">
-            <span className="w-2 h-2 bg-accent-blue animate-pulse"></span>
-            {t('hero.badge', lang)}
-          </div>
-
           <h1 className="text-[clamp(32px,5vw,60px)] font-extrabold tracking-tight leading-[1.1] text-text-primary">
             {t('hero.headline', lang)}
           </h1>

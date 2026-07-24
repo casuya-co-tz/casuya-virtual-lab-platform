@@ -140,6 +140,90 @@ export interface Database {
           updated_at: string
         }
       }
+      pricing_plans: {
+        Row: {
+          id: string
+          slug: string
+          name: string
+          name_sw: string
+          description: string | null
+          description_sw: string | null
+          price: number
+          currency: string
+          interval: string
+          user_type: 'standard' | 'developer'
+          features: string[]
+          rate_limit_per_min: number | null
+          burst_per_min: number | null
+          max_api_keys: number | null
+          is_active: boolean
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          slug: string
+          name: string
+          name_sw: string
+          description?: string | null
+          description_sw?: string | null
+          price?: number
+          currency?: string
+          interval?: string
+          user_type: 'standard' | 'developer'
+          features?: string[]
+          rate_limit_per_min?: number | null
+          burst_per_min?: number | null
+          max_api_keys?: number | null
+          is_active?: boolean
+          sort_order?: number
+        }
+        Update: {
+          name?: string
+          name_sw?: string
+          description?: string | null
+          description_sw?: string | null
+          price?: number
+          currency?: string
+          interval?: string
+          user_type?: 'standard' | 'developer'
+          features?: string[]
+          rate_limit_per_min?: number | null
+          burst_per_min?: number | null
+          max_api_keys?: number | null
+          is_active?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+      }
+      payment_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          subscription_id: string | null
+          plan_id: string
+          amount: number
+          currency: string
+          provider: string
+          provider_transaction_id: string | null
+          status: 'pending' | 'completed' | 'failed' | 'refunded'
+          metadata: Record<string, unknown> | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          user_id: string
+          subscription_id?: string | null
+          plan_id: string
+          amount: number
+          currency?: string
+          provider: string
+          provider_transaction_id?: string | null
+          status?: 'pending' | 'completed' | 'failed' | 'refunded'
+          metadata?: Record<string, unknown> | null
+          completed_at?: string | null
+        }
+      }
     }
   }
 }

@@ -8,7 +8,13 @@ interface Review {
   id: string
   rating: number
   review_text: string
-  profiles: {
+  is_public: boolean
+  helpful_count: number
+  not_helpful_count: number
+  created_at: string
+  updated_at: string
+  has_active_subscription?: boolean
+  profiles?: {
     full_name: string
     role: string
   }
@@ -21,15 +27,28 @@ export function VoicesFromTanzania() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [rating, setRating] = useState(5)
   const [reviewText, setReviewText] = useState('')
+  const [isPublic, setIsPublic] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editRating, setEditRating] = useState(5)
+  const [editText, setEditText] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [reportingId, setReportingId] = useState<string | null>(null)
+  const [reportReason, setReportReason] = useState('')
+  const [userVotes, setUserVotes] = useState<Record<string, boolean | null>>({})
 
   useEffect(() => {
     fetch('/api/profile').then(r => r.ok ? r.json() : null).then(data => setUser(data))
     fetchReviews()
-  }, [])
+  }, [page])
 
   const fetchReviews = async () => {
-    const r = await fetch('/api/reviews')
-    if (r.ok) setReviews(await r.json())
+    const r = await fetch(`/api/reviews?page=${page}&limit=5&sort=created_at&order=desc`)
+    if (r.ok) {
+      const json = await r.json()
+      setReviews(json.data)
+      setTotalPages(json.pagination.totalPages)
+    }
   }
 
   const submitReview = async () => {
@@ -38,28 +57,90 @@ export function VoicesFromTanzania() {
     const r = await fetch('/api/reviews', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rating, review_text: reviewText })
+      body: JSON.stringify({ rating, review_text: reviewText, is_public: isPublic }),
     })
     setIsSubmitting(false)
     if (r.ok) {
       setReviewText('')
+      setIsPublic(true)
+      setPage(1)
       fetchReviews()
-    } else {
-      alert('Failed to submit review')
     }
+  }
+
+  const startEdit = (rv: Review) => {
+    setEditingId(rv.id)
+    setEditRating(rv.rating)
+    setEditText(rv.review_text || '')
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditRating(5)
+    setEditText('')
+  }
+
+  const saveEdit = async (id: string) => {
+    const r = await fetch(`/api/reviews/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating: editRating, review_text: editText }),
+    })
+    if (r.ok) {
+      cancelEdit()
+      fetchReviews()
+    }
+  }
+
+  const deleteReview = async (id: string) => {
+    const r = await fetch(`/api/reviews/${id}`, { method: 'DELETE' })
+    if (r.ok) {
+      setReviews(reviews.filter(rv => rv.id !== id))
+    }
+  }
+
+  const submitReport = async (id: string) => {
+    if (!reportReason.trim()) return
+    const r = await fetch(`/api/reviews/${id}/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reportReason }),
+    })
+    if (r.ok) {
+      setReportingId(null)
+      setReportReason('')
+    }
+  }
+
+  const vote = async (id: string, helpful: boolean) => {
+    const r = await fetch(`/api/reviews/${id}/vote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ helpful }),
+    })
+    if (r.ok) {
+      const data = await r.json()
+      setReviews(reviews.map(rv => rv.id === id ? { ...rv, helpful_count: data.helpful_count, not_helpful_count: data.not_helpful_count } : rv))
+      setUserVotes(prev => ({ ...prev, [id]: userVotes[id] === helpful ? null : helpful }))
+    }
+  }
+
+  const canEdit = (rv: Review) => {
+    const elapsed = Date.now() - new Date(rv.created_at).getTime()
+    return elapsed < 30 * 60 * 1000
   }
 
   const hardcodedVoices = [
     {
       text: t('home.voice1.text', lang),
       author: t('home.voice1.author', lang),
-      avatar: "👩🏾‍🎓"
+      avatar: "👩🏾‍🎓",
     },
     {
       text: t('home.voice2.text', lang),
       author: t('home.voice2.author', lang),
-      avatar: "👨🏾‍🏫"
-    }
+      avatar: "👨🏾‍🏫",
+    },
   ]
 
   return (
@@ -88,16 +169,117 @@ export function VoicesFromTanzania() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {reviews.map(r => (
                 <div key={r.id} className="p-6 bg-bg-tertiary">
-                  <div className="flex gap-1 mb-2 text-accent-amber">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i}>{i < r.rating ? '★' : '☆'}</span>
-                    ))}
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex gap-1 text-accent-amber">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <span key={i}>{i < r.rating ? '★' : '☆'}</span>
+                      ))}
+                    </div>
+                    {r.has_active_subscription && (
+                      <Badge variant="info">Verified</Badge>
+                    )}
                   </div>
-                  <p className="text-[14px] text-text-secondary italic mb-4">"{r.review_text}"</p>
-                  <p className="text-[12px] font-bold text-text-primary">— {r.profiles?.full_name}</p>
+
+                  {editingId === r.id ? (
+                    <div className="space-y-3 mb-4">
+                      <div className="flex gap-2 text-[24px] cursor-pointer text-accent-amber">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <span key={i} onClick={() => setEditRating(i + 1)}>
+                            {i < editRating ? '★' : '☆'}
+                          </span>
+                        ))}
+                      </div>
+                      <textarea
+                        className="w-full bg-bg-primary border border-border-strong p-3 text-[14px] text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue/50 resize-none"
+                        rows={3}
+                        value={editText}
+                        onChange={e => setEditText(e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <Button variant="primary" className="!h-8 !px-4 !text-[12px]" onClick={() => saveEdit(r.id)}>
+                          Save
+                        </Button>
+                        <Button variant="secondary" className="!h-8 !px-4 !text-[12px]" onClick={cancelEdit}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-[14px] text-text-secondary italic mb-4">"{r.review_text}"</p>
+                      <p className="text-[12px] font-bold text-text-primary mb-3">— {r.profiles?.full_name}</p>
+                    </>
+                  )}
+
+                  {/* Vote buttons */}
+                  <div className="flex items-center gap-4 text-[12px] text-text-secondary mb-3">
+                    <button onClick={() => vote(r.id, true)} className={`flex items-center gap-1 hover:text-accent-green ${userVotes[r.id] === true ? 'text-accent-green' : ''}`}>
+                      👍 {r.helpful_count}
+                    </button>
+                    <button onClick={() => vote(r.id, false)} className={`flex items-center gap-1 hover:text-accent-red ${userVotes[r.id] === false ? 'text-accent-red' : ''}`}>
+                      👎 {r.not_helpful_count}
+                    </button>
+                  </div>
+
+                  {/* Owner actions */}
+                  {user?.id && r.profiles && (
+                    <div className="flex items-center gap-3 text-[11px]">
+                      {canEdit(r) && !editingId && (
+                        <button onClick={() => startEdit(r)} className="text-accent-blue underline">Edit</button>
+                      )}
+                      <button onClick={() => deleteReview(r.id)} className="text-accent-red underline">Delete</button>
+                    </div>
+                  )}
+
+                  {/* Report */}
+                  {user && (
+                    <div className="mt-2">
+                      {reportingId === r.id ? (
+                        <div className="flex gap-2">
+                          <input
+                            className="flex-1 bg-bg-primary border border-border-strong p-2 text-[12px] text-text-primary focus:outline-none"
+                            placeholder="Reason for report..."
+                            value={reportReason}
+                            onChange={e => setReportReason(e.target.value)}
+                          />
+                          <Button variant="secondary" className="!h-8 !px-3 !text-[11px]" onClick={() => submitReport(r.id)}>
+                            Send
+                          </Button>
+                          <button className="text-[11px] text-text-secondary underline" onClick={() => { setReportingId(null); setReportReason('') }}>
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setReportingId(r.id)} className="text-[11px] text-text-secondary underline">
+                          Report
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-8">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-4 py-2 text-[13px] border border-border-strong disabled:opacity-40"
+                >
+                  {t('admin.previous', lang)}
+                </button>
+                <span className="text-[13px] text-text-secondary">{page} / {totalPages}</span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="px-4 py-2 text-[13px] border border-border-strong disabled:opacity-40"
+                >
+                  {t('admin.next', lang)}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -112,13 +294,22 @@ export function VoicesFromTanzania() {
                 </span>
               ))}
             </div>
-            <textarea 
+            <textarea
               className="w-full bg-bg-primary border border-border-strong p-4 text-[14px] text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:border-accent-blue resize-none mb-4"
               rows={3}
               placeholder={t('home.reviewPlaceholder', lang)}
               value={reviewText}
               onChange={e => setReviewText(e.target.value)}
             />
+            <label className="flex items-center gap-3 mb-4 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={e => setIsPublic(e.target.checked)}
+                className="w-4 h-4 accent-accent-blue"
+              />
+              <span className="text-[13px] text-text-secondary">{t('home.showPublicly', lang)}</span>
+            </label>
             <Button variant="primary" loading={isSubmitting} onClick={submitReview}>
               {t('home.submitReview', lang)}
             </Button>
@@ -131,5 +322,16 @@ export function VoicesFromTanzania() {
         )}
       </div>
     </section>
+  )
+}
+
+function Badge({ variant, children }: { variant: string; children: React.ReactNode }) {
+  const cls = variant === 'info'
+    ? 'bg-accent-blue/20 text-accent-blue border border-accent-blue/30'
+    : 'bg-bg-tertiary text-text-secondary border border-border-default'
+  return (
+    <span className={`inline-flex items-center h-5 px-2 text-[10px] font-bold uppercase tracking-[1px] rounded-full ${cls}`}>
+      {children}
+    </span>
   )
 }

@@ -4,13 +4,13 @@ import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 
 interface SidebarProps {
-  userRole?: 'student' | 'admin'
+  userRole?: 'student' | 'admin' | 'teacher'
 }
 
 export function Sidebar({ userRole: overrideRole }: SidebarProps) {
   const pathname = usePathname()
   const { lang } = useLanguage()
-  const userRole = overrideRole || (pathname.startsWith('/admin') ? 'admin' : 'student')
+  const userRole = overrideRole || (pathname.startsWith('/admin') ? 'admin' : pathname.startsWith('/teacher') ? 'teacher' : 'student')
 
   const subjectItems = [
     { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: '/student/physics', active: pathname.startsWith('/student/physics') },
@@ -21,6 +21,7 @@ export function Sidebar({ userRole: overrideRole }: SidebarProps) {
   const studentItems = [
     { icon: '📊', label: t('nav.dashboard', lang), href: '/student', active: pathname === '/student' },
     ...subjectItems,
+    { icon: '💳', label: t('nav.pricing', lang), href: '/pricing', active: pathname === '/pricing' },
     { icon: '⚙️', label: t('nav.settings', lang), href: '/student/settings', active: pathname === '/student/settings' },
   ]
 
@@ -29,6 +30,8 @@ export function Sidebar({ userRole: overrideRole }: SidebarProps) {
     { icon: '📚', label: t('admin.curriculum', lang), href: '/admin/curriculum', active: pathname.startsWith('/admin/curriculum') },
     { icon: '🧪', label: t('admin.labs', lang), href: '/admin/labs', active: pathname.startsWith('/admin/labs') },
     { icon: '👥', label: t('admin.users', lang), href: '/admin/users', active: pathname === '/admin/users' },
+    { icon: '💬', label: t('admin.reviews', lang), href: '/admin/reviews', active: pathname === '/admin/reviews' },
+    { icon: '🚩', label: t('admin.viewReports', lang), href: '/admin/reports', active: pathname === '/admin/reports' },
     { icon: '💳', label: t('admin.billing', lang), href: '/admin/billing', active: pathname === '/admin/billing' },
     { icon: '🔑', label: t('admin.apiKeys', lang), href: '/admin/api-keys', active: pathname === '/admin/api-keys' },
     { icon: '📄', label: t('admin.docs', lang), href: '/admin/docs', active: pathname === '/admin/docs' },
@@ -37,7 +40,16 @@ export function Sidebar({ userRole: overrideRole }: SidebarProps) {
     { icon: '⚙️', label: t('admin.settings', lang), href: '/admin/settings', active: pathname === '/admin/settings' },
   ]
 
-  const items = userRole === 'student' ? studentItems : adminItems
+  const teacherItems = [
+    { icon: '📊', label: t('nav.dashboard', lang), href: '/teacher', active: pathname === '/teacher' },
+    { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: '/student/physics', active: pathname.startsWith('/student/physics') },
+    { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: '/student/chemistry', active: pathname.startsWith('/student/chemistry') },
+    { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: '/student/biology', active: pathname.startsWith('/student/biology') },
+    { icon: '💳', label: t('nav.pricing', lang), href: '/pricing', active: pathname === '/pricing' },
+    { icon: '⚙️', label: t('nav.settings', lang), href: '/student/settings', active: pathname === '/student/settings' },
+  ]
+
+  const items = userRole === 'admin' ? adminItems : userRole === 'teacher' ? teacherItems : studentItems
 
   return (
     <aside className="w-64 bg-bg-tertiary flex flex-col border-r border-border-strong hidden md:flex">

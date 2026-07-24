@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const { lab_id, status, score, completion_data } = await req.json()
+    const { lab_id, status, score, completion_data, client_sync_version } = await req.json()
 
     if (!lab_id || typeof lab_id !== 'string') {
       return NextResponse.json({ error: 'Invalid lab_id' }, { status: 400 })
@@ -41,6 +41,19 @@ export async function POST(req: Request) {
     const validStatuses = ['not_started', 'in_progress', 'completed']
     const statusValue = validStatuses.includes(status) ? status : 'in_progress'
     const scoreValue = typeof score === 'number' ? score : 0
+
+    if (typeof client_sync_version === 'number') {
+      const existing = await query(
+        'SELECT sync_version FROM lab_progress WHERE student_id = $1 AND lab_id = $2',
+        [userId, lab_id]
+      )
+      if (existing.rows.length > 0 && client_sync_version < existing.rows[0].sync_version) {
+        return NextResponse.json(
+          { error: 'Stale data — server has newer version', server_sync_version: existing.rows[0].sync_version },
+          { status: 409 }
+        )
+      }
+    }
 
     let queryText: string
     let queryParams: unknown[]

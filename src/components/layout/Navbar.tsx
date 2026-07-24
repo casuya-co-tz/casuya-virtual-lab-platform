@@ -60,6 +60,9 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
         <a href="/search" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
           {t('nav.search', lang)}
         </a>
+        <a href="/pricing" className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
+          {t('nav.pricing', lang)}
+        </a>
         <a href="/developer" suppressHydrationWarning className="text-[14px] text-text-secondary hover:border-b hover:border-border-strong pb-1">
           {t('nav.developer', lang)}
         </a>
@@ -94,6 +97,7 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
               <a href="/student" className="text-[14px] text-text-secondary">{t('nav.subjects', lang)}</a>
             )}
             <a href="/search" className="text-[14px] text-text-secondary">{t('nav.search', lang)}</a>
+            <a href="/pricing" className="text-[14px] text-text-secondary">{t('nav.pricing', lang)}</a>
             <a href="/developer" suppressHydrationWarning className="text-[14px] text-text-secondary">{t('nav.developer', lang)}</a>
             <LanguageToggle lang={lang} onToggle={toggle} />
             {user ? (

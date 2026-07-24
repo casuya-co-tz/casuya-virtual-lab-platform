@@ -1,4 +1,4 @@
-import { HTMLAttributes, TableHTMLAttributes } from 'react'
+import { HTMLAttributes, TableHTMLAttributes, TdHTMLAttributes } from 'react'
 
 interface TableProps extends TableHTMLAttributes<HTMLTableElement> {
   headers: string[]
@@ -31,7 +31,7 @@ export function Tr({ className = '', children, ...props }: HTMLAttributes<HTMLTa
   )
 }
 
-export function Td({ className = '', children, ...props }: HTMLAttributes<HTMLTableCellElement>) {
+export function Td({ className = '', children, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td className={`px-3 py-2 text-[14px] text-text-primary border border-border-DEFAULT ${className}`} {...props}>
       {children}

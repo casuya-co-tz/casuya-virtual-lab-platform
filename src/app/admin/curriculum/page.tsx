@@ -207,7 +207,7 @@ export default function CurriculumPage() {
                   )}
                 </div>
               ))}
-              <Button variant="outline" onClick={() => openTopicModal('create', subject.id)} className="ml-2 sm:ml-4">
+              <Button variant="secondary" onClick={() => openTopicModal('create', subject.id)} className="ml-2 sm:ml-4">
                 + {t('admin.addTopic', lang)}
               </Button>
             </div>

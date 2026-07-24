@@ -1,6 +1,7 @@
 import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-guard'
+import { dispatchEventToAllDevelopers } from '@/lib/webhook-dispatcher'
 
 export async function GET() {
   const adminId = await requireAdmin()
@@ -11,10 +12,11 @@ export async function GET() {
                 s.name AS subject_name, st.title AS subtopic_title, t.title AS topic_title,
                 p.full_name AS creator_name
          FROM labs l
-         LEFT JOIN subtopics st ON st.id = l.subtopic_id
-         LEFT JOIN topics t ON t.id = st.topic_id
+         LEFT JOIN subtopics st ON st.id = l.subtopic_id AND st.deleted_at IS NULL
+         LEFT JOIN topics t ON t.id = st.topic_id AND t.deleted_at IS NULL
          LEFT JOIN subjects s ON s.id = t.subject_id
          LEFT JOIN profiles p ON p.id = l.created_by
+         WHERE l.deleted_at IS NULL
          ORDER BY l.created_at DESC`
       )
       return NextResponse.json(result.rows)
@@ -29,11 +31,11 @@ export async function GET() {
               s.name AS subject_name, st.title AS subtopic_title, t.title AS topic_title,
               p.full_name AS creator_name
        FROM labs l
-       LEFT JOIN subtopics st ON st.id = l.subtopic_id
-       LEFT JOIN topics t ON t.id = st.topic_id
+       LEFT JOIN subtopics st ON st.id = l.subtopic_id AND st.deleted_at IS NULL
+       LEFT JOIN topics t ON t.id = st.topic_id AND t.deleted_at IS NULL
        LEFT JOIN subjects s ON s.id = t.subject_id
        LEFT JOIN profiles p ON p.id = l.created_by
-       WHERE l.is_published = true
+       WHERE l.is_published = true AND l.deleted_at IS NULL
        ORDER BY l.created_at DESC`
     )
     return NextResponse.json(result.rows)
@@ -58,7 +60,18 @@ export async function POST(req: Request) {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [body.subtopic_id, body.title, body.title_sw || '', body.description || '', body.subject, body.html_threejs_code || null, body.is_published || false, userId]
     )
-    return NextResponse.json(result.rows[0], { status: 201 })
+
+    const newLab = result.rows[0]
+    if (newLab.is_published) {
+      dispatchEventToAllDevelopers('lab.created', {
+        id: newLab.id,
+        title: newLab.title,
+        subject: newLab.subject,
+        is_published: newLab.is_published,
+      }).catch(() => {})
+    }
+
+    return NextResponse.json(newLab, { status: 201 })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

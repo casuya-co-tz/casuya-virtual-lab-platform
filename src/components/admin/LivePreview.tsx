@@ -8,6 +8,16 @@ interface LivePreviewProps {
   code: string
 }
 
+function injectSandboxCsp(html: string): string {
+  const csp = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self';">`
+  const headMatch = html.match(/<head[^>]*>/i)
+  if (headMatch && headMatch.index !== undefined) {
+    const pos = headMatch.index + headMatch[0].length
+    return html.slice(0, pos) + csp + html.slice(pos)
+  }
+  return csp + html
+}
+
 export function LivePreview({ code }: LivePreviewProps) {
   const { lang } = useLanguage()
   const [refreshKey, setRefreshKey] = useState(0)
@@ -30,7 +40,7 @@ export function LivePreview({ code }: LivePreviewProps) {
       </div>
       <iframe
         key={refreshKey}
-        srcDoc={code}
+        srcDoc={injectSandboxCsp(code)}
         sandbox="allow-scripts"
         className="w-full h-[500px] bg-white"
         title="Lab Preview"

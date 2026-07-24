@@ -1,11 +1,23 @@
 import { query } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
-import { trackApiUsage } from '@/lib/api-tracker'
+import { trackApiUsage, enforceDeveloperQuota } from '@/lib/api-tracker'
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const authHeader = req.headers.get('authorization')
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+    if (token) {
+      const credResult = await query(
+        'SELECT id, developer_id FROM api_credentials WHERE public_token = $1',
+        [token]
+      )
+      if (credResult.rows.length > 0) {
+        const cred = credResult.rows[0]
+        const quotaError = await enforceDeveloperQuota(cred.developer_id, 0)
+        if (quotaError) return quotaError
+      }
+    }
 
     const result = await query(
       `SELECT l.id, l.title, l.title_sw, l.subject, l.description, l.version, l.created_at,
@@ -19,9 +31,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     )
 
     if (token) {
-      const credResult = await query('SELECT id FROM api_credentials WHERE public_token = $1', [token])
+      const credResult = await query(
+        'SELECT id, developer_id FROM api_credentials WHERE public_token = $1',
+        [token]
+      )
       if (credResult.rows.length > 0) {
-        await trackApiUsage(credResult.rows[0].id, `/api/v1/labs/${params.id}`, result.rows.length > 0 ? 200 : 404, req.headers.get('x-forwarded-for') || undefined)
+        const cred = credResult.rows[0]
+        const quotaError = await enforceDeveloperQuota(cred.developer_id, 0)
+        if (quotaError) return quotaError
+        await trackApiUsage(cred.id, `/api/v1/labs/${params.id}`, result.rows.length > 0 ? 200 : 404, req.headers.get('x-forwarded-for') || undefined)
       }
     }
 

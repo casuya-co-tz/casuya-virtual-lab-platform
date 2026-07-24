@@ -20,6 +20,7 @@ export type AuditEntityType =
   | 'api_key'
   | 'setting'
   | 'payment'
+  | 'review'
 
 export async function logAuditEvent(params: {
   userId: string | null

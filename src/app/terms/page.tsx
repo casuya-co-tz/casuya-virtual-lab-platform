@@ -28,7 +28,7 @@ export default function TermsOfServicePage() {
 
               <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">3. Usajili na Malipo</h2>
               <p className="text-[16px] text-text-secondary leading-relaxed mb-4">
-                Ufikiaji wa malipo (premium) unalipiwa kupitia M-Pesa. Malipo ya usajili hayarudishwi pindi mzunguko wa malipo unapoanza, isipokuwa kama inavyotakiwa na sheria ya mlaji ya Tanzania.
+                Ufikiaji wa malipo (premium) unalipiwa kupitia AzamPesa. Malipo ya usajili hayarudishwi pindi mzunguko wa malipo unapoanza, isipokuwa kama inavyotakiwa na sheria ya mlaji ya Tanzania.
               </p>
 
               <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">4. Mwenendo wa Mtumiaji</h2>
@@ -53,7 +53,7 @@ export default function TermsOfServicePage() {
 
               <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">3. Subscriptions and Payments</h2>
               <p className="text-[16px] text-text-secondary leading-relaxed mb-4">
-                Premium access is billed via M-Pesa. Subscriptions are non-refundable once a billing cycle has started, except as required by Tanzanian consumer law.
+                Premium access is billed via AzamPesa. Subscriptions are non-refundable once a billing cycle has started, except as required by Tanzanian consumer law.
               </p>
 
               <h2 className="text-[20px] font-bold text-text-primary mt-8 mb-4">4. User Conduct</h2>

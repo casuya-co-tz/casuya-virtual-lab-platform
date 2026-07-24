@@ -8,6 +8,16 @@ interface SimulationWrapperProps {
   previewKey: number
 }
 
+function injectSandboxCsp(html: string): string {
+  const csp = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self';">`
+  const headMatch = html.match(/<head[^>]*>/i)
+  if (headMatch && headMatch.index !== undefined) {
+    const pos = headMatch.index + headMatch[0].length
+    return html.slice(0, pos) + csp + html.slice(pos)
+  }
+  return csp + html
+}
+
 export function SimulationWrapper({ htmlCode, previewKey }: SimulationWrapperProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [processedHtml, setProcessedHtml] = useState('')
@@ -43,6 +53,9 @@ export function SimulationWrapper({ htmlCode, previewKey }: SimulationWrapperPro
       modified = styleInjection + modified
     }
 
+    // 3. Inject sandboxed CSP meta tag
+    modified = injectSandboxCsp(modified)
+
     setProcessedHtml(modified)
   }, [htmlCode, previewKey])
 
@@ -59,7 +72,7 @@ export function SimulationWrapper({ htmlCode, previewKey }: SimulationWrapperPro
         <iframe
           key={previewKey}
           srcDoc={processedHtml}
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts"
           className={`w-full h-full border-none transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
           title="Lab Simulation"
           onLoad={() => setIsLoading(false)}

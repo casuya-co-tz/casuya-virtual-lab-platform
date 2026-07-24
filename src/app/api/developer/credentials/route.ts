@@ -35,6 +35,27 @@ export async function POST(req: Request) {
   if (!developerId) return NextResponse.json({ error: 'Developer access required' }, { status: 403 })
 
   try {
+    const planCheck = await query(
+      `SELECT pp.max_api_keys
+       FROM developer_profiles dp
+       LEFT JOIN pricing_plans pp ON pp.id = dp.plan_id
+       WHERE dp.id = $1`,
+      [developerId]
+    )
+    const maxKeys = planCheck.rows[0]?.max_api_keys ?? 1
+    {
+      const countResult = await query(
+        `SELECT COUNT(*) as cnt FROM api_credentials WHERE developer_id = $1 AND is_active = true`,
+        [developerId]
+      )
+      if (parseInt(countResult.rows[0].cnt) >= maxKeys) {
+        return NextResponse.json(
+          { error: 'API key limit reached', upgradeUrl: '/pricing?section=developer', maxKeys, currentKeys: parseInt(countResult.rows[0].cnt) },
+          { status: 403 }
+        )
+      }
+    }
+
     const { scopes } = await req.json()
     const crypto = await import('crypto')
     const bcrypt = await import('bcryptjs')

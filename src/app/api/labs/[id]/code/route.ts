@@ -1,6 +1,7 @@
 import { query } from '@/lib/db'
 import { NextResponse, NextRequest } from 'next/server'
 import { sanitizeLabCode } from '@/lib/lab-processor'
+import { cookies } from 'next/headers'
 
 interface Props {
   params: { id: string }
@@ -10,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: Props) {
   try {
     const { id } = params
     const result = await query(
-      'SELECT html_threejs_code, is_published FROM labs WHERE id = $1',
+      'SELECT html_threejs_code, is_published, is_premium FROM labs WHERE id = $1 AND deleted_at IS NULL',
       [id]
     )
 
@@ -22,6 +23,21 @@ export async function GET(_request: NextRequest, { params }: Props) {
 
     if (!lab.is_published) {
       return NextResponse.json({ error: 'Lab not published' }, { status: 403 })
+    }
+
+    if (lab.is_premium) {
+      const cookieStore = await cookies()
+      const sid = cookieStore.get('sid')?.value
+      if (!sid) {
+        return NextResponse.json({ error: 'Subscription required', upgradeUrl: '/pricing' }, { status: 403 })
+      }
+      const subResult = await query(
+        `SELECT id FROM subscriptions WHERE user_id = $1 AND status = 'active' AND tier IN ('premium', 'enterprise')`,
+        [sid]
+      )
+      if (subResult.rows.length === 0) {
+        return NextResponse.json({ error: 'Subscription required', upgradeUrl: '/pricing' }, { status: 403 })
+      }
     }
 
     if (!lab.html_threejs_code) {

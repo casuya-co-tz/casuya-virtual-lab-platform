@@ -1,6 +1,6 @@
-# CASUYA - IMPLEMENTATION PLAN v15
+# CASUYA - IMPLEMENTATION PLAN v16
 
-> Phase 15: Security hardening — CVE-2026-45623 patch, credential leak remediation, .gitignore hardening.
+> Phase 16: Security architecture hardening — iframe CSP, sync versioning, soft-delete, minor-unit ledger.
 > Last updated: 2026-07-24
 
 ---
@@ -66,7 +66,7 @@
 
 - [x] `src/app/api/lab-progress/route.ts` — GET (single + all) and POST (upsert) for lab progress
 - [x] `src/app/api/v1/enterprise/keys/[id]/revoke/route.ts` — Enterprise key revocation endpoint
-- [x] `src/app/api/payments/tigo/route.ts` — Tigo Pesa webhook endpoint
+- [x] `src/app/api/payments/azampesa/route.ts` — AzamPesa webhook endpoint
 - [x] `public/js/three.min.js` — Three.js r128 library (603 KB) for 3D lab simulations
 
 ### P10 - Monitoring & security audit
@@ -114,6 +114,19 @@
 - [x] `.env.example` — Added `PG*` database connection variables for migration scripts
 - [x] `.gitignore` — Verified sensitive files properly excluded (`supabase/config.toml`, `.env*`, `*.key`, `*.pem`, etc.)
 
+### P16 - Security Architecture Hardening
+
+- [x] `src/components/student/SimulationWrapper.tsx` — Removed `allow-same-origin` from iframe sandbox (critical security fix: prevented lab scripts from accessing parent cookies/session), added CSP meta tag injection into srcDoc
+- [x] `src/components/admin/LivePreview.tsx` — Added CSP meta tag injection to admin preview iframe for consistency
+- [x] `src/app/api/progress/route.ts` — Added server-side `sync_version` check: rejects stale client updates with HTTP 409 when `client_sync_version < server sync_version`
+- [x] `supabase/migrations/005_security_hardening.sql` — Migration for integer minor-unit payments (prevents float drift), soft-delete columns on topics/subtopics/labs, RESTRICT foreign keys, cascade trigger, partial indexes
+- [x] `src/app/api/topics/route.ts` — DELETE now sets `deleted_at = NOW()` instead of hard delete
+- [x] `src/app/api/subtopics/route.ts` — DELETE now soft-deletes; GET filters out `deleted_at IS NOT NULL` records and joined parent records
+- [x] `src/app/api/labs/[id]/route.ts` — DELETE now soft-deletes; GET filters out soft-deleted labs
+- [x] `src/app/api/labs/route.ts` — Both admin and public GET queries filter `deleted_at IS NULL`
+- [x] `src/app/api/labs/[id]/code/route.ts` — Code serving endpoint filters soft-deleted labs
+- [x] `src/app/api/admin/stats/route.ts` — Stats counters exclude soft-deleted labs
+
 ---
 
 ## COMPLETION LOG
@@ -154,3 +167,26 @@
 | 2026-07-24 | Security: Patched postcss CVE-2026-45623 (arbitrary file read via sourceMappingURL) — bumped to >=8.5.12 with npm overrides | Done |
 | 2026-07-24 | Security: Removed hardcoded DB password from scripts/run_migration.js — now reads PGPASSWORD from env | Done |
 | 2026-07-24 | Security: Cleaned .env.local credential leak, updated .env.example with PG* variables | Done |
+| 2026-07-24 | Security: Iframe CSP hardening — removed allow-same-origin, injected meta CSP into srcDoc (SimulationWrapper + LivePreview) | Done |
+| 2026-07-24 | Security: Sync versioning — server-side staleness check on /api/progress (HTTP 409 on version mismatch) | Done |
+| 2026-07-24 | Security: Soft-delete migration — deleted_at on topics/subtopics/labs, RESTRICT FKs, cascade trigger | Done |
+| 2026-07-24 | Security: Integer minor-unit payments — converted NUMERIC(10,2) to INT8 minor units, CHECK constraints | Done |
+| 2026-07-24 | Security: Updated all labs/topics/subtopics API routes to use soft-delete and filter deleted_at | Done |
+| 2026-07-24 | PRING2 P0-1: AzamPesa real payment callback endpoint + status polling | Done |
+| 2026-07-24 | PRING2 P0-2: Subscription expiry cron job (/api/cron/expire-subscriptions) | Done |
+| 2026-07-24 | PRING2 P0-3: API key limit enforcement (server + UI) | Done |
+| 2026-07-24 | PRING2 P1-1: Offline lab sync — service worker rewrite + IndexedDB offline-sync library + offline.html | Done |
+| 2026-07-24 | PRING2 P1-2: Past paper mock practicals — DB migration + API + student UI | Done |
+| 2026-07-24 | PRING2 P1-3: Performance reporting — vitals DB persistence + student progress page | Done |
+| 2026-07-24 | PRING2 P1-4: Webhook system — DB migration + register/list/delete/deliveries API + dispatcher lib | Done |
+| 2026-07-24 | PRING2 P1-5: Support ticketing — DB migration + create/list/message API + student + admin UI | Done |
+| 2026-07-24 | PRING2 P2-1: Classroom provisioning — DB migration + teacher CRUD + student join API + UI | Done |
+| 2026-07-24 | PRING2 P2-2: Uptime monitoring — health check API + incidents table + status page | Done |
+| 2026-07-24 | PRING2 P2-3: API analytical engine — analytics API + CSV/JSON export + developer analytics page | Done |
+| 2026-07-24 | PRING2 P2-4: Custom rate limits — DB migration + developer_profiles columns + sla-tracker lib | Done |
+| 2026-07-24 | PRING2 P2-5: Assigned integration engineer — DB migration + admin assignment column | Done |
+| 2026-07-24 | PRING2 P3-1: NECTA curriculum tagging — necta_topic/subtopic/level columns on labs table | Done |
+| 2026-07-24 | PRING2 P3-2: Audit logging for pricing operations | Done |
+| 2026-07-24 | PRING2 P3-3: AzamPesa transfer fee note — i18n key added | Done |
+| 2026-07-24 | PRING2: 60+ new i18n keys (EN+SW) for support, past papers, progress, classrooms, analytics, status, offline | Done |
+| 2026-07-24 | PRING2: Build verification — 83 routes, all compile successfully | Done |

@@ -7,6 +7,8 @@
   "background_color": "#FFFFFF",
   "theme_color": "#3B82F6",
   "orientation": "any",
+  "scope": "/",
+  "categories": ["education", "science"],
   "icons": [
     {
       "src": "/favicon.svg",

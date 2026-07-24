@@ -9,19 +9,19 @@ export async function POST(req: NextRequest) {
   const { phone, amount, currency } = await req.json()
   if (!phone || !amount) return NextResponse.json({ error: 'Phone and amount required' }, { status: 400 })
 
-  const txId = `mpesa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+  const txId = `azampesa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
   try {
     await query(
       `INSERT INTO payments (user_id, amount, currency, payment_method, status, metadata)
-       VALUES ($1, $2, $3, 'mpesa', 'pending', $4)`,
+       VALUES ($1, $2, $3, 'azampesa', 'pending', $4)`,
       [userId, amount, currency || 'TZS', JSON.stringify({ phone, transaction_id: txId })]
     )
 
     return NextResponse.json({
       success: true,
       transaction_id: txId,
-      message: 'M-Pesa push sent. Check your phone.',
+      message: 'AzamPesa push sent. Check your phone.',
       amount,
       phone,
     })

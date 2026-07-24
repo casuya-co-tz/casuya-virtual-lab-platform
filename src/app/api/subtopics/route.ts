@@ -7,8 +7,9 @@ export async function GET() {
     const result = await query(
       `SELECT st.id, st.title, st.title_sw, t.title AS topic_title, s.name AS subject_name
        FROM subtopics st
-       JOIN topics t ON t.id = st.topic_id
+       JOIN topics t ON t.id = st.topic_id AND t.deleted_at IS NULL
        JOIN subjects s ON s.id = t.subject_id
+       WHERE st.deleted_at IS NULL
        ORDER BY s.sort_order, t.sort_order, st.sort_order`
     )
     return NextResponse.json(result.rows)
@@ -73,7 +74,7 @@ export async function DELETE(req: Request) {
     if (!id) return NextResponse.json({ error: 'Missing subtopic id' }, { status: 400 })
 
     const result = await query(
-      `DELETE FROM subtopics WHERE id = $1 RETURNING id`,
+      `UPDATE subtopics SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id`,
       [id]
     )
 

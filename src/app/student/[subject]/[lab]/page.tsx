@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tabs } from '@/components/ui/Tabs'
 import { SimulationWrapper } from '@/components/student/SimulationWrapper'
+import { UpgradePrompt } from '@/components/pricing/UpgradePrompt'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 
@@ -17,6 +18,7 @@ interface Lab {
   subject: string
   html_threejs_code: string | null
   is_published: boolean
+  is_premium: boolean
   version: number
 }
 
@@ -39,17 +41,21 @@ export default function LabPlayer({ params }: Props) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [previewKey, setPreviewKey] = useState(0)
+  const [hasActiveSub, setHasActiveSub] = useState<boolean | null>(null)
+  const [showUpgrade, setShowUpgrade] = useState(false)
 
   useEffect(() => {
     Promise.all([
       fetch(`/api/labs/${lab}`).then(r => r.ok ? r.json() : null),
       fetch('/api/progress').then(r => r.ok ? r.json() : []),
+      fetch('/api/subscription').then(r => r.ok ? r.json() : null).catch(() => null),
     ])
-      .then(([labResult, progressResult]) => {
+      .then(([labResult, progressResult, subResult]) => {
         if (labResult) setLabData(labResult)
         const allProgress = Array.isArray(progressResult) ? progressResult : []
         const p = allProgress.find((d: Progress & { lab_id?: string }) => d.lab_id === lab)
         if (p) setProgress({ status: p.status, score: p.score })
+        setHasActiveSub(!!subResult?.subscription)
         setLoading(false)
       })
       .catch(() => {
@@ -96,6 +102,17 @@ export default function LabPlayer({ params }: Props) {
 
   const hasCode = labData?.html_threejs_code && labData.html_threejs_code.trim().length > 0
   const displayName = lang === 'sw' ? (labData?.title_sw || labData?.title) : (labData?.title || lab.replace(/-/g, ' '))
+  const isPaywalled = labData?.is_premium && !hasActiveSub
+
+  if (isPaywalled && showUpgrade) {
+    return (
+      <UpgradePrompt
+        recommendedPlan="basic"
+        lang={lang}
+        onClose={() => setShowUpgrade(false)}
+      />
+    )
+  }
 
   if (loading) {
     return (
@@ -162,7 +179,16 @@ export default function LabPlayer({ params }: Props) {
           {
             id: 'simulation',
             label: t('student.simulation', lang),
-            content: hasCode ? (
+            content: isPaywalled ? (
+              <div className="bg-bg-secondary border border-border-DEFAULT h-[60vh] max-h-[500px] flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-[14px] text-text-secondary mb-4">{lang === 'sw' ? 'Maabara hii inahitaji usajili wa premium' : 'This lab requires a premium subscription'}</p>
+                  <Button variant="primary" onClick={() => setShowUpgrade(true)}>
+                    {lang === 'sw' ? 'Boresha Sasa' : 'Upgrade Now'}
+                  </Button>
+                </div>
+              </div>
+            ) : hasCode ? (
               <div className="border border-border-DEFAULT">
                 <div className="flex items-center justify-between px-4 py-2 bg-bg-tertiary border-b border-border-DEFAULT">
                   <span className="text-[12px] text-text-secondary uppercase">{t('student.labEnvironment', lang)}</span>
