@@ -3,12 +3,18 @@ const fs = require('fs');
 const path = require('path');
 
 const client = new Client({
-  host: '127.0.0.1',
-  port: 5432,
-  user: 'postgres',
-  password: 'Mkalanga1994!@',
-  database: 'casuya_lab_platform'
+  host: process.env.PGHOST || '127.0.0.1',
+  port: parseInt(process.env.PGPORT || '5432', 10),
+  user: process.env.PGUSER || 'postgres',
+  password: process.env.PGPASSWORD,
+  database: process.env.PGDATABASE || 'casuya_lab_platform'
 });
+
+if (!process.env.PGPASSWORD) {
+  console.error('Error: PGPASSWORD environment variable is required.');
+  console.error('Usage: PGPASSWORD=yourpassword node scripts/run_migration.js');
+  process.exit(1);
+}
 
 async function run() {
   await client.connect();

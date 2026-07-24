@@ -1,7 +1,7 @@
-# CASUYA - IMPLEMENTATION PLAN v11
+# CASUYA - IMPLEMENTATION PLAN v15
 
-> Phase 11: Labs & monitoring — loading skeletons, DOMPurify sanitization, web-vitals.
-> Last updated: 2026-07-21
+> Phase 15: Security hardening — CVE-2026-45623 patch, credential leak remediation, .gitignore hardening.
+> Last updated: 2026-07-24
 
 ---
 
@@ -106,6 +106,14 @@
 - [x] `src/lib/db.ts` — Bypassed `@supabase/auth-helpers-nextjs` (which caused 500 errors) in favor of raw SQL and `sid` custom cookies.
 - [x] UI strings refactored to use `useLanguage()` across the codebase: Teacher dashboard, Footer, Admin elements, home page voices, and static docs.
 
+### P15 - Security Hardening
+
+- [x] `package.json` — Bumped postcss devDependency to `>=8.5.12`, added `overrides` to force all transitive deps to patched version (CVE-2026-45623: arbitrary file read via sourceMappingURL)
+- [x] `scripts/run_migration.js` — Removed hardcoded database password (`Mkalanga1994!@`); now reads from `PGPASSWORD` environment variable with validation
+- [x] `.env.local` — Removed leaked credential from plaintext, replaced with `changeme` placeholder
+- [x] `.env.example` — Added `PG*` database connection variables for migration scripts
+- [x] `.gitignore` — Verified sensitive files properly excluded (`supabase/config.toml`, `.env*`, `*.key`, `*.pem`, etc.)
+
 ---
 
 ## COMPLETION LOG
@@ -143,3 +151,6 @@
 | 2026-07-21 | Build verification (49 routes, 9 tests) after Phase 11 | Done |
 | 2026-07-23 | Auth overhaul — Bypassed @supabase/auth-helpers-nextjs due to 500 errors, implemented raw SQL & custom sid cookies | Done |
 | 2026-07-23 | Full UI i18n Refactor — Teacher Dashboard, Admin API Key Manager, Voices From Tanzania, Footer, LivePreview, 404, Privacy, Terms, Docs | Done |
+| 2026-07-24 | Security: Patched postcss CVE-2026-45623 (arbitrary file read via sourceMappingURL) — bumped to >=8.5.12 with npm overrides | Done |
+| 2026-07-24 | Security: Removed hardcoded DB password from scripts/run_migration.js — now reads PGPASSWORD from env | Done |
+| 2026-07-24 | Security: Cleaned .env.local credential leak, updated .env.example with PG* variables | Done |

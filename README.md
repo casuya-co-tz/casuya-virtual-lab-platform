@@ -6,7 +6,7 @@
 
 ## STATUS
 
-**Alpha.** The project contains a complete codebase with all planned components, API routes, types, and database schema implemented. We have completed Phase 12: Full UI i18n & Auth Overhaul. See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the full audit and completion log.
+**Alpha.** The project contains a complete codebase with all planned components, API routes, types, and database schema implemented. We have completed Phase 15: Security Hardening (postcss CVE-2026-45623, credential leak remediation). See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the full audit and completion log.
 
 ### What's implemented
 
@@ -26,7 +26,7 @@
 - **Database**: Supabase migrations with 15+ tables, indexes, RLS policies, NECTA-aligned seed data, payments table
 - **Middleware**: API key validation, rate limiting, session-based route protection, CSP nonce generation
 - **Security**: Content-Security-Policy with per-request nonces (middleware-generated), Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection
-- **Monitoring**: Sentry error tracking (client + server + edge), web vitals (LCP, INP, CLS, TTFB), audit logging
+- **Monitoring**: Web vitals (LCP, INP, CLS, TTFB) via `/api/vitals`, audit logging (Sentry DSN not configured — pending setup)
 - **Error boundaries**: Client error.tsx with retry, global-error.tsx with isolated CSS + Sentry, not-found.tsx
 - **Design tokens**: Light mode CSS variables + dark mode for lab execution
 - **PWA**: Service worker (sw.js), manifest.json
@@ -1037,7 +1037,7 @@ All privileged actions are logged to the `audit_log` table with actor, action, t
 
 ### Error Tracking
 
-- **Service**: Sentry (self-hosted or cloud)
+- **Service**: Sentry (client config exists but DSN not configured — pending production setup)
 - **Scope**: All API routes, client-side errors, middleware failures
 - **Sampling**: 100% for errors, 10% for performance traces in production
 - **Alerts**: PagerDuty integration for CRITICAL/HIGH events
@@ -1529,7 +1529,9 @@ npm run dev
 | `npm run build` | Production build |
 | `npm run start` | Production server |
 | `npm run lint` | ESLint check |
+| `npm run test` | Run tests (vitest) |
 | `npm run db:generate` | Generate Supabase types |
+| `PGPASSWORD=xxx node scripts/run_migration.js` | Run database migration |
 
 ---
 
