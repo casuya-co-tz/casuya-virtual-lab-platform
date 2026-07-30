@@ -103,27 +103,27 @@ export default function SupportPage() {
               <div className="flex flex-col gap-1">
                 <label className="text-[12px] uppercase text-text-secondary tracking-[0.5px]">{t('support.description', lang)}</label>
                 <textarea
-                  className="rounded-xl px-3 py-2 bg-bg-secondary border border-border-strong text-[14px] text-text-primary min-h-[100px] focus:outline-none focus:ring-2 focus:ring-accent-blue/50"
+                  className="w-full rounded-xl px-3 py-2 bg-bg-secondary border border-border-strong text-[14px] text-text-primary min-h-[100px] focus:outline-none focus:ring-2 focus:ring-accent-blue/50 resize-y"
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {['low', 'normal', 'high', 'urgent'].map(p => (
                   <button
                     key={p}
                     onClick={() => setPriority(p)}
                     className={`px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all ${
-                      priority === p ? 'bg-accent-blue text-white' : 'bg-bg-secondary border border-border-default text-text-secondary'
+                      priority === p ? 'bg-accent-blue text-white' : 'bg-bg-secondary border border-border text-text-secondary'
                     }`}
                   >
                     {p}
                   </button>
                 ))}
               </div>
-              <div className="flex gap-2">
-                <Button variant="primary" onClick={handleCreate}>{t('support.submit', lang)}</Button>
-                <Button variant="secondary" onClick={() => setShowCreate(false)}>{t('common.cancel', lang)}</Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button variant="primary" onClick={handleCreate} className="w-full sm:w-auto">{t('support.submit', lang)}</Button>
+                <Button variant="secondary" onClick={() => setShowCreate(false)} className="w-full sm:w-auto">{t('common.cancel', lang)}</Button>
               </div>
             </div>
           </Card>
@@ -154,14 +154,15 @@ export default function SupportPage() {
               </div>
             )}
             <div className="flex gap-2">
-              <Input
-                placeholder={t('support.messagePlaceholder', lang)}
-                value={newMessage}
-                onChange={e => setNewMessage(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-              />
-              <Button variant="primary" className="!h-10" onClick={handleSendMessage}>{t('support.send', lang)}</Button>
-            </div>
+                <Input
+                  placeholder={t('support.messagePlaceholder', lang)}
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
+                  className="flex-1 min-w-0"
+                />
+                <Button variant="primary" className="!h-10 !px-4 whitespace-nowrap" onClick={handleSendMessage}>{t('support.send', lang)}</Button>
+              </div>
           </Card>
         )}
 

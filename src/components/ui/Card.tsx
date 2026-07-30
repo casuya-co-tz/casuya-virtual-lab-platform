@@ -12,7 +12,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={`p-4 sm:p-5 bg-bg-primary border border-border-default rounded-2xl shadow-sm transition-all duration-300 ease-out
+        className={`p-2 sm:p-4 md:p-5 bg-bg-primary border border-border rounded-2xl shadow-sm transition-all duration-300 ease-out
           ${hover ? 'hover:border-border-strong hover:shadow-md hover:-translate-y-1' : ''}
           ${selected ? 'border-accent-blue ring-1 ring-accent-blue/50' : ''}
           ${interactive ? 'cursor-pointer' : ''}

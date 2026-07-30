@@ -1,8 +1,8 @@
-import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { logAuditEvent } from '@/lib/audit-logger'
 import { SimpleRateLimiter } from '@/lib/rate-limiter'
+import { getUserIdFromSession } from '@/lib/auth-guard'
 
 const postLimiter = new SimpleRateLimiter(3600000, 5)
 
@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
     const order = searchParams.get('order') || 'desc'
     const minRating = parseInt(searchParams.get('min_rating') || '0')
 
-    const allowedSorts = ['created_at', 'rating', 'helpful_count']
-    const safeSort = allowedSorts.includes(sort) ? sort : 'created_at'
+    const allowedSorts: Record<string, string> = { created_at: 'r.created_at', rating: 'r.rating', helpful_count: 'r.helpful_count' }
+    const safeSort = allowedSorts[sort] || 'r.created_at'
     const safeOrder = order === 'asc' ? 'ASC' : 'DESC'
 
     const offset = (page - 1) * limit
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       JOIN profiles p ON r.user_id = p.id
       LEFT JOIN subscriptions s ON s.user_id = p.id AND s.status = 'active'
       WHERE r.is_public = true AND r.rating >= $1
-      ORDER BY r.${safeSort} ${safeOrder}
+      ORDER BY ${safeSort} ${safeOrder}
       LIMIT $2 OFFSET $3
     `, [minRating, limit, offset])
 
@@ -64,16 +64,14 @@ export async function GET(req: NextRequest) {
         totalPages: Math.ceil(total / limit),
       },
     })
-  } catch (error: any) {
-    console.error('Reviews GET Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('sid')?.value
+    const userId = await getUserIdFromSession()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const ip = req.headers.get('x-forwarded-for') || 'unknown'
@@ -102,6 +100,11 @@ export async function POST(req: Request) {
 
     const sanitized = trimmed.replace(/<[^>]*>/g, '')
 
+    const existingReview = await query('SELECT id FROM reviews WHERE user_id = $1 LIMIT 1', [userId])
+    if (existingReview.rows.length > 0) {
+      return NextResponse.json({ error: 'You have already submitted a review' }, { status: 409 })
+    }
+
     const result = await query(
       `INSERT INTO reviews (user_id, rating, review_text, is_public)
        VALUES ($1, $2, $3, $4)
@@ -109,11 +112,10 @@ export async function POST(req: Request) {
       [userId, rating, sanitized, is_public !== false]
     )
 
-    logAuditEvent({ userId, action: 'create', entityType: 'review', entityId: result.rows[0].id, ipAddress: ip })
+    await logAuditEvent({ userId, action: 'create', entityType: 'review', entityId: result.rows[0].id, ipAddress: ip })
 
     return NextResponse.json(result.rows[0])
-  } catch (error: any) {
-    console.error('Reviews POST Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

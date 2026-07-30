@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
-import { Card } from '@/components/ui/Card'
+
 import { Badge } from '@/components/ui/Badge'
 import { Table, Tr, Td } from '@/components/ui/Table'
 
@@ -35,20 +35,20 @@ export default function AdminReviewsPage() {
   const limit = 20
 
   useEffect(() => {
+    async function fetchReviews() {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+      if (status !== 'all') params.set('status', status)
+      const r = await fetch(`/api/admin/reviews?${params}`)
+      if (r.ok) {
+        const json = await r.json()
+        setReviews(json.data)
+        setPagination(json.pagination)
+      }
+      setLoading(false)
+    }
+
     fetchReviews()
   }, [page, status])
-
-  async function fetchReviews() {
-    const params = new URLSearchParams({ page: String(page), limit: String(limit) })
-    if (status !== 'all') params.set('status', status)
-    const r = await fetch(`/api/admin/reviews?${params}`)
-    if (r.ok) {
-      const json = await r.json()
-      setReviews(json.data)
-      setPagination(json.pagination)
-    }
-    setLoading(false)
-  }
 
   async function toggleVisibility(id: string, current: boolean) {
     const r = await fetch('/api/admin/reviews', {
@@ -79,19 +79,19 @@ export default function AdminReviewsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 flex-wrap gap-2">
         <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary">{t('admin.reviews', lang)}</h1>
         <a href="/admin/reports" className="text-[13px] text-accent-blue underline">
           {t('admin.viewReports', lang)} →
         </a>
       </div>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-1 mb-2 overflow-x-auto hide-scrollbar">
         {filterBtns.map(btn => (
           <button
             key={btn.key}
             onClick={() => { setStatus(btn.key); setPage(1) }}
-            className={`px-4 py-1.5 text-[12px] font-bold uppercase border ${
+            className={`px-2 py-1 text-[11px] font-bold uppercase border ${
               status === btn.key
                 ? 'bg-accent-blue text-white border-accent-blue'
                 : 'bg-bg-secondary text-text-secondary border-border-strong hover:bg-bg-tertiary'
@@ -102,37 +102,38 @@ export default function AdminReviewsPage() {
         ))}
       </div>
 
-      <Card>
+      <div className="bg-bg-primary border border-border p-2">
+        <div className="-mx-4 sm:mx-0 overflow-x-auto">
         <Table headers={[t('admin.tableUser', lang), t('admin.reviewRating', lang), t('admin.reviewText', lang), t('admin.reviewStatus', lang), t('admin.tableDate', lang), t('admin.tableActions', lang)]}>
           {reviews.map(rv => (
             <Tr key={rv.id}>
               <Td>
-                <div className="text-[14px]">{rv.full_name}</div>
-                <div className="text-[11px] text-text-secondary uppercase">{rv.user_role}</div>
+                <div className="text-[13px]">{rv.full_name}</div>
+                <div className="text-[10px] text-text-secondary uppercase">{rv.user_role}</div>
               </Td>
               <Td>
-                <span className="text-accent-amber">{'★'.repeat(rv.rating)}{'☆'.repeat(5 - rv.rating)}</span>
+                <span className="text-accent-amber text-[13px]">{'★'.repeat(rv.rating)}{'☆'.repeat(5 - rv.rating)}</span>
               </Td>
-              <Td className="max-w-[300px]">
-                <p className="text-[13px] text-text-secondary truncate">{rv.review_text || '—'}</p>
+              <Td className="max-w-[200px]">
+                <p className="text-[12px] text-text-secondary truncate">{rv.review_text || '—'}</p>
               </Td>
               <Td>
                 <Badge variant={rv.is_public ? 'success' : 'danger'}>
                   {rv.is_public ? t('admin.reviewActive', lang) : t('admin.reviewDeactivated', lang)}
                 </Badge>
               </Td>
-              <Td className="text-[13px]">{new Date(rv.created_at).toLocaleDateString()}</Td>
+              <Td className="text-[12px]">{new Date(rv.created_at).toLocaleDateString()}</Td>
               <Td>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleVisibility(rv.id, rv.is_public)}
-                    className="text-[12px] underline"
+                    className="text-[11px] underline"
                   >
                     {rv.is_public ? t('admin.reviewDeactivate', lang) : t('admin.reviewActivate', lang)}
                   </button>
                   <button
                     onClick={() => deleteReview(rv.id)}
-                    className="text-[12px] text-accent-red underline"
+                    className="text-[11px] text-accent-red underline"
                   >
                     {t('admin.delete', lang)}
                   </button>
@@ -142,28 +143,29 @@ export default function AdminReviewsPage() {
           ))}
           {reviews.length === 0 && (
             <Tr>
-              <Td colSpan={6} className="text-center text-text-secondary py-8">{t('admin.noData', lang)}</Td>
+              <Td colSpan={6} className="text-center text-text-secondary py-2">{t('admin.noData', lang)}</Td>
             </Tr>
           )}
         </Table>
-      </Card>
+        </div>
+      </div>
 
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-3">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="px-4 py-2 text-[13px] border border-border-strong disabled:opacity-40"
+            className="w-full sm:w-auto px-2 py-1 text-[12px] border border-border-strong disabled:opacity-40"
           >
             {t('admin.previous', lang)}
           </button>
-          <span className="text-[13px] text-text-secondary">
+          <span className="text-[12px] text-text-secondary">
             {t('admin.page', lang)} {page} / {pagination.totalPages}
           </span>
           <button
             onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
             disabled={page >= pagination.totalPages}
-            className="px-4 py-2 text-[13px] border border-border-strong disabled:opacity-40"
+            className="w-full sm:w-auto px-2 py-1 text-[12px] border border-border-strong disabled:opacity-40"
           >
             {t('admin.next', lang)}
           </button>

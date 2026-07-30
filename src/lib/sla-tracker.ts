@@ -14,10 +14,10 @@ export async function updateIncidentStatus(incidentId: string, status: string, u
   const existing = incident.rows[0].updates || []
   const newUpdates = [...existing, { status, note: updateNote, timestamp: new Date().toISOString() }]
 
-  const resolvedAt = status === 'resolved' ? 'NOW()' : 'NULL'
+  const resolvedAt = status === 'resolved' ? new Date().toISOString() : null
   return query(
-    `UPDATE incidents SET status = $1, updates = $2, resolved_at = ${resolvedAt} WHERE id = $3`,
-    [status, JSON.stringify(newUpdates), incidentId]
+    `UPDATE incidents SET status = $1, updates = $2, resolved_at = $3 WHERE id = $4`,
+    [status, JSON.stringify(newUpdates), resolvedAt, incidentId]
   )
 }
 

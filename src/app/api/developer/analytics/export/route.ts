@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
-import { cookies } from 'next/headers'
-
-async function getDeveloperId(): Promise<string | null> {
-  const cookieStore = await cookies()
-  const sid = cookieStore.get('sid')?.value
-  if (!sid) return null
-  const result = await query('SELECT id FROM developer_profiles WHERE id = $1', [sid])
-  return result.rows.length > 0 ? sid : null
-}
+import { getDeveloperId } from '@/lib/developer-auth'
 
 export async function GET(req: NextRequest) {
   const developerId = await getDeveloperId()
@@ -39,7 +31,7 @@ export async function GET(req: NextRequest) {
     if (format === 'csv') {
       const header = 'Date,Endpoint,Status Code,Request Count\n'
       const rows = result.rows.map((r: Record<string, unknown>) =>
-        `${r.date},${r.endpoint},${r.status_code},${r.request_count}`
+        `${String(r.date)},${String(r.endpoint)},${String(r.status_code)},${String(r.request_count)}`
       ).join('\n')
       return new NextResponse(header + rows, {
         headers: { 'Content-Type': 'text/csv', 'Content-Disposition': `attachment; filename="api-usage-${period}.csv"` },

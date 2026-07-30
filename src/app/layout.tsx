@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { WebVitals } from '@/components/shared/WebVitals'
 import './globals.css'
@@ -23,6 +24,8 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
   themeColor: '#3B82F6',
 }
 
@@ -32,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans">
         {children}
         <WebVitals />
-        <script src="/js/init.js" />
+        <Script src="/js/init.js" strategy="afterInteractive" />
       </body>
     </html>
   )

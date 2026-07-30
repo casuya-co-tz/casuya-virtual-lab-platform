@@ -1,29 +1,38 @@
-import { query } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
+import { validateApiKey, trackApiUsage, enforceDeveloperQuota, hasApiScope } from '@/lib/api-tracker'
+import { searchLabs } from '@/lib/lab-manager'
 
 export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url)
-    const q = searchParams.get('q')
-    if (!q || q.trim().length < 2) {
-      return NextResponse.json({ data: [], total: 0 })
-    }
+  const auth = await validateApiKey(req.headers.get('authorization'))
+  if (!auth) {
+    return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
+  }
+  if (!hasApiScope(auth.scopes, 'labs:read')) {
+    return NextResponse.json({ error: 'Insufficient scope. Required: labs:read' }, { status: 403 })
+  }
 
-    const term = `%${q.trim()}%`
-    const result = await query(
-      `SELECT l.id, l.title, l.title_sw, l.subject, l.description,
-              st.title AS subtopic, t.title AS topic
-       FROM labs l
-       LEFT JOIN subtopics st ON st.id = l.subtopic_id
-       LEFT JOIN topics t ON t.id = st.topic_id
-       WHERE l.is_published = true
-         AND (l.title ILIKE $1 OR l.title_sw ILIKE $1 OR l.description ILIKE $1 OR st.title ILIKE $1)
-       ORDER BY l.created_at DESC
-       LIMIT 20`,
-      [term]
-    )
-    return NextResponse.json({ data: result.rows, total: result.rows.length })
+  const devResult = await (await import('@/lib/db')).query('SELECT developer_id FROM api_credentials WHERE id = $1', [auth.credentialId])
+  if (devResult.rows.length > 0) {
+    const quotaError = await enforceDeveloperQuota(devResult.rows[0].developer_id)
+    if (quotaError) return quotaError
+  }
+
+  try {
+      const { searchParams } = new URL(req.url)
+      const q = searchParams.get('q')
+      const subject = searchParams.get('subject') || undefined
+      const thumbnail = searchParams.get('thumbnail')
+      if (!q || q.trim().length < 2) {
+        return NextResponse.json({ data: [], total: 0 })
+      }
+
+      const result = await searchLabs(q, subject)
+
+    await trackApiUsage(auth.credentialId, '/api/v1/search', 200, req.headers.get('x-forwarded-for') || undefined)
+
+    return NextResponse.json({ data: result.results, total: result.results.length })
   } catch {
+    await trackApiUsage(auth.credentialId, '/api/v1/search', 500, req.headers.get('x-forwarded-for') || undefined)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

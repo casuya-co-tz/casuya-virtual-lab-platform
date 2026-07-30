@@ -3,6 +3,7 @@ interface RateLimitInfo {
   resetTime: number
 }
 
+// In-memory limiter: effective per server instance only. For multi-instance deploys, wire REDIS_URL.
 class SimpleRateLimiter {
   private store = new Map<string, RateLimitInfo>()
   private cleanupTimer?: NodeJS.Timeout
@@ -62,8 +63,11 @@ class SimpleRateLimiter {
 export { SimpleRateLimiter }
 
 export const endpointRateLimiters = {
-  '/api/v1': new SimpleRateLimiter(60000, 100), // 1 minute, 100 requests
-  '/api/v1/labs': new SimpleRateLimiter(60000, 200), // 1 minute, 200 requests
+  '/api/v1': new SimpleRateLimiter(60000, 100),
+  '/api/v1/labs': new SimpleRateLimiter(60000, 200),
   '/api/v1/search': new SimpleRateLimiter(60000, 200),
   '/api/v1/labs/[id]': new SimpleRateLimiter(60000, 200),
+  '/api/v1/public': new SimpleRateLimiter(60000, 30),
 }
+
+export const loginLimiter = new SimpleRateLimiter(60000, 10) // 10 attempts per minute per IP

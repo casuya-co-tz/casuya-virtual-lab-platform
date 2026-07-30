@@ -1,57 +1,48 @@
 import { cookies } from 'next/headers'
-import { query } from './db'
+import { resolveSessionUser, type SessionUser } from './session'
 
-export async function requireAdmin() {
+export async function getSessionFromCookies(): Promise<SessionUser | null> {
   const cookieStore = await cookies()
   const sid = cookieStore.get('sid')?.value
   if (!sid) return null
-
-  try {
-    const result = await query(
-      "SELECT role FROM profiles WHERE id = $1",
-      [sid]
-    )
-    if (result.rows.length === 0 || result.rows[0].role !== 'admin') {
-      return null
-    }
-    return sid
-  } catch {
-    return null
-  }
+  return resolveSessionUser(sid)
 }
 
-export async function requireTeacher() {
-  const cookieStore = await cookies()
-  const sid = cookieStore.get('sid')?.value
-  if (!sid) return null
-
-  try {
-    const result = await query(
-      "SELECT role FROM profiles WHERE id = $1",
-      [sid]
-    )
-    if (result.rows.length === 0 || result.rows[0].role !== 'teacher') {
-      return null
-    }
-    return sid
-  } catch {
-    return null
-  }
+export async function getUserIdFromSession(): Promise<string | null> {
+  const session = await getSessionFromCookies()
+  return session?.id ?? null
 }
 
-export async function requireAuth() {
-  const cookieStore = await cookies()
-  const sid = cookieStore.get('sid')?.value
-  if (!sid) return null
+export async function getRoleIdFromSession(): Promise<string | null> {
+  const session = await getSessionFromCookies()
+  return session?.role ?? null
+}
 
-  try {
-    const result = await query(
-      "SELECT id FROM profiles WHERE id = $1",
-      [sid]
-    )
-    if (result.rows.length === 0) return null
-    return sid
-  } catch {
-    return null
-  }
+export async function requireAdmin(): Promise<string | null> {
+  const session = await getSessionFromCookies()
+  if (!session || session.role !== 'admin') return null
+  return session.id
+}
+
+export async function requireTeacher(): Promise<string | null> {
+  const session = await getSessionFromCookies()
+  if (!session || session.role !== 'teacher') return null
+  return session.id
+}
+
+export async function requireTeacherOrAdmin(): Promise<string | null> {
+  const session = await getSessionFromCookies()
+  if (!session || (session.role !== 'teacher' && session.role !== 'admin')) return null
+  return session.id
+}
+
+export async function requireAuth(): Promise<string | null> {
+  const session = await getSessionFromCookies()
+  return session?.id ?? null
+}
+
+export async function requireStudentOrAdmin(): Promise<string | null> {
+  const session = await getSessionFromCookies()
+  if (!session || (session.role !== 'student' && session.role !== 'admin')) return null
+  return session.id
 }

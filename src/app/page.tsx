@@ -6,10 +6,11 @@ import { Features } from '@/components/home/Features'
 import { VoicesFromTanzania } from '@/components/home/VoicesFromTanzania'
 import { FinalCTA } from '@/components/home/FinalCTA'
 import { Footer } from '@/components/layout/Footer'
+import { UserProvider } from '@/contexts/UserContext'
 
 export default function HomePage() {
   return (
-    <>
+    <UserProvider>
       <Navbar />
       <main>
         <Hero />
@@ -20,6 +21,6 @@ export default function HomePage() {
         <FinalCTA />
       </main>
       <Footer />
-    </>
+    </UserProvider>
   )
 }

@@ -1,8 +1,13 @@
 import crypto from 'crypto'
 import { query } from './db'
+import { isAllowedWebhookUrl } from './webhook-url'
 
 const MAX_RETRIES = 3
-const RETRY_DELAYS = [1000, 5000, 30000]
+const RETRY_DELAYS = [1000, 5000, 15000]
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
 export async function dispatchWebhookEvent(
   developerId: string,
@@ -16,7 +21,15 @@ export async function dispatchWebhookEvent(
 
   for (const webhook of result.rows) {
     if (!webhook.events.includes(event)) continue
-    deliverWebhook(webhook.id, webhook.url, webhook.secret, event, payload)
+    if (!isAllowedWebhookUrl(webhook.url)) {
+      console.error('Blocked webhook URL:', webhook.url)
+      continue
+    }
+    try {
+      await deliverWebhook(webhook.id, webhook.url, webhook.secret, event, payload)
+    } catch (err) {
+      console.error('Webhook delivery error:', err)
+    }
   }
 }
 
@@ -30,7 +43,15 @@ export async function dispatchEventToAllDevelopers(
 
   for (const webhook of result.rows) {
     if (!webhook.events.includes(event)) continue
-    deliverWebhook(webhook.id, webhook.url, webhook.secret, event, payload)
+    if (!isAllowedWebhookUrl(webhook.url)) {
+      console.error('Blocked webhook URL:', webhook.url)
+      continue
+    }
+    try {
+      await deliverWebhook(webhook.id, webhook.url, webhook.secret, event, payload)
+    } catch (err) {
+      console.error('Webhook delivery error:', err)
+    }
   }
 }
 
@@ -50,7 +71,7 @@ async function deliverWebhook(
     [deliveryId, webhookId, event, JSON.stringify(payload)]
   )
 
-  deliverWithRetry(deliveryId, url, body, signature, 0)
+  await deliverWithRetry(deliveryId, url, body, signature, event, 0)
 }
 
 async function deliverWithRetry(
@@ -58,6 +79,7 @@ async function deliverWithRetry(
   url: string,
   body: string,
   signature: string,
+  event: string,
   attempt: number
 ) {
   try {
@@ -69,7 +91,7 @@ async function deliverWithRetry(
       headers: {
         'Content-Type': 'application/json',
         'X-Webhook-Signature': `sha256=${signature}`,
-        'X-Webhook-Event': JSON.parse(body).event,
+        'X-Webhook-Event': event,
         'User-Agent': 'CasuyaWebhook/1.0',
       },
       body,
@@ -82,6 +104,11 @@ async function deliverWithRetry(
       `UPDATE webhook_deliveries SET status = $1, attempts = $2, last_attempt_at = NOW(), response_code = $3 WHERE id = $4`,
       [res.ok ? 'delivered' : 'failed', attempt + 1, res.status, deliveryId]
     )
+
+    if (!res.ok && attempt + 1 < MAX_RETRIES) {
+      await sleep(RETRY_DELAYS[attempt] || 5000)
+      await deliverWithRetry(deliveryId, url, body, signature, event, attempt + 1)
+    }
   } catch (err) {
     const nextAttempt = attempt + 1
     const status = nextAttempt >= MAX_RETRIES ? 'failed' : 'pending'
@@ -93,12 +120,15 @@ async function deliverWithRetry(
     )
 
     if (nextAttempt < MAX_RETRIES) {
-      setTimeout(() => deliverWithRetry(deliveryId, url, body, signature, nextAttempt), RETRY_DELAYS[attempt] || 5000)
+      await sleep(RETRY_DELAYS[attempt] || 5000)
+      await deliverWithRetry(deliveryId, url, body, signature, event, nextAttempt)
     }
   }
 }
 
 export function verifyWebhookSignature(secret: string, body: string, signature: string): boolean {
   const expected = crypto.createHmac('sha256', secret).update(body).digest('hex')
-  return crypto.timingSafeEqual(Buffer.from(`sha256=${expected}`), Buffer.from(signature))
+  const expectedFull = `sha256=${expected}`
+  if (typeof signature !== 'string' || expectedFull.length !== signature.length) return false
+  return crypto.timingSafeEqual(Buffer.from(expectedFull), Buffer.from(signature))
 }

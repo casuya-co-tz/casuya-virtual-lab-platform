@@ -46,12 +46,12 @@ export const PricingManager: React.FC<{ initialPlans: AdminPlan[] }> = ({ initia
   }
 
   return (
-    <div className="p-6 bg-bg-primary border border-border-default rounded-xl shadow-sm">
+    <div className="p-4 sm:p-6 bg-bg-primary border border-border rounded-xl shadow-sm">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-text-primary">Pricing Plans</h2>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="-mx-4 sm:mx-0 overflow-x-auto">
         <table className="w-full text-left text-sm text-text-secondary">
           <thead className="bg-bg-tertiary text-text-primary uppercase text-xs tracking-wider">
             <tr>
@@ -64,7 +64,7 @@ export const PricingManager: React.FC<{ initialPlans: AdminPlan[] }> = ({ initia
               <th className="p-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border-default">
+          <tbody className="divide-y divide-border">
             {plans.map((p) => (
               <tr key={p.id} className="hover:bg-bg-tertiary/50">
                 <td className="p-3 font-mono text-xs">{p.slug}</td>
@@ -72,7 +72,7 @@ export const PricingManager: React.FC<{ initialPlans: AdminPlan[] }> = ({ initia
                   {editingId === p.id ? (
                     <input
                       type="text"
-                      className="border border-border-default px-2 py-1 rounded bg-bg-primary text-text-primary"
+                      className="border border-border px-2 py-1 rounded bg-bg-primary text-text-primary"
                       value={formData.name || ''}
                       onChange={e => setFormData({ ...formData, name: e.target.value })}
                     />
@@ -82,7 +82,7 @@ export const PricingManager: React.FC<{ initialPlans: AdminPlan[] }> = ({ initia
                   {editingId === p.id ? (
                     <input
                       type="text"
-                      className="border border-border-default px-2 py-1 rounded bg-bg-primary text-text-primary"
+                      className="border border-border px-2 py-1 rounded bg-bg-primary text-text-primary"
                       value={formData.name_sw || ''}
                       onChange={e => setFormData({ ...formData, name_sw: e.target.value })}
                     />
@@ -92,7 +92,7 @@ export const PricingManager: React.FC<{ initialPlans: AdminPlan[] }> = ({ initia
                   {editingId === p.id ? (
                     <input
                       type="number"
-                      className="border border-border-default px-2 py-1 rounded bg-bg-primary text-text-primary w-24"
+                      className="border border-border px-2 py-1 rounded bg-bg-primary text-text-primary w-24"
                       value={formData.price || 0}
                       onChange={e => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
                     />
@@ -107,7 +107,7 @@ export const PricingManager: React.FC<{ initialPlans: AdminPlan[] }> = ({ initia
                 </td>
                 <td className="p-3">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    p.is_active ? 'bg-accent-green/10 text-accent-green' : 'bg-text-muted/10 text-text-muted'
+                    p.is_active ? 'bg-accent-green/10 text-accent-green' : 'bg-bg-tertiary text-text-secondary'
                   }`}>
                     {p.is_active ? 'Active' : 'Disabled'}
                   </span>
@@ -122,7 +122,7 @@ export const PricingManager: React.FC<{ initialPlans: AdminPlan[] }> = ({ initia
                       >
                         {saving ? 'Saving...' : 'Save'}
                       </button>
-                      <button onClick={cancelEdit} className="text-text-muted font-semibold text-xs hover:underline">
+                      <button onClick={cancelEdit} className="text-text-secondary font-semibold text-xs hover:underline">
                         Cancel
                       </button>
                     </>

@@ -1,8 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 import { Button } from '@/components/ui/Button'
+import { useUser } from '@/contexts/UserContext'
 
 interface Review {
   id: string
@@ -22,8 +23,8 @@ interface Review {
 
 export function VoicesFromTanzania() {
   const { lang } = useLanguage()
+  const { user } = useUser()
   const [reviews, setReviews] = useState<Review[]>([])
-  const [user, setUser] = useState<{ id: string } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [rating, setRating] = useState(5)
   const [reviewText, setReviewText] = useState('')
@@ -37,19 +38,18 @@ export function VoicesFromTanzania() {
   const [reportReason, setReportReason] = useState('')
   const [userVotes, setUserVotes] = useState<Record<string, boolean | null>>({})
 
-  useEffect(() => {
-    fetch('/api/profile').then(r => r.ok ? r.json() : null).then(data => setUser(data))
-    fetchReviews()
-  }, [page])
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     const r = await fetch(`/api/reviews?page=${page}&limit=5&sort=created_at&order=desc`)
     if (r.ok) {
       const json = await r.json()
       setReviews(json.data)
       setTotalPages(json.pagination.totalPages)
     }
-  }
+  }, [page])
+
+  useEffect(() => {
+    fetchReviews()
+  }, [fetchReviews])
 
   const submitReview = async () => {
     if (!reviewText.trim()) return
@@ -132,57 +132,61 @@ export function VoicesFromTanzania() {
 
   const hardcodedVoices = [
     {
-      text: t('home.voice1.text', lang),
-      author: t('home.voice1.author', lang),
-      avatar: "👩🏾‍🎓",
+      text: lang === 'sw'
+        ? 'Nilitumia Casuya kujiandaa kwa Mtihani wa NECTA wa Fizikia na nikapata alama 92. Ulinganisho wa optiki ulikuwa sawia na mpango wa mtihani wa kweli. Kila mwanafunzi nchini Tanzania anahitaji hii.'
+        : 'I used Casuya to prepare for my NECTA Physics Practical and scored a 92. The optics simulation was exactly like the real exam setup. Every student in Tanzania needs this.',
+      author: 'Aisha Mwangi, Form VI Student — Dar es Salaam',
+      avatar: '👩🏾‍🎓',
     },
     {
-      text: t('home.voice2.text', lang),
-      author: t('home.voice2.author', lang),
-      avatar: "👨🏾‍🏫",
+      text: lang === 'sw'
+        ? 'Shule yetu hauna vifaa vya maabara vilivyofanya kazi. Kwa Casuya, nilionyesha utitiriko, mzunguko, na Sheria ya Boyle kwa njia ya mwingiliano. Kiwango cha kupita kwa wanafunzi wangu kiliongeka kutoka 61% hadi 89% katika muhula mmoja.'
+        : 'Our school has no functioning lab equipment. With Casuya, I demonstrated titration, circuits, and Boyle\'s Law interactively. My students\' pass rate went from 61% to 89% in one term.',
+      author: 'David Nkosi, Head of Science — Arusha Secondary School',
+      avatar: '👨🏾‍🏫',
     },
   ]
 
   return (
-    <section className="px-6 py-24 bg-bg-primary border-b border-border-default">
+    <section className="px-4 sm:px-6 py-10 sm:py-20 lg:py-24 bg-bg-primary border-b border-border">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-[clamp(28px,5vw,40px)] font-extrabold text-text-primary text-center tracking-tight mb-16">
+        <h2 className="text-[clamp(22px,5vw,38px)] font-extrabold text-text-primary text-center tracking-tight mb-8 sm:mb-14">
           {t('home.voicesTitle', lang)}
         </h2>
 
         {/* Hardcoded Highlighted Voices */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-10 sm:mb-14">
           {hardcodedVoices.map((v, i) => (
-            <div key={i} className="flex flex-col p-8 bg-bg-secondary shadow-sm border border-border-default relative overflow-hidden">
-              <div className="absolute top-4 right-6 text-[48px] opacity-10">"</div>
-              <div className="text-[40px] mb-4">{v.avatar}</div>
-              <p className="text-[16px] italic text-text-primary mb-6 relative z-10 leading-relaxed">"{v.text}"</p>
-              <p className="text-[14px] font-bold text-accent-blue mt-auto">— {v.author}</p>
+            <div key={i} className="flex flex-col p-5 sm:p-7 bg-bg-secondary border border-border relative overflow-hidden">
+              <div className="absolute top-3 right-4 text-[32px] sm:text-[44px] opacity-10 select-none">&ldquo;</div>
+              <div className="text-[28px] sm:text-[36px] mb-3">{v.avatar}</div>
+              <p className="text-[13px] sm:text-[15px] italic text-text-primary mb-5 relative z-10 leading-relaxed">&ldquo;{v.text}&rdquo;</p>
+              <p className="text-[12px] sm:text-[13px] font-bold text-accent-blue mt-auto">— {v.author}</p>
             </div>
           ))}
         </div>
 
         {/* Dynamic User Reviews */}
         {reviews.length > 0 && (
-          <div className="space-y-6 mb-16">
-            <h3 className="text-[20px] font-bold text-text-primary text-center mb-8">{t('home.recentReviews', lang)}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-5 mb-10 sm:mb-14">
+            <h3 className="text-[17px] sm:text-[19px] font-bold text-text-primary text-center mb-6">{t('home.recentReviews', lang)}</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {reviews.map(r => (
-                <div key={r.id} className="p-6 bg-bg-tertiary">
+                <div key={r.id} className="p-4 sm:p-5 bg-bg-tertiary">
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex gap-1 text-accent-amber">
+                    <div className="flex gap-0.5 text-accent-amber text-[14px]">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <span key={i}>{i < r.rating ? '★' : '☆'}</span>
                       ))}
                     </div>
                     {r.has_active_subscription && (
-                      <Badge variant="info">Verified</Badge>
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-accent-blue/15 text-accent-blue px-1.5 py-0.5">Verified</span>
                     )}
                   </div>
 
                   {editingId === r.id ? (
-                    <div className="space-y-3 mb-4">
-                      <div className="flex gap-2 text-[24px] cursor-pointer text-accent-amber">
+                    <div className="space-y-2 mb-3">
+                      <div className="flex gap-1 text-[20px] cursor-pointer text-accent-amber">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <span key={i} onClick={() => setEditRating(i + 1)}>
                             {i < editRating ? '★' : '☆'}
@@ -190,40 +194,36 @@ export function VoicesFromTanzania() {
                         ))}
                       </div>
                       <textarea
-                        className="w-full bg-bg-primary border border-border-strong p-3 text-[14px] text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue/50 resize-none"
-                        rows={3}
+                        className="w-full bg-bg-primary border border-border-strong p-2 text-[13px] text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue/50 resize-none"
+                        rows={2}
                         value={editText}
                         onChange={e => setEditText(e.target.value)}
                       />
                       <div className="flex gap-2">
-                        <Button variant="primary" className="!h-8 !px-4 !text-[12px]" onClick={() => saveEdit(r.id)}>
-                          Save
-                        </Button>
-                        <Button variant="secondary" className="!h-8 !px-4 !text-[12px]" onClick={cancelEdit}>
-                          Cancel
-                        </Button>
+                        <Button variant="primary" className="!h-7 !px-3 !text-[11px]" onClick={() => saveEdit(r.id)}>Save</Button>
+                        <Button variant="secondary" className="!h-7 !px-3 !text-[11px]" onClick={cancelEdit}>Cancel</Button>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <p className="text-[14px] text-text-secondary italic mb-4">"{r.review_text}"</p>
-                      <p className="text-[12px] font-bold text-text-primary mb-3">— {r.profiles?.full_name}</p>
+                      <p className="text-[13px] text-text-secondary italic mb-3">&ldquo;{r.review_text}&rdquo;</p>
+                      <p className="text-[11px] font-bold text-text-primary mb-2">— {r.profiles?.full_name}</p>
                     </>
                   )}
 
                   {/* Vote buttons */}
-                  <div className="flex items-center gap-4 text-[12px] text-text-secondary mb-3">
-                    <button onClick={() => vote(r.id, true)} className={`flex items-center gap-1 hover:text-accent-green ${userVotes[r.id] === true ? 'text-accent-green' : ''}`}>
+                  <div className="flex items-center gap-3 text-[11px] text-text-secondary mb-2">
+                    <button onClick={() => vote(r.id, true)} className={`flex items-center gap-1 hover:text-accent-green transition-colors ${userVotes[r.id] === true ? 'text-accent-green' : ''}`}>
                       👍 {r.helpful_count}
                     </button>
-                    <button onClick={() => vote(r.id, false)} className={`flex items-center gap-1 hover:text-accent-red ${userVotes[r.id] === false ? 'text-accent-red' : ''}`}>
+                    <button onClick={() => vote(r.id, false)} className={`flex items-center gap-1 hover:text-accent-red transition-colors ${userVotes[r.id] === false ? 'text-accent-red' : ''}`}>
                       👎 {r.not_helpful_count}
                     </button>
                   </div>
 
                   {/* Owner actions */}
                   {user?.id && r.profiles && (
-                    <div className="flex items-center gap-3 text-[11px]">
+                    <div className="flex items-center gap-2 text-[10px]">
                       {canEdit(r) && !editingId && (
                         <button onClick={() => startEdit(r)} className="text-accent-blue underline">Edit</button>
                       )}
@@ -235,22 +235,18 @@ export function VoicesFromTanzania() {
                   {user && (
                     <div className="mt-2">
                       {reportingId === r.id ? (
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5">
                           <input
-                            className="flex-1 bg-bg-primary border border-border-strong p-2 text-[12px] text-text-primary focus:outline-none"
-                            placeholder="Reason for report..."
+                            className="flex-1 min-w-0 bg-bg-primary border border-border-strong p-1.5 text-[11px] text-text-primary focus:outline-none"
+                            placeholder="Reason..."
                             value={reportReason}
                             onChange={e => setReportReason(e.target.value)}
                           />
-                          <Button variant="secondary" className="!h-8 !px-3 !text-[11px]" onClick={() => submitReport(r.id)}>
-                            Send
-                          </Button>
-                          <button className="text-[11px] text-text-secondary underline" onClick={() => { setReportingId(null); setReportReason('') }}>
-                            Cancel
-                          </button>
+                          <Button variant="secondary" className="!h-7 !px-2 !text-[10px] shrink-0" onClick={() => submitReport(r.id)}>Send</Button>
+                          <button className="text-[10px] text-text-secondary underline shrink-0" onClick={() => { setReportingId(null); setReportReason('') }}>Cancel</button>
                         </div>
                       ) : (
-                        <button onClick={() => setReportingId(r.id)} className="text-[11px] text-text-secondary underline">
+                        <button onClick={() => setReportingId(r.id)} className="text-[10px] text-text-secondary underline">
                           Report
                         </button>
                       )}
@@ -262,19 +258,19 @@ export function VoicesFromTanzania() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-8">
+              <div className="flex items-center justify-center gap-2 mt-6">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-4 py-2 text-[13px] border border-border-strong disabled:opacity-40"
+                  className="px-3 py-1.5 text-[12px] border border-border-strong disabled:opacity-40 transition-opacity"
                 >
                   {t('admin.previous', lang)}
                 </button>
-                <span className="text-[13px] text-text-secondary">{page} / {totalPages}</span>
+                <span className="text-[12px] text-text-secondary">{page} / {totalPages}</span>
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="px-4 py-2 text-[13px] border border-border-strong disabled:opacity-40"
+                  className="px-3 py-1.5 text-[12px] border border-border-strong disabled:opacity-40 transition-opacity"
                 >
                   {t('admin.next', lang)}
                 </button>
@@ -285,9 +281,9 @@ export function VoicesFromTanzania() {
 
         {/* Review Submission Form */}
         {user ? (
-          <div className="bg-bg-secondary p-8 border border-border-default">
-            <h3 className="text-[18px] font-bold text-text-primary mb-4">{t('home.leaveReview', lang)}</h3>
-            <div className="flex gap-2 mb-4 text-[24px] cursor-pointer text-accent-amber">
+          <div className="bg-bg-secondary p-5 sm:p-7 border border-border">
+            <h3 className="text-[16px] sm:text-[18px] font-bold text-text-primary mb-3">{t('home.leaveReview', lang)}</h3>
+            <div className="flex gap-1 mb-3 text-[22px] cursor-pointer text-accent-amber">
               {Array.from({ length: 5 }).map((_, i) => (
                 <span key={i} onClick={() => setRating(i + 1)}>
                   {i < rating ? '★' : '☆'}
@@ -295,43 +291,32 @@ export function VoicesFromTanzania() {
               ))}
             </div>
             <textarea
-              className="w-full bg-bg-primary border border-border-strong p-4 text-[14px] text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:border-accent-blue resize-none mb-4"
+              className="w-full bg-bg-primary border border-border-strong p-3 text-[13px] sm:text-[14px] text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:border-accent-blue resize-none mb-3"
               rows={3}
               placeholder={t('home.reviewPlaceholder', lang)}
               value={reviewText}
               onChange={e => setReviewText(e.target.value)}
             />
-            <label className="flex items-center gap-3 mb-4 cursor-pointer select-none">
+            <label className="flex items-center gap-2 mb-3 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={isPublic}
                 onChange={e => setIsPublic(e.target.checked)}
-                className="w-4 h-4 accent-accent-blue"
+                className="w-3.5 h-3.5 accent-accent-blue"
               />
-              <span className="text-[13px] text-text-secondary">{t('home.showPublicly', lang)}</span>
+              <span className="text-[12px] text-text-secondary">{t('home.showPublicly', lang)}</span>
             </label>
-            <Button variant="primary" loading={isSubmitting} onClick={submitReview}>
+            <Button variant="primary" loading={isSubmitting} onClick={submitReview} className="!h-10 w-full sm:w-auto">
               {t('home.submitReview', lang)}
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center p-8 bg-bg-secondary border border-border-default">
-            <p className="text-[14px] text-text-secondary mb-4">{t('home.loginToReview', lang)}</p>
-            <Button variant="secondary" onClick={() => window.location.href = '/auth'}>{t('home.loginBtn', lang)}</Button>
+          <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-bg-secondary border border-border text-center">
+            <p className="text-[13px] text-text-secondary mb-3">{t('home.loginToReview', lang)}</p>
+            <Button variant="secondary" className="!h-10 w-full sm:w-auto" onClick={() => window.location.href = '/auth'}>{t('home.loginBtn', lang)}</Button>
           </div>
         )}
       </div>
     </section>
-  )
-}
-
-function Badge({ variant, children }: { variant: string; children: React.ReactNode }) {
-  const cls = variant === 'info'
-    ? 'bg-accent-blue/20 text-accent-blue border border-accent-blue/30'
-    : 'bg-bg-tertiary text-text-secondary border border-border-default'
-  return (
-    <span className={`inline-flex items-center h-5 px-2 text-[10px] font-bold uppercase tracking-[1px] rounded-full ${cls}`}>
-      {children}
-    </span>
   )
 }

@@ -15,7 +15,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         )}
         <select
           ref={ref}
-          className={`rounded-xl h-[clamp(36px,5vw,40px)] px-3 bg-bg-secondary border border-border-default text-[14px] text-text-primary
+          className={`rounded-xl h-[clamp(36px,5vw,40px)] px-3 bg-bg-secondary border border-border text-[14px] text-text-primary
             transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:border-accent-blue ${className}`}
           {...props}
         >

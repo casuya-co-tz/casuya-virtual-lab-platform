@@ -56,18 +56,18 @@ export default function StatusPage() {
             <div className={`h-3 w-3 rounded-full ${cfg.color} animate-pulse`} />
             <span className={`text-[18px] font-bold ${cfg.textColor}`}>{cfg.label}</span>
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+          <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-4 text-center">
             <div>
               <p className="text-[12px] uppercase text-text-secondary">{t('status.uptime', lang)}</p>
-              <p className="text-[20px] font-bold text-accent-green">99.9%</p>
+              <p className="text-[16px] sm:text-[20px] font-bold text-accent-green">99.9%</p>
             </div>
             <div>
               <p className="text-[12px] uppercase text-text-secondary">API</p>
-              <p className="text-[20px] font-bold text-accent-green">OK</p>
+              <p className="text-[16px] sm:text-[20px] font-bold text-accent-green">OK</p>
             </div>
             <div>
               <p className="text-[12px] uppercase text-text-secondary">Database</p>
-              <p className="text-[20px] font-bold text-accent-green">Connected</p>
+              <p className="text-[16px] sm:text-[20px] font-bold text-accent-green">Connected</p>
             </div>
           </div>
         </Card>

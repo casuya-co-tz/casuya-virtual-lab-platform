@@ -17,7 +17,9 @@ function AuthForm() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'login' | 'signup'>('login')
-  const [role, setRole] = useState<'student' | 'teacher'>(searchParams.get('role') === 'teacher' ? 'teacher' : 'student')
+  const [role, setRole] = useState<'student' | 'developer'>(
+    searchParams.get('role') === 'developer' ? 'developer' : 'student'
+  )
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -37,7 +39,7 @@ function AuthForm() {
         setError(data.error || t('auth.somethingWrong', lang))
         return
       }
-      const dest = data.user.role === 'admin' ? '/admin' : data.user.role === 'teacher' ? '/teacher' : '/student'
+      const dest = data.user.role === 'admin' ? '/admin' : data.user.role === 'developer' ? '/developer' : data.user.role === 'teacher' ? '/teacher' : '/student'
       router.push(redirect || dest)
       router.refresh()
     } catch {
@@ -48,46 +50,49 @@ function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg-secondary px-4">
-      <div className="w-full max-w-md bg-bg-primary border border-border-DEFAULT p-8">
-        <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-2">
+    <div className="min-h-screen flex items-center justify-center bg-bg-secondary px-2 py-4">
+      <div className="w-full max-w-sm bg-bg-primary border border-border p-4 sm:p-6">
+        <h1 className="text-[clamp(18px,4vw,24px)] font-bold text-text-primary mb-1">
           {mode === 'login' ? t('auth.login', lang) : t('auth.signup', lang)}
         </h1>
-        <p className="text-[14px] text-text-secondary mb-6">
+        <p className="text-[12px] sm:text-[13px] text-text-secondary mb-4">
           {mode === 'login' ? t('auth.welcomeBack', lang) : t('auth.createYourAccount', lang)}
         </p>
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
           {mode === 'signup' && (
             <>
               <Input label={t('auth.fullName', lang)} value={fullName} onChange={(e) => setFullName(e.target.value)} />
-              <div className="flex gap-4 mb-2">
-                <label className="flex items-center gap-2 cursor-pointer text-[14px] text-text-primary">
+              <div className="flex gap-3 mb-1 flex-wrap">
+                <label className="flex items-center gap-1.5 cursor-pointer text-[12px] sm:text-[13px] text-text-primary">
                   <input type="radio" name="role" value="student" checked={role === 'student'} onChange={() => setRole('student')} className="accent-accent-blue" />
                   Student
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer text-[14px] text-text-primary">
-                  <input type="radio" name="role" value="teacher" checked={role === 'teacher'} onChange={() => setRole('teacher')} className="accent-accent-blue" />
-                  Teacher
+                <label className="flex items-center gap-1.5 cursor-pointer text-[12px] sm:text-[13px] text-text-primary">
+                  <input type="radio" name="role" value="developer" checked={role === 'developer'} onChange={() => setRole('developer')} className="accent-accent-blue" />
+                  Developer
                 </label>
               </div>
+              <p className="text-[11px] text-text-secondary -mt-1">
+                {lang === 'sw' ? 'Akaunti za walimu hutengenezwa na msimamizi.' : 'Teacher accounts are created by an administrator.'}
+              </p>
             </>
           )}
           <Input label={t('auth.email', lang)} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input label={t('auth.password', lang)} type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          {error && <p className="text-[12px] text-accent-red">{error}</p>}
-          <Button variant="primary" className="!h-[52px] !w-full" disabled={loading}>
+          {error && <p className="text-[11px] text-accent-red">{error}</p>}
+          <Button variant="primary" className="!h-10 !w-full" disabled={loading}>
             {loading ? t('auth.processing', lang) : mode === 'login' ? t('auth.login', lang) : t('auth.createAccount', lang)}
           </Button>
         </form>
-        <p className="text-[12px] text-text-secondary text-center mt-4">
+        <p className="text-[11px] text-text-secondary text-center mt-3">
           {mode === 'login' ? (
             <>{t('auth.noAccount', lang)} <button onClick={() => setMode('signup')} className="text-accent-blue underline">{t('auth.signup', lang)}</button></>
           ) : (
             <>{t('auth.hasAccount', lang)} <button onClick={() => setMode('login')} className="text-accent-blue underline">{t('auth.login', lang)}</button></>
           )}
         </p>
-        <div className="mt-4 text-center">
-          <a href="/auth/recovery" className="text-[12px] text-accent-blue underline">{t('auth.forgotPassword', lang)}</a>
+        <div className="mt-3 text-center">
+          <a href="/auth/recovery" className="text-[11px] text-accent-blue underline">{t('auth.forgotPassword', lang)}</a>
         </div>
       </div>
     </div>
@@ -96,7 +101,7 @@ function AuthForm() {
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-bg-secondary px-4"><div className="w-full max-w-md bg-bg-primary border border-border-DEFAULT p-8 text-center text-text-secondary">Loading...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-bg-secondary px-2"><div className="w-full max-w-sm bg-bg-primary border border-border p-4 text-center text-text-secondary">Loading...</div></div>}>
       <AuthForm />
     </Suspense>
   )

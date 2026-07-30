@@ -3,7 +3,7 @@
 const nextConfig = {
   compress: true,
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   images: {
     formats: ['image/avif', 'image/webp'],

@@ -4,15 +4,74 @@
 
 ---
 
+## ARCHITECTURE — Service Separation
+
+CASUYA runs as a **two-service architecture**. The main platform handles users, sessions, payments, and routing. Lab content is managed by a separate **Lab Content Service**.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     STUDENT / ADMIN                          │
+│                    Browser (port 3000)                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+              ┌────────────┴────────────┐
+              │                         │
+              ▼                         ▼
+┌──────────────────────┐   ┌──────────────────────────────────┐
+│  CASUYA Platform     │   │  Lab Content Service             │
+│  (port 3000)         │   │  (port 3100)                     │
+│                      │   │                                  │
+│  • Next.js App       │   │  • Express API                   │
+│  • Users & Auth      │──▶│  • Lab HTML storage              │
+│  • Sessions          │   │  • Version control               │
+│  • Payments          │   │  • Content editor UI             │
+│  • Subscriptions     │   │  • Templates                     │
+│  • Progress tracking │   │  • Full-text search              │
+│  • Developer API     │   │  • Audit logging                 │
+│  • Admin dashboard   │   │  • Import/Export                 │
+│                      │   │                                  │
+│  Supabase PostgreSQL  │   │  PostgreSQL (lab_content DB)     │
+└──────────────────────┘   └──────────────────────────────────┘
+              │                         │
+              ▼                         ▼
+┌──────────────────────┐   ┌──────────────────────────────────┐
+│  CASUYA Database     │   │  Lab Content Database             │
+│  • profiles          │   │  • labs (metadata)                │
+│  • subjects/topics   │   │  • lab_versions (HTML code)       │
+│  • lab_progress      │   │  • lab_templates                  │
+│  • subscriptions     │   │  • lab_schemas                    │
+│  • api_credentials   │   │  • audit_log                      │
+│  • audit_log         │   │  • lab_access_log                 │
+│  • payments          │   │  • lab_tags                       │
+└──────────────────────┘   └──────────────────────────────────┘
+```
+
+### How CASUYA connects to Lab Content Service
+
+```
+CASUYA API Route                     Lab Content Service
+─────────────────                    ────────────────────
+GET /api/labs                ──▶     GET /api/casuya/labs
+GET /api/labs/:id            ──▶     GET /api/casuya/labs/:id
+GET /api/labs/:id/code       ──▶     GET /api/casuya/labs/:id (HTML)
+GET /api/v1/labs             ──▶     GET /api/casuya/labs
+Search                        ──▶     GET /api/casuya/search?q=
+```
+
+CASUYA authenticates with the Lab Content Service using an API key stored in `LAB_CONTENT_API_KEY`.
+
+---
+
 ## STATUS
 
-**Alpha.** The project contains a complete codebase with all planned components, API routes, types, and database schema implemented. We have completed Phase 15: Security Hardening (postcss CVE-2026-45623, credential leak remediation). See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the full audit and completion log.
+**Alpha.** The project contains a complete codebase with all planned components, API routes, types, and database schema implemented. Lab content management has been separated into the Lab Content Service. See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the full audit and completion log.
 
 ### What's implemented
 
 - **Root config**: package.json, next.config.js, tailwind.config.js, postcss.config.js, tsconfig.json, .env.example, .gitignore
 - **App routes**: 26 pages (home, auth, auth/recovery, student dashboard/subjects/lab/profile/settings, admin dashboard/labs/lab-editor/new-lab/users/billing/audit/analytics/api-keys/docs/settings, developer portal/docs, search, payment, error boundary, 404)
 - **API routes**: 35+ endpoints (auth login/signup/logout, labs CRUD, lab code, profile, progress, admin stats/activity/audit, AzamPesa payments, developer registration/credentials, public/enterprise v1 API, settings, search, subjects, subtopics, embed, vitals)
+- **Lab Content Service integration**: CASUYA fetches lab HTML, versions, and metadata from the standalone Lab Content Service (port 3100)
 - **UI design system**: Button, Input, Card, Badge, Table, Modal, Select, Tabs, Toggle, Skeleton, Toast
 - **Layout components**: Navbar (responsive with mobile drawer), Sidebar, MobileDrawer, Footer
 - **Home sections**: Hero, SubjectCards, Features, Stats
@@ -20,16 +79,34 @@
 - **Admin components**: StatsGrid, LabEditor, LivePreview, CurriculumBuilder, DataTable, UserTable, BillingTable, APIKeyManager, DocsEditor, EditorSkeleton
 - **Shared components**: LanguageToggle, RoleGuard, SearchBar, EmptyState, ThemeProvider, WebVitals
 - **Simulation**: LabSimulation — Three.js lab simulation component with per-subject 3D objects
-- **Lib utilities**: supabase client, auth (custom `sid` cookie strategy via raw SQL), auth-guard, i18n (EN/SW 100% UI coverage), lab-manager, lab-processor (DOMPurify sanitization), rate-limiter, crypto, validators, db (PostgreSQL pool), api-tracker, audit-logger
+- **Lib utilities**: supabase client, auth (custom `sid` cookie strategy via raw SQL), auth-guard, i18n (EN/SW 100% UI coverage), lab-manager (fetches from Lab Content Service), lab-processor (DOMPurify sanitization), rate-limiter, crypto, validators, db (PostgreSQL pool), api-tracker, audit-logger
 - **Custom hooks**: useAuth, useLabs, useLanguage, useRateLimit, useMediaQuery
 - **TypeScript types**: Full type system with models (profile, lab, school, subscription), API requests/responses, subject-specific types (physics, chemistry, biology), database row types
-- **Database**: Supabase migrations with 15+ tables, indexes, RLS policies, NECTA-aligned seed data, payments table
+- **Database**: Supabase migrations with 15+ tables, indexes, RLS policies, NECTA-aligned seed data, payments table (lab content tables are in the Lab Content Service)
 - **Middleware**: API key validation, rate limiting, session-based route protection, CSP nonce generation
 - **Security**: Content-Security-Policy with per-request nonces (middleware-generated), Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection
 - **Monitoring**: Web vitals (LCP, INP, CLS, TTFB) via `/api/vitals`, audit logging (Sentry DSN not configured — pending setup)
 - **Error boundaries**: Client error.tsx with retry, global-error.tsx with isolated CSS + Sentry, not-found.tsx
 - **Design tokens**: Light mode CSS variables + dark mode for lab execution
 - **PWA**: Service worker (sw.js), manifest.json
+
+### What lives where
+
+| Concern | Service | Port |
+|---------|---------|------|
+| User authentication | CASUYA | 3000 |
+| Student sessions | CASUYA | 3000 |
+| Lab HTML content | Lab Content Service | 3100 |
+| Lab versioning | Lab Content Service | 3100 |
+| Lab templates | Lab Content Service | 3100 |
+| Lab content editor | Lab Content Service | 3100 |
+| Lab progress/scores | CASUYA | 3000 |
+| Payments (AzamPesa) | CASUYA | 3000 |
+| Subscriptions | CASUYA | 3000 |
+| Developer API keys | CASUYA | 3000 |
+| Full-text search | Lab Content Service | 3100 |
+| Content audit log | Lab Content Service | 3100 |
+| Platform audit log | CASUYA | 3000 |
 
 ---
 
@@ -188,9 +265,9 @@ ACCENT COLORS (shared):
 
 ---
 
-## FILE STRUCTURE (Planned)
+## FILE STRUCTURE
 
-Target structure. All files are to be created during implementation.
+Target structure. Lab HTML content, templates, and content versioning are managed by the **Lab Content Service** (separate project at `../lab-content-service/`). CASUYA fetches lab content via HTTP API calls. See [Lab Content Service README](../lab-content-service/README.md) for its full documentation.
 
 ```
 casuya-virtual-lab-platform/
@@ -270,6 +347,10 @@ casuya-virtual-lab-platform/
 │   │   │
 │   │   └── search/
 │   │       └── page.tsx                  # Search page
+│   │   │
+│   │   ├── error.tsx                      # Client error boundary
+│   │   ├── global-error.tsx               # Root error boundary
+│   │   └── not-found.tsx                  # 404 page
 │   │
 │   ├── components/                       # React components
 │   │   ├── ui/                           # Design system primitives
@@ -302,7 +383,8 @@ casuya-virtual-lab-platform/
 │   │   │   ├── SubjectCatalog.tsx
 │   │   │   ├── SyllabusTree.tsx
 │   │   │   ├── LabCard.tsx
-│   │   │   └── LabRunner.tsx
+│   │   │   ├── LabRunner.tsx
+│   │   │   └── LabSkeleton.tsx            # Lab loading skeleton
 │   │   │
 │   │   ├── admin/                        # Admin dashboard
 │   │   │   ├── StatsGrid.tsx
@@ -313,13 +395,19 @@ casuya-virtual-lab-platform/
 │   │   │   ├── UserTable.tsx
 │   │   │   ├── BillingTable.tsx
 │   │   │   ├── APIKeyManager.tsx
-│   │   │   └── DocsEditor.tsx
+│   │   │   ├── DocsEditor.tsx
+│   │   │   └── EditorSkeleton.tsx         # Editor loading skeleton
+│   │   │
+│   │   ├── simulation/
+│   │   │   └── LabSimulation.tsx           # Three.js 3D simulation
 │   │   │
 │   │   └── shared/                       # Cross-page components
 │   │       ├── LanguageToggle.tsx
 │   │       ├── RoleGuard.tsx
 │   │       ├── SearchBar.tsx
-│   │       └── EmptyState.tsx
+│   │       ├── EmptyState.tsx
+│   │       ├── ThemeProvider.tsx           # Light/dark theme context
+│   │       └── WebVitals.tsx              # Web vitals collector
 │   │
 │   ├── lib/                              # Utilities and services
 │   │   ├── supabase.ts
@@ -353,22 +441,6 @@ casuya-virtual-lab-platform/
 │   │   │   ├── chemistry.ts
 │   │   │   └── biology.ts
 │   │   └── database.ts
-│   │
-│   ├── app/
-│   │   ├── error.tsx                      # Client error boundary
-│   │   ├── global-error.tsx               # Root error boundary
-│   │   └── not-found.tsx                  # 404 page
-│   │
-│   ├── components/
-│   │   ├── simulation/
-│   │   │   └── LabSimulation.tsx           # Three.js 3D simulation
-│   │   ├── shared/
-│   │   │   ├── ThemeProvider.tsx           # Light/dark theme context
-│   │   │   └── WebVitals.tsx              # Web vitals collector
-│   │   ├── student/
-│   │   │   └── LabSkeleton.tsx            # Lab loading skeleton
-│   │   └── admin/
-│   │       └── EditorSkeleton.tsx         # Editor loading skeleton
 │   │
 │   ├── instrumentation.ts                 # Sentry server init
 │   └── middleware.ts
@@ -598,6 +670,8 @@ VARIANTS:
 
 ## DATABASE SCHEMA
 
+> **Note:** Lab content tables (`labs`, `lab_versions`, `lab_templates`, `lab_schemas`, `lab_tags`, `lab_access_log`) are managed by the **Lab Content Service** with its own `lab_content` database. Only the schemas shown below remain in CASUYA's Supabase database.
+
 ```sql
 -- ==========================================
 -- CORE TABLES
@@ -661,19 +735,22 @@ CREATE TABLE subscriptions (
 
 CREATE TABLE labs (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  subtopic_id       UUID REFERENCES subtopics(id) ON DELETE CASCADE,
   title             TEXT NOT NULL,
   title_sw          TEXT NOT NULL,
   description       TEXT,
-  subject           TEXT CHECK (subject IN ('physics','chemistry','biology')) NOT NULL,
-  html_threejs_code TEXT,
+  description_sw    TEXT,
+  subject           TEXT CHECK (subject IN ('physics','chemistry','biology','mathematics')) NOT NULL,
+  is_premium        BOOL DEFAULT FALSE,
   is_published      BOOL DEFAULT FALSE,
-  version           INT DEFAULT 1,
-  security_score    INT DEFAULT 0,
-  created_by        UUID REFERENCES profiles(id),
+  current_version   INT DEFAULT 1,
+  search_vector     TSVECTOR,
   created_at        TIMESTAMPTZ DEFAULT NOW(),
   updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Lab HTML content and version history are managed by the Lab Content Service.
+-- See ../lab-content-service/README.md for the lab_versions, lab_templates,
+-- lab_schemas, lab_tags, and lab_access_log table definitions.
 
 CREATE TABLE lab_progress (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1011,7 +1088,7 @@ All privileged actions are logged to the `audit_log` table with actor, action, t
 | Action | Logged Data |
 |--------|-------------|
 | `lab.publish` | Lab ID, admin ID, timestamp |
-| `lab.code_update` | Lab ID, old + new `html_threejs_code` hash |
+| `lab.code_update` | Lab ID, version number, old + new html_code hash (handled by Lab Content Service) |
 | `user.role_change` | Profile ID, old role, new role |
 | `subscription.override` | Subscription ID, old tier, new tier, reason |
 | `api_key.create` | Developer ID, key ID, scopes |
@@ -1424,6 +1501,8 @@ When a school bell rings and 500 students login at the same time:
 ---
 ## IMPLEMENTATION PHASES
 
+> **Note:** Phases 5 and parts of Phase 8 have been moved to the **Lab Content Service** (`../lab-content-service/`). CASUYA now integrates with the Lab Content Service via HTTP API rather than managing lab content directly.
+
 ### Phase 1: Foundation
 - [ ] Config files: `package.json`, `tailwind.config.js`, `postcss.config.js`, `next.config.js`, `tsconfig.json`
 - [ ] Supabase client setup + type generation
@@ -1456,14 +1535,16 @@ When a school bell rings and 500 students login at the same time:
 - [ ] Docs editor (markdown → documentation table → static pages)
 - [ ] Settings (favicon upload, cache flush)
 
-### Phase 5: Lab Editor
-- [ ] Curriculum builder (topic → subtopic → lab)
-- [ ] Code editor workspace (syntax highlight, line numbers, error flagging)
-- [ ] Live preview (split-screen: code left, `<iframe srcDoc sandbox="allow-scripts">` right)
-- [ ] Save Draft / Publish flow
-- [ ] Server-side DOMPurify sanitization before every code write
-- [ ] Build-time code obfuscation (minify + variable scramble) before storage
-- [ ] Distribution matrix (auto-generated embed links)
+### Phase 5: Lab Content (moved to Lab Content Service)
+- [x] Curriculum builder (topic → subtopic → lab) — Lab Content Service
+- [x] Code editor workspace (syntax highlight, line numbers, error flagging) — Lab Content Service
+- [x] Live preview (split-screen: code left, `<iframe srcDoc sandbox="allow-scripts">` right) — Lab Content Service
+- [x] Save Draft / Publish flow — Lab Content Service
+- [x] Server-side DOMPurify sanitization before every code write — Lab Content Service
+- [x] Templates (4 HTML templates seeded) — Lab Content Service
+- [x] Full-text search — Lab Content Service
+- [x] Content audit logging — Lab Content Service
+- [ ] CASUYA integration: proxy API routes to Lab Content Service (`lib/lab-manager.ts`)
 
 ### Phase 6: Student Dashboard
 - [ ] Student shell (nav + sidebar, EN/SW header)
@@ -1484,7 +1565,7 @@ When a school bell rings and 500 students login at the same time:
 - [ ] Physics engine (rigid-body, vectors)
 - [ ] Chemistry engine (fragment shaders)
 - [ ] Biology engine (compressed models)
-- [ ] Migrate standalone labs to DB
+- [x] Lab content management — moved to Lab Content Service
 
 ### Phase 9: Payments
 - [ ] Subscription tables + storage tracking
@@ -1510,21 +1591,44 @@ When a school bell rings and 500 students login at the same time:
 
 ## QUICK START
 
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL 14+ (for Lab Content Service)
+- Supabase project (for CASUYA platform)
+
+### 1. Lab Content Service (port 3100)
+
 ```bash
-git clone https://github.com/your-org/casuya-virtual-lab-platform.git
+cd ../lab-content-service
+npm install
+cp .env.example .env
+# fill in DATABASE_URL and admin credentials
+npm run migrate
+npm run seed
+npm run dev
+# Dashboard: http://localhost:3100
+# Health: http://localhost:3100/health
+```
+
+### 2. CASUYA Platform (port 3000)
+
+```bash
 cd casuya-virtual-lab-platform
 npm install
 cp .env.example .env.local
-# fill in Supabase keys
+# fill in Supabase keys + Lab Content Service URL
 npm run db:generate
 npm run dev
 ```
+
+Both services must be running for full functionality. CASUYA fetches lab content from the Lab Content Service via HTTP API.
 
 ### Scripts
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | Development server |
+| `npm run dev` | Development server (CASUYA, port 3000) |
 | `npm run build` | Production build |
 | `npm run start` | Production server |
 | `npm run lint` | ESLint check |
@@ -1532,11 +1636,22 @@ npm run dev
 | `npm run db:generate` | Generate Supabase types |
 | `PGPASSWORD=xxx node scripts/run_migration.js` | Run database migration |
 
+### Lab Content Service Scripts (../lab-content-service)
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Development server (port 3100) |
+| `npm run migrate` | Run database migrations |
+| `npm run seed` | Seed 4 HTML templates into database |
+| `npm start` | Production server |
+| `docker-compose up -d` | Start with PostgreSQL in Docker |
+
 ---
 
 ## ENVIRONMENT
 
 ```env
+# CASUYA Platform
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
@@ -1549,6 +1664,10 @@ REDIS_URL=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_WS_URL=ws://localhost:8080
 NODE_ENV=development
+
+# Lab Content Service
+LAB_CONTENT_SERVICE_URL=http://localhost:3100
+LAB_CONTENT_API_KEY=lab-content-secret-key-change-in-production
 ```
 
 ---

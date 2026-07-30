@@ -1,6 +1,8 @@
-import { query } from '@/lib/db'
 import { NextResponse, NextRequest } from 'next/server'
 import { sanitizeLabCode } from '@/lib/lab-processor'
+import { getSessionFromCookies } from '@/lib/auth-guard'
+import { canAccessPremiumContent } from '@/lib/subscription-access'
+import { getLab } from '@/lib/lab-manager'
 
 interface Props {
   params: { id: string }
@@ -9,32 +11,33 @@ interface Props {
 export async function GET(_request: NextRequest, { params }: Props) {
   try {
     const { id } = params
-    const result = await query(
-      `SELECT l.title, l.html_threejs_code, l.is_published, l.subject,
-              s.name AS subject_name
-       FROM labs l
-       LEFT JOIN subjects s ON LOWER(s.name) = LOWER(l.subject)
-       WHERE l.id = $1`,
-      [id]
-    )
+    const lab = await getLab(id)
 
-    if (result.rows.length === 0) {
+    if (!lab) {
       return new NextResponse('<h1>Lab not found</h1>', {
         status: 404,
         headers: { 'Content-Type': 'text/html' },
       })
     }
 
-    const lab = result.rows[0]
-
-    if (!lab.is_published || !lab.html_threejs_code) {
+    if (!lab.html_code) {
       return new NextResponse('<h1>Lab unavailable</h1>', {
         status: 403,
         headers: { 'Content-Type': 'text/html' },
       })
     }
 
-    const sanitized = sanitizeLabCode(lab.html_threejs_code)
+    if (lab.is_premium) {
+      const session = await getSessionFromCookies()
+      if (!session || !(await canAccessPremiumContent(session.id, session.role))) {
+        return new NextResponse('<h1>Premium subscription required</h1>', {
+          status: 403,
+          headers: { 'Content-Type': 'text/html' },
+        })
+      }
+    }
+
+    const sanitized = sanitizeLabCode(lab.html_code)
     const escapedTitle = lab.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
     const wrapper = `<!DOCTYPE html>
@@ -45,14 +48,15 @@ export async function GET(_request: NextRequest, { params }: Props) {
   <title>${escapedTitle}</title>
   <style>body{margin:0;padding:0;overflow:hidden;font-family:system-ui,sans-serif}</style>
 </head>
-<body>${sanitized}</body>
+<body>${sanitized}
+</body>
 </html>`
 
     return new NextResponse(wrapper, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'X-Frame-Options': 'ALLOW-FROM',
         'Content-Security-Policy': "frame-ancestors *",
+        'X-Content-Type-Options': 'nosniff',
       },
     })
   } catch {

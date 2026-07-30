@@ -11,7 +11,7 @@ export function Table({ headers, className = '', children, ...props }: TableProp
         <thead>
           <tr className="bg-bg-tertiary">
             {headers.map((h, i) => (
-              <th key={i} className="px-3 py-2 text-[12px] font-bold uppercase text-text-secondary text-left border border-border-DEFAULT">
+              <th key={i} className="px-3 py-2 text-[12px] font-bold uppercase text-text-secondary text-left border border-border whitespace-nowrap">
                 {h}
               </th>
             ))}
@@ -25,7 +25,7 @@ export function Table({ headers, className = '', children, ...props }: TableProp
 
 export function Tr({ className = '', children, ...props }: HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={`bg-bg-secondary border-b border-border-DEFAULT hover:bg-bg-hover ${className}`} {...props}>
+    <tr className={`bg-bg-secondary border-b border-border hover:bg-bg-hover ${className}`} {...props}>
       {children}
     </tr>
   )
@@ -33,7 +33,7 @@ export function Tr({ className = '', children, ...props }: HTMLAttributes<HTMLTa
 
 export function Td({ className = '', children, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={`px-3 py-2 text-[14px] text-text-primary border border-border-DEFAULT ${className}`} {...props}>
+    <td className={`px-3 py-2 text-[14px] text-text-primary border border-border whitespace-nowrap ${className}`} {...props}>
       {children}
     </td>
   )

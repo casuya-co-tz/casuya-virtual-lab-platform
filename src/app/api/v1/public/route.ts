@@ -1,21 +1,15 @@
-import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { getLabs } from '@/lib/lab-manager'
 
 export async function GET() {
   try {
-    const result = await query(
-      `SELECT l.id, l.title, l.subject, l.version, l.created_at,
-              s.name AS subject_name
-       FROM labs l
-       LEFT JOIN subjects s ON LOWER(s.name) = LOWER(l.subject)
-       WHERE l.is_published = true
-       ORDER BY l.created_at DESC
-       LIMIT 20`
-    )
+    const result = await getLabs({ page: 1, limit: 20 })
     return NextResponse.json({
-      labs: result.rows,
+      labs: result.data,
       tier: 'public',
       message: 'Free public API — no key required. Rate limit: 30 req/min.',
+    }, {
+      headers: { 'Cache-Control': 'public, max-age=60, immutable' },
     })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

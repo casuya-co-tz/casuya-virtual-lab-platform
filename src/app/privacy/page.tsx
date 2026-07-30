@@ -9,7 +9,7 @@ export default function PrivacyPolicyPage() {
   return (
     <>
       <Navbar />
-      <main className="px-6 py-24 bg-bg-primary min-h-screen">
+      <main className="px-4 sm:px-6 py-16 sm:py-24 bg-bg-primary min-h-screen">
         <div className="max-w-3xl mx-auto prose prose-invert">
           {lang === 'sw' ? (
             <>

@@ -1,45 +1,62 @@
-import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth-guard'
-import { cookies } from 'next/headers'
+import { requireAdmin, getSessionFromCookies } from '@/lib/auth-guard'
+import { canAccessPremiumContent } from '@/lib/subscription-access'
+import { getLab, updateLab, deleteLab } from '@/lib/lab-manager'
 import { dispatchEventToAllDevelopers } from '@/lib/webhook-dispatcher'
+import { query } from '@/lib/db'
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const adminId = await requireAdmin()
   if (adminId) {
     try {
-      const result = await query('SELECT * FROM labs WHERE id = $1 AND deleted_at IS NULL', [params.id])
-      if (result.rows.length === 0) {
-        return NextResponse.json({ error: 'Not found' }, { status: 404 })
+      const lab = await getLab(params.id)
+      if (lab) {
+        let localOverrides: Record<string, unknown> = {}
+        try {
+          const local = await query(
+            'SELECT is_published, is_premium, subtopic_id FROM labs WHERE id = $1',
+            [params.id]
+          )
+          if (local.rows[0]) {
+            localOverrides = local.rows[0]
+          }
+        } catch {}
+        return NextResponse.json({ ...lab, ...localOverrides })
       }
-      return NextResponse.json(result.rows[0])
+      try {
+        const local = await query(
+          'SELECT id, title, title_sw, description, subject, html_threejs_code AS html_code, subtopic_id, is_published, is_premium, version AS current_version, updated_at FROM labs WHERE id = $1',
+          [params.id]
+        )
+        if (local.rows[0]) {
+          return NextResponse.json(local.rows[0])
+        }
+      } catch {}
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
     } catch {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
   }
 
   try {
-    const result = await query('SELECT * FROM labs WHERE id = $1 AND is_published = true AND deleted_at IS NULL', [params.id])
-    if (result.rows.length === 0) {
+    const lab = await getLab(params.id)
+    if (!lab) {
+      try {
+        const local = await query(
+          'SELECT id, title, title_sw, description, subject, html_threejs_code AS html_code, subtopic_id, is_published, is_premium, version AS current_version, updated_at FROM labs WHERE id = $1 AND is_published = true',
+          [params.id]
+        )
+        if (local.rows[0]) {
+          return NextResponse.json(local.rows[0])
+        }
+      } catch {}
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    const lab = result.rows[0]
-
     if (lab.is_premium) {
-      const cookieStore = await cookies()
-      const sid = cookieStore.get('sid')?.value
-      if (sid) {
-        const subResult = await query(
-          `SELECT id FROM subscriptions WHERE user_id = $1 AND status = 'active' AND tier IN ('premium', 'enterprise')`,
-          [sid]
-        )
-        if (subResult.rows.length === 0) {
-          const { html_threejs_code, ...labMetadata } = lab
-          return NextResponse.json({ ...labMetadata, code_gated: true })
-        }
-      } else {
-        const { html_threejs_code, ...labMetadata } = lab
+      const session = await getSessionFromCookies()
+      if (!session || !(await canAccessPremiumContent(session.id, session.role))) {
+        const { html_code, scoring_config, ...labMetadata } = lab
         return NextResponse.json({ ...labMetadata, code_gated: true })
       }
     }
@@ -58,30 +75,46 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
   try {
     const body = await req.json()
-    if (!body.title || !body.subtopic_id || !body.subject) {
-      return NextResponse.json({ error: 'Missing required fields: title, subtopic_id, subject' }, { status: 400 })
-    }
-    const result = await query(
-      `UPDATE labs SET subtopic_id = $1, title = $2, title_sw = $3, description = $4, subject = $5,
-       html_threejs_code = $6, is_published = $7, version = version + 1, updated_at = NOW()
-       WHERE id = $8 RETURNING *`,
-      [body.subtopic_id, body.title, body.title_sw || '', body.description || '', body.subject,
-       body.html_threejs_code || null, body.is_published, params.id]
-    )
-    if (result.rows.length === 0) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    const { id: _id, created_at: _ca, updated_at: _ua, ...cleanBody } = body
+    const lab = await updateLab(params.id, cleanBody)
+
+    if (!lab) {
+      return NextResponse.json({ error: 'Not found or update failed' }, { status: 404 })
     }
 
-    const updatedLab = result.rows[0]
+    try {
+      await query(
+        `UPDATE labs SET
+           title = COALESCE($1, title), title_sw = COALESCE($2, title_sw),
+           description = COALESCE($3, description), subject = COALESCE($4, subject),
+           html_threejs_code = COALESCE($5, html_threejs_code), subtopic_id = COALESCE($6, subtopic_id),
+           thumbnail = COALESCE($7, thumbnail), is_published = COALESCE($8, is_published), is_premium = COALESCE($9, is_premium),
+           version = COALESCE($10, version), updated_at = NOW()
+         WHERE id = $11`,
+        [
+          body.title || null, body.title_sw || null,
+          body.description || null, body.subject || null,
+          body.html_code || null, body.subtopic_id || null,
+          body.thumbnail || null, body.is_published !== undefined ? body.is_published : null,
+          body.is_premium !== undefined ? body.is_premium : null,
+          lab.current_version, params.id,
+        ]
+      )
+    } catch (dbErr) {
+      console.error('Failed to sync lab update to local DB:', dbErr)
+    }
+
     dispatchEventToAllDevelopers('lab.updated', {
-      id: updatedLab.id,
-      title: updatedLab.title,
-      subject: updatedLab.subject,
-      is_published: updatedLab.is_published,
-      version: updatedLab.version,
+      id: lab.id,
+      title: lab.title,
+      subject: lab.subject,
+      is_published: body.is_published !== undefined ? body.is_published : true,
+      is_premium: lab.is_premium,
+      version: lab.current_version,
     }).catch(() => {})
 
-    return NextResponse.json(updatedLab)
+    return NextResponse.json(lab)
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -94,9 +127,14 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   }
 
   try {
-    const result = await query('UPDATE labs SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id', [params.id])
-    if (result.rows.length === 0) {
+    const deleted = await deleteLab(params.id)
+    if (!deleted) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    try {
+      await query('DELETE FROM labs WHERE id = $1', [params.id])
+    } catch (dbErr) {
+      console.error('Failed to sync lab deletion to local DB:', dbErr)
     }
     return NextResponse.json({ deleted: true })
   } catch {

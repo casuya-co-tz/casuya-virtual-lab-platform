@@ -1,11 +1,10 @@
 import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
+import { getUserIdFromSession } from '@/lib/auth-guard'
 
 export async function PUT(req: Request) {
-  const cookieStore = await cookies()
-  const userId = cookieStore.get('sid')?.value
+  const userId = await getUserIdFromSession()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {

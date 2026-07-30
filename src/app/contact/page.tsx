@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/Card'
 
 export default function ContactPage() {
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
       <h1 className="text-[clamp(20px,4vw,32px)] font-bold text-text-primary mb-2">Contact</h1>
       <p className="text-[14px] text-text-secondary mb-8">
         Reach the Casuya support team for product questions, onboarding help, and classroom support.

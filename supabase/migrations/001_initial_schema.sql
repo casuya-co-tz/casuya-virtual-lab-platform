@@ -76,6 +76,7 @@ CREATE TABLE labs (
   description       TEXT,
   subject           TEXT CHECK (subject IN ('physics','chemistry','biology')) NOT NULL,
   html_threejs_code TEXT,
+  thumbnail         TEXT,
   is_published      BOOL DEFAULT FALSE,
   version           INT DEFAULT 1,
   security_score    INT DEFAULT 0,

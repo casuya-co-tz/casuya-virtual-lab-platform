@@ -1,4 +1,4 @@
-const CACHE_NAME = 'casuya-v2'
+const CACHE_NAME = 'casuya-v3'
 const STATIC_ASSETS = [
   '/',
   '/auth',
@@ -28,28 +28,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event
 
-  if (request.method !== 'GET' && request.method !== 'POST') return
+  if (request.method !== 'GET') return
 
   if (request.url.includes('/api/vitals')) {
     event.respondWith(
       fetch(request).catch(() => new Response(JSON.stringify({ ok: true }), { status: 200 }))
-    )
-    return
-  }
-
-  if (request.url.includes('/api/progress') && request.method === 'POST') {
-    event.respondWith(
-      fetch(request).catch(async () => {
-        try {
-          const body = await request.clone().json()
-          await queueProgressUpdate(body)
-          self.registration.sync?.register('sync-progress').catch(() => {})
-        } catch {}
-        return new Response(JSON.stringify({ queued: true, offline: true }), {
-          status: 202,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      })
     )
     return
   }

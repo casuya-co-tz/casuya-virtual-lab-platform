@@ -84,11 +84,7 @@ export interface Database {
           title_sw: string
           description: string | null
           subject: 'physics' | 'chemistry' | 'biology'
-          html_threejs_code: string | null
           is_published: boolean
-          version: number
-          security_score: number
-          created_by: string | null
           created_at: string
           updated_at: string
         }

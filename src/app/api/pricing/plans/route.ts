@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     const targetedPlans = result.rows.filter((p: any) => p.user_type === userType)
 
     return NextResponse.json(targetedPlans, { status: 200 })
-  } catch (err: any) {
-    return NextResponse.json({ error: 'DB_FETCH_FAILURE', details: err.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

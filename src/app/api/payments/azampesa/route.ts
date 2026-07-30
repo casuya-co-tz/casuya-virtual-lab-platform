@@ -1,31 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { requireAuth } from '@/lib/auth-guard'
+import { mobileCheckout, PROVIDER_MAP, formatAccountNumber } from '@/lib/azampay'
 
 export async function POST(req: NextRequest) {
-  const userId = await requireAuth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { phone, amount, currency } = await req.json()
-  if (!phone || !amount) return NextResponse.json({ error: 'Phone and amount required' }, { status: 400 })
-
-  const txId = `azampesa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-
   try {
-    await query(
-      `INSERT INTO payments (user_id, amount, currency, payment_method, status, metadata)
-       VALUES ($1, $2, $3, 'azampesa', 'pending', $4)`,
-      [userId, amount, currency || 'TZS', JSON.stringify({ phone, transaction_id: txId })]
+    const userId = await requireAuth()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { phone, plan_id, provider: rawProvider } = await req.json()
+    if (!phone || !plan_id) {
+      return NextResponse.json({ error: 'Phone and plan_id required' }, { status: 400 })
+    }
+
+    const provider = PROVIDER_MAP[(rawProvider || 'mpesa').toLowerCase()]
+    if (!provider) return NextResponse.json({ error: 'Invalid provider' }, { status: 400 })
+    const planResult = await query(
+      'SELECT id, price, currency FROM pricing_plans WHERE id = $1 AND is_active = true',
+      [plan_id]
+    )
+    if (planResult.rows.length === 0) {
+      return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+    }
+    const plan = planResult.rows[0]
+
+    const txResult = await query(
+      `INSERT INTO payment_transactions (user_id, plan_id, amount, currency, provider, status, metadata)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6)
+       RETURNING id`,
+      [userId, plan.id, plan.price, plan.currency || 'TZS', provider, JSON.stringify({ phone, source: 'payments_api' })]
     )
 
-    return NextResponse.json({
-      success: true,
-      transaction_id: txId,
-      message: 'AzamPesa push sent. Check your phone.',
-      amount,
-      phone,
+    const transactionId = txResult.rows[0].id
+
+    if (!process.env.AZAMPESA_APP_NAME || !process.env.AZAMPESA_CLIENT_ID) {
+      return NextResponse.json({
+        success: false,
+        transaction_id: transactionId,
+        error: 'Payment gateway not configured',
+      }, { status: 503 })
+    }
+
+    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/azampesa/callback`
+
+    const gatewayResult = await mobileCheckout({
+      amount: String(plan.price),
+      accountNumber: formatAccountNumber(phone),
+      externalId: transactionId,
+      provider,
+      currency: plan.currency || 'TZS',
+      callbackUrl,
     })
-  } catch {
+
+    if (gatewayResult.success && gatewayResult.transactionId) {
+      await query(
+        `UPDATE payment_transactions SET provider_transaction_id = $1 WHERE id = $2`,
+        [gatewayResult.transactionId, transactionId]
+      )
+    }
+
+    if (!gatewayResult.success) {
+      return NextResponse.json({
+        success: false, transaction_id: transactionId,
+        error: gatewayResult.message || 'Payment initiation failed',
+      }, { status: 502 })
+    }
+
+    return NextResponse.json({
+      success: true, transaction_id: transactionId,
+      message: 'Payment initiated. Check your phone.',
+      amount: plan.price, phone,
+    })
+  } catch (err) {
+    console.error('Payment error:', err)
     return NextResponse.json({ error: 'Payment failed' }, { status: 500 })
   }
 }
@@ -36,7 +83,7 @@ export async function GET() {
 
   try {
     const result = await query(
-      'SELECT id, amount, currency, payment_method, status, created_at FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20',
+      'SELECT id, amount, currency, provider, status, created_at FROM payment_transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20',
       [userId]
     )
     return NextResponse.json(result.rows)

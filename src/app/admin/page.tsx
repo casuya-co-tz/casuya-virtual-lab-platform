@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
-import { Card } from '@/components/ui/Card'
 import { Table, Tr, Td } from '@/components/ui/Table'
 import { Badge } from '@/components/ui/Badge'
 import { StatsGrid } from '@/components/admin/StatsGrid'
@@ -20,10 +19,9 @@ interface Lab {
   id: string
   title: string
   subject: string
-  subject_name: string
-  is_published: boolean
-  version: number
-  created_at: string
+  is_premium: boolean
+  current_version: number
+  updated_at: string
 }
 
 export default function AdminDashboard() {
@@ -35,11 +33,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     Promise.all([
       fetch('/api/admin/stats').then(r => r.ok ? r.json() : null),
-      fetch('/api/labs').then(r => r.ok ? r.json() : []),
+      fetch('/api/labs').then(r => r.ok ? r.json() : { data: [] }),
     ])
       .then(([statsData, labsData]) => {
         setStats(statsData)
-        setLabs(Array.isArray(labsData) ? labsData.slice(0, 10) : [])
+        setLabs(Array.isArray(labsData.data) ? labsData.data.slice(0, 10) : [])
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -48,8 +46,8 @@ export default function AdminDashboard() {
   if (loading) return <p className="text-text-secondary">{t('admin.loading', lang)}</p>
 
   return (
-    <div>
-      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">{t('admin.dashboard', lang)}</h1>
+    <div className="px-1 py-2">
+      <h1 className="text-[clamp(18px,4vw,28px)] font-bold text-text-primary mb-3">{t('admin.dashboard', lang)}</h1>
 
       {stats && (
         <StatsGrid stats={[
@@ -59,21 +57,23 @@ export default function AdminDashboard() {
         ]} />
       )}
 
-      <h2 className="text-[16px] font-bold text-text-primary mt-8 mb-4">{t('admin.recentLabs', lang)}</h2>
+      <h2 className="text-[14px] font-bold text-text-primary mt-4 mb-2">{t('admin.recentLabs', lang)}</h2>
       {labs.length === 0 ? (
-        <Card><p className="text-[14px] text-text-secondary text-center py-4">{t('admin.noLabs', lang)}</p></Card>
+        <p className="text-[13px] text-text-secondary text-center py-4">{t('admin.noLabs', lang)}</p>
       ) : (
+        <div className="overflow-x-auto">
         <Table headers={[t('admin.tableTitle', lang), t('admin.tableSubject', lang), t('admin.tableStatus', lang), t('admin.tableVersion', lang), t('admin.tableActions', lang)]}>
           {labs.map(lab => (
             <Tr key={lab.id}>
               <Td>{lab.title}</Td>
-              <Td>{lab.subject_name || lab.subject}</Td>
-              <Td><Badge variant={lab.is_published ? 'success' : 'neutral'}>{lab.is_published ? t('admin.published', lang) : t('admin.draft', lang)}</Badge></Td>
-              <Td>v{lab.version}</Td>
-              <Td><a href={`/admin/labs/${lab.id}`} className="text-[12px] text-accent-blue underline">{t('admin.edit', lang)}</a></Td>
+              <Td>{lab.subject}</Td>
+              <Td><Badge variant={lab.is_premium ? 'success' : 'neutral'}>{lab.is_premium ? t('admin.published', lang) : t('admin.draft', lang)}</Badge></Td>
+              <Td>v{lab.current_version}</Td>
+              <Td><a href={`/admin/labs/${lab.id}`} className="text-[11px] text-accent-blue underline">{t('admin.edit', lang)}</a></Td>
             </Tr>
           ))}
         </Table>
+        </div>
       )}
     </div>
   )

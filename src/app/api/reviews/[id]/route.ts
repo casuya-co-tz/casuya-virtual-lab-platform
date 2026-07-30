@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { query } from '@/lib/db'
 import { logAuditEvent } from '@/lib/audit-logger'
+import { getUserIdFromSession } from '@/lib/auth-guard'
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('sid')?.value
+    const userId = await getUserIdFromSession()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { id } = params
@@ -56,16 +55,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     logAuditEvent({ userId, action: 'update', entityType: 'review', entityId: id })
 
     return NextResponse.json(result.rows[0])
-  } catch (error: any) {
-    console.error('Review PUT Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('sid')?.value
+    const userId = await getUserIdFromSession()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { id } = params
@@ -83,8 +80,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     logAuditEvent({ userId, action: 'delete', entityType: 'review', entityId: id })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('Review DELETE Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

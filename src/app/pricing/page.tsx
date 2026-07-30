@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { pricingTranslations } from '@/lib/i18n'
 import { PricingSection } from '@/components/pricing/PricingSection'
@@ -22,6 +23,7 @@ interface Plan {
 
 export default function PricingPage() {
   const { lang } = useLanguage()
+  const router = useRouter()
   const t = (key: string) => (pricingTranslations[lang] as Record<string, string>)[key] || key
   const [standardPlans, setStandardPlans] = useState<Plan[]>([])
   const [developerPlans, setDeveloperPlans] = useState<Plan[]>([])
@@ -44,14 +46,18 @@ export default function PricingPage() {
     ]).then(([std, dev, sub]) => {
       setStandardPlans(std)
       setDeveloperPlans(dev)
-      if (sub?.plan?.slug) setCurrentPlanSlug(sub.plan.slug)
+      if (sub?.plan?.slug) {
+        setCurrentPlanSlug(sub.plan.slug)
+      } else {
+        setCurrentPlanSlug('free')
+      }
       if (sub?.subscription) setSubscription(sub)
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
 
-  const resolveFeatures = (featureKeys: string[]): string[] => {
-    return featureKeys.map(key => {
+  const resolveFeatures = (featureKeys?: string[]): string[] => {
+    return (featureKeys || []).map(key => {
       const translated = (pricingTranslations[lang] as Record<string, string>)[key]
       return translated || key.replace('pricing.features.', '')
     })
@@ -124,7 +130,7 @@ export default function PricingPage() {
             plans={standardFeatures}
             lang={lang}
             currentPlanSlug={currentPlanSlug}
-            onSelectPlan={(slug) => console.log('Selected standard plan:', slug)}
+            onSelectPlan={(slug) => router.push(`/payment?plan=${slug}&section=standard`)}
           />
         </div>
 
@@ -134,7 +140,7 @@ export default function PricingPage() {
             plans={developerFeatures}
             lang={lang}
             currentPlanSlug={currentPlanSlug}
-            onSelectPlan={(slug) => console.log('Selected developer plan:', slug)}
+            onSelectPlan={(slug) => router.push(`/payment?plan=${slug}&section=developer`)}
           />
         </div>
 
@@ -163,7 +169,7 @@ export default function PricingPage() {
 
         <div className="mt-12 text-center">
           <p className="text-sm text-text-secondary">
-            💡 AzamPesa-to-AzamPesa: {lang === 'sw' ? 'BURE (Hamisho la Bure)' : 'FREE (Free Transfer)'}
+            💡 {lang === 'sw' ? 'Lipa kwa M-Pesa, Airtel Money, Mixx by Yas, Halopesa, au Azampesa' : 'Pay with M-Pesa, Airtel Money, Mixx by Yas, Halopesa, or Azampesa'}
           </p>
         </div>
       </div>

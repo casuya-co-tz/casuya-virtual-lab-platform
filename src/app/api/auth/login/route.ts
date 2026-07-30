@@ -1,15 +1,26 @@
 import { query } from '@/lib/db'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { logAuditEvent } from '@/lib/audit-logger'
+import { loginLimiter } from '@/lib/rate-limiter'
+import crypto from 'crypto'
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'unknown'
+
+    const rateResult = loginLimiter.check(ip, 'login')
+    if (!rateResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Try again in 1 minute.' },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const password = typeof body.password === 'string' ? body.password : ''
-    const ip = req.headers.get('x-forwarded-for') || 'unknown'
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
@@ -28,7 +39,7 @@ export async function POST(req: Request) {
     }
 
     const authUser = userResult.rows[0]
-    const valid = bcrypt.compareSync(password, authUser.encrypted_password)
+    const valid = await bcrypt.compare(password, authUser.encrypted_password)
     if (!valid) {
       await logAuditEvent({ userId: authUser.id, action: 'login_failed', entityType: 'user', ipAddress: ip })
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
@@ -51,9 +62,17 @@ export async function POST(req: Request) {
     }
 
     const user = profileResult.rows[0]
+
+    const sessionId = crypto.randomUUID()
+    await query(
+      `INSERT INTO user_sessions (id, user_id, ip_address, user_agent, expires_at)
+       VALUES ($1, $2, $3, $4, NOW() + INTERVAL '7 days')`,
+      [sessionId, user.id, ip, req.headers.get('user-agent') || null]
+    )
+
     const isProd = process.env.NODE_ENV === 'production'
     const cookieStore = await cookies()
-    cookieStore.set('sid', user.id, {
+    cookieStore.set('sid', sessionId, {
       httpOnly: true,
       secure: isProd,
       sameSite: 'lax',

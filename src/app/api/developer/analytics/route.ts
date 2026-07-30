@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
-import { cookies } from 'next/headers'
-
-async function getDeveloperId(): Promise<string | null> {
-  const cookieStore = await cookies()
-  const sid = cookieStore.get('sid')?.value
-  if (!sid) return null
-  const result = await query('SELECT id FROM developer_profiles WHERE id = $1', [sid])
-  return result.rows.length > 0 ? sid : null
-}
+import { getDeveloperId } from '@/lib/developer-auth'
 
 export async function GET(req: NextRequest) {
   const developerId = await getDeveloperId()

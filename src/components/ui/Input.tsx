@@ -17,7 +17,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <input
           ref={ref}
-          className={`rounded-xl h-[clamp(36px,5vw,40px)] px-3 bg-bg-secondary border text-[14px] text-text-primary
+          className={`rounded-xl h-[clamp(40px,5vw,44px)] px-3 bg-bg-secondary border text-[14px] text-text-primary
             placeholder:text-text-disabled transition-all duration-300 ease-out
             focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:border-accent-blue
             ${error ? 'border-accent-red' : 'border-border-strong'}

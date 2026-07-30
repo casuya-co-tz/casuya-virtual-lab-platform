@@ -1,38 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
-import crypto from 'crypto'
+import { verifyWebhookChecksum } from '@/lib/azampay'
 
 export async function POST(req: NextRequest) {
-  const body = await req.text()
-  const signature = req.headers.get('x-azampesa-signature')
-
-  if (!signature) {
-    return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
-  }
-
-  const secret = process.env.AZAMPESA_SECRET_KEY
-  if (!secret) {
-    return NextResponse.json({ error: 'Payment gateway not configured' }, { status: 500 })
-  }
-
-  const expectedSig = `sha256=${crypto.createHmac('sha256', secret).update(body).digest('hex')}`
-  const sigBuf = Buffer.from(expectedSig)
-  const headerBuf = Buffer.from(signature)
-  if (sigBuf.length !== headerBuf.length || !crypto.timingSafeEqual(sigBuf, headerBuf)) {
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
-  }
-
-  const data = JSON.parse(body)
-  const { TransactionID, ResultCode, ResultDesc, Amount, PhoneNumber } = data
-
-  if (!TransactionID) {
-    return NextResponse.json({ error: 'Missing TransactionID' }, { status: 400 })
-  }
-
   try {
+    const body = await req.json()
+
+    if (process.env.AZAMPESA_APP_NAME) {
+      const apiKey = process.env.AZAMPESA_API_KEY
+      if (!apiKey) {
+        return NextResponse.json({ error: 'Webhook verification not configured' }, { status: 503 })
+      }
+      const signature = req.headers.get('x-checksum') || body.checksum
+      if (!signature || typeof signature !== 'string') {
+        return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+      }
+      const { checksum: _checksum, ...payloadForVerify } = body
+      if (!verifyWebhookChecksum(apiKey, payloadForVerify, signature)) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      }
+    }
+
+    const {
+      externalId,
+      transactionId: providerTxId,
+      status,
+      resultCode,
+      resultDesc,
+      amount,
+    } = body
+
+    const refId = externalId || providerTxId
+    if (!refId) {
+      return NextResponse.json({ error: 'Missing reference ID' }, { status: 400 })
+    }
+
     const txResult = await query(
-      `SELECT id, user_id, plan_id FROM payment_transactions WHERE provider_transaction_id = $1`,
-      [TransactionID]
+      `SELECT id, user_id, plan_id FROM payment_transactions WHERE id = $1 OR provider_transaction_id = $1`,
+      [refId]
     )
 
     if (txResult.rows.length === 0) {
@@ -41,10 +46,13 @@ export async function POST(req: NextRequest) {
 
     const tx = txResult.rows[0]
 
-    if (ResultCode === 0 || ResultCode === '0') {
+    const success = status === 'Completed' || status === 'completed' || resultCode === 0 || resultCode === '0'
+
+    if (success) {
       await query(
-        `UPDATE payment_transactions SET status = 'completed', completed_at = NOW() WHERE id = $1`,
-        [tx.id]
+        `UPDATE payment_transactions SET status = 'completed', completed_at = NOW(),
+         provider_transaction_id = COALESCE(provider_transaction_id, $1) WHERE id = $2`,
+        [providerTxId, tx.id]
       )
 
       const planResult = await query(
@@ -70,10 +78,10 @@ export async function POST(req: NextRequest) {
               WHEN $2 = 'pro' THEN 'premium'
               WHEN $2 = 'institution' THEN 'enterprise'
               ELSE tier END,
-              plan_id = $2, status = 'active', expires_at = $3,
-              provider = 'azampesa', transaction_id = $4, amount = $5
+              plan_id = $3, status = 'active', expires_at = $4,
+              provider = 'Azampesa', transaction_id = $5, amount = $6
             WHERE id = $1`,
-            [existingSub.rows[0].id, plan.slug, expiresAt, TransactionID, Amount]
+            [existingSub.rows[0].id, plan.slug, tx.plan_id, expiresAt, providerTxId, amount]
           )
         } else {
           const tierMapping: Record<string, string> = {
@@ -81,8 +89,8 @@ export async function POST(req: NextRequest) {
           }
           await query(
             `INSERT INTO subscriptions (user_id, tier, status, plan_id, expires_at, provider, transaction_id, amount, currency)
-             VALUES ($1, $2, 'active', $3, $4, 'azampesa', $5, $6, 'TZS')`,
-            [tx.user_id, tierMapping[plan.slug] || 'premium', tx.plan_id, expiresAt, TransactionID, Amount]
+             VALUES ($1, $2, 'active', $3, $4, 'Azampesa', $5, $6, 'TZS')`,
+            [tx.user_id, tierMapping[plan.slug] || 'premium', tx.plan_id, expiresAt, providerTxId, amount]
           )
         }
 
@@ -98,9 +106,9 @@ export async function POST(req: NextRequest) {
     } else {
       await query(
         `UPDATE payment_transactions SET status = 'failed', metadata = jsonb_set(COALESCE(metadata, '{}'), '{error}', $1::jsonb) WHERE id = $2`,
-        [JSON.stringify(ResultDesc || 'Payment failed'), tx.id]
+        [JSON.stringify(resultDesc || 'Payment failed'), tx.id]
       )
-      return NextResponse.json({ success: false, message: ResultDesc || 'Payment failed' })
+      return NextResponse.json({ success: false, message: resultDesc || 'Payment failed' })
     }
   } catch (err) {
     console.error('Payment callback error:', err)

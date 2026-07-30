@@ -41,7 +41,7 @@ export async function GET() {
         currency: sub.currency,
       } : null,
     }, { status: 200 })
-  } catch (err: any) {
-    return NextResponse.json({ error: 'SUBSCRIPTION_FETCH_EXCEPTION', details: err.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

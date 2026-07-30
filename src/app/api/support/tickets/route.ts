@@ -7,11 +7,29 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const result = await query(
-      `SELECT id, subject, description, priority, status, plan_tier, assigned_to, created_at, updated_at
-       FROM support_tickets WHERE user_id = $1 ORDER BY created_at DESC`,
-      [userId]
-    )
+    const roleResult = await query('SELECT role FROM profiles WHERE id = $1', [userId])
+    const isAdmin = roleResult.rows[0]?.role === 'admin'
+
+    let result
+    if (isAdmin) {
+      result = await query(
+        `SELECT st.id, st.subject, st.description, st.priority, st.status, st.plan_tier,
+                st.assigned_to, st.created_at, st.updated_at,
+                p.full_name AS user_name, u.email AS user_email
+         FROM support_tickets st
+         LEFT JOIN profiles p ON p.id = st.user_id
+         LEFT JOIN auth.users u ON u.id = st.user_id
+         ORDER BY
+           CASE st.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,
+           st.created_at DESC`
+      )
+    } else {
+      result = await query(
+        `SELECT id, subject, description, priority, status, plan_tier, assigned_to, created_at, updated_at
+         FROM support_tickets WHERE user_id = $1 ORDER BY created_at DESC`,
+        [userId]
+      )
+    }
     return NextResponse.json(result.rows)
   } catch {
     return NextResponse.json({ error: 'Failed' }, { status: 500 })

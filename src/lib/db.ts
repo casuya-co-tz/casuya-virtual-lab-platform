@@ -1,4 +1,4 @@
-import { Pool } from 'pg'
+import { Pool, QueryResult } from 'pg'
 
 function getEnv(key: string): string {
   const val = process.env[key]
@@ -12,7 +12,9 @@ const pool = new Pool({
   user: getEnv('PGUSER'),
   password: getEnv('PGPASSWORD'),
   database: getEnv('PGDATABASE'),
-  max: 10,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 })
 
 export async function query(text: string, params?: unknown[]) {
@@ -25,14 +27,13 @@ export async function query(text: string, params?: unknown[]) {
   }
 }
 
-export async function transaction<T>(fn: (query: (text: string, params?: unknown[]) => Promise<T>) => Promise<T>) {
+export async function transaction<T>(
+  fn: (query: (text: string, params?: unknown[]) => Promise<QueryResult>) => Promise<T>
+): Promise<T> {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
-    const result = await fn(async (text: string, params?: unknown[]) => {
-      const res = await client.query(text, params)
-      return res as unknown as T
-    })
+    const result = await fn(async (text: string, params?: unknown[]) => client.query(text, params))
     await client.query('COMMIT')
     return result
   } catch (e) {

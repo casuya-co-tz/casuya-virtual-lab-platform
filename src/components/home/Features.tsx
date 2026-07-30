@@ -7,16 +7,16 @@ export function Features() {
   ]
 
   return (
-    <section className="px-6 py-24 bg-bg-secondary border-b border-border-default">
+    <section className="px-4 sm:px-6 py-10 sm:py-20 lg:py-24 bg-bg-secondary border-b border-border">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-[clamp(28px,5vw,40px)] font-extrabold text-text-primary mb-12 text-center tracking-tight">
+        <h2 className="text-[clamp(22px,5vw,38px)] font-extrabold text-text-primary mb-6 sm:mb-10 text-center tracking-tight">
           BUILT FOR TANZANIA
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
           {features.map(f => (
-            <div key={f.title} className="p-8 bg-bg-primary border border-border-strong text-center flex flex-col items-center">
-              <h3 className="text-[16px] font-bold uppercase tracking-[0.5px] text-accent-blue mb-4">{f.title}</h3>
-              <p className="text-[14px] text-text-secondary leading-relaxed">{f.desc}</p>
+            <div key={f.title} className="p-4 sm:p-6 bg-bg-primary border border-border-strong text-center flex flex-col items-center">
+              <h3 className="text-[13px] sm:text-[15px] font-bold uppercase tracking-wide text-accent-blue mb-2 sm:mb-3">{f.title}</h3>
+              <p className="text-[12px] sm:text-[13px] text-text-secondary leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>

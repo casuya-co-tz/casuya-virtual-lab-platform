@@ -17,7 +17,7 @@ export function Tabs({ tabs, defaultTab }: TabsProps) {
 
   return (
     <div>
-      <div className="flex border-b border-border-DEFAULT">
+      <div className="flex overflow-x-auto border-b border-border">
         {tabs.map(t => (
           <button
             key={t.id}

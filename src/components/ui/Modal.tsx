@@ -28,19 +28,19 @@ export function Modal({ open, onClose, onConfirm, title, className = '', childre
       onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
     >
       <div
-        className={`bg-bg-secondary border-2 border-border-strong w-[clamp(480px,80vw,800px)] ${className}`}
+        className={`bg-bg-secondary border-2 border-border-strong w-[min(90vw,800px)] max-h-[90vh] overflow-y-auto ${className}`}
         {...props}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border-DEFAULT">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border">
             <h2 className="text-[16px] font-bold text-text-primary">{title}</h2>
-            <button onClick={onClose} className="text-text-secondary hover:text-text-primary text-[20px] leading-none">x</button>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center text-text-secondary hover:text-text-primary text-[20px] leading-none">x</button>
           </div>
         )}
-        <div className="px-6 py-4">{children}</div>
-        <div className="flex justify-end gap-2 px-6 py-4 bg-bg-tertiary border-t border-border-DEFAULT">
-          <button onClick={onClose} className="px-4 py-2 text-[14px] text-text-secondary border border-border-strong">Cancel</button>
-          <button onClick={onConfirm || onClose} className="px-4 py-2 text-[14px] text-white bg-accent-blue border border-accent-blue">Confirm</button>
+        <div className="px-4 sm:px-6 py-4">{children}</div>
+        <div className="flex justify-end gap-2 px-4 sm:px-6 py-4 bg-bg-tertiary border-t border-border">
+          <button onClick={onClose} className="h-10 px-4 text-[14px] text-text-secondary border border-border-strong">Cancel</button>
+          <button onClick={onConfirm || onClose} className="h-10 px-4 text-[14px] text-white bg-accent-blue border border-accent-blue">Confirm</button>
         </div>
       </div>
     </div>

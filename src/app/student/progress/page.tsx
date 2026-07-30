@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
-import { Card } from '@/components/ui/Card'
+
 
 interface ProgressData {
   labs_completed: number
@@ -18,7 +18,7 @@ export default function ProgressPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/lab-progress').then(r => r.ok ? r.json() : []),
+      fetch('/api/progress').then(r => r.ok ? r.json() : []),
       fetch('/api/subjects').then(r => r.ok ? r.json() : []),
     ]).then(([progress, subjects]) => {
       const progressArr = Array.isArray(progress) ? progress : []
@@ -39,56 +39,52 @@ export default function ProgressPage() {
     }).catch(() => setLoading(false))
   }, [])
 
-  if (loading) return <div className="p-8 text-text-secondary">{t('common.loading', lang)}</div>
+  if (loading) return <div className="p-2 text-text-secondary">{t('common.loading', lang)}</div>
 
   return (
-    <div className="min-h-screen bg-bg-secondary px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">{t('progress.title', lang)}</h1>
+    <div className="px-1 py-2">
+      <h1 className="text-[clamp(18px,4vw,28px)] font-bold text-text-primary mb-3">{t('progress.title', lang)}</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card>
-            <p className="text-[12px] uppercase text-text-secondary">{t('progress.labsCompleted', lang)}</p>
-            <p className="text-[28px] font-bold text-text-primary mt-1">{data?.labs_completed || 0}</p>
-          </Card>
-          <Card>
-            <p className="text-[12px] uppercase text-text-secondary">{t('progress.averageScore', lang)}</p>
-            <p className="text-[28px] font-bold text-text-primary mt-1">{data?.average_score || 0}%</p>
-          </Card>
-          <Card>
-            <p className="text-[12px] uppercase text-text-secondary">{t('progress.totalTime', lang)}</p>
-            <p className="text-[28px] font-bold text-text-primary mt-1">{data?.total_labs || 0}</p>
-          </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+        <div className="bg-bg-primary border border-border p-2">
+          <p className="text-[10px] uppercase text-text-secondary">{t('progress.labsCompleted', lang)}</p>
+          <p className="text-[20px] sm:text-[24px] font-bold text-text-primary mt-0.5">{data?.labs_completed || 0}</p>
         </div>
-
-        <h2 className="text-[16px] font-bold text-text-primary mb-4">{t('progress.recentActivity', lang)}</h2>
-        {!data?.recent_activity?.length ? (
-          <Card className="text-center py-8">
-            <p className="text-text-secondary">{t('progress.noActivity', lang)}</p>
-          </Card>
-        ) : (
-          <Card>
-            <div className="space-y-3">
-              {data.recent_activity.map((a, i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-border-DEFAULT last:border-0">
-                  <div>
-                    <p className="text-[14px] font-medium text-text-primary">{a.lab_title}</p>
-                    <p className="text-[12px] text-text-secondary">{new Date(a.completed_at).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[14px] font-bold text-text-primary">{a.score}%</span>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full ${
-                      a.status === 'completed' ? 'bg-accent-green/20 text-accent-green' : 'bg-accent-amber/20 text-accent-amber'
-                    }`}>
-                      {a.status === 'completed' ? t('student.status.completed', lang) : t('student.status.inProgress', lang)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
+        <div className="bg-bg-primary border border-border p-2">
+          <p className="text-[10px] uppercase text-text-secondary">{t('progress.averageScore', lang)}</p>
+          <p className="text-[20px] sm:text-[24px] font-bold text-text-primary mt-0.5">{data?.average_score || 0}%</p>
+        </div>
+        <div className="bg-bg-primary border border-border p-2">
+          <p className="text-[10px] uppercase text-text-secondary">{t('progress.totalTime', lang)}</p>
+          <p className="text-[20px] sm:text-[24px] font-bold text-text-primary mt-0.5">{data?.total_labs || 0}</p>
+        </div>
       </div>
+
+      <h2 className="text-[14px] font-bold text-text-primary mb-2">{t('progress.recentActivity', lang)}</h2>
+      {!data?.recent_activity?.length ? (
+        <div className="text-center py-4 text-text-secondary">{t('progress.noActivity', lang)}</div>
+      ) : (
+        <div className="bg-bg-primary border border-border">
+          <div className="space-y-0">
+            {data.recent_activity.map((a, i) => (
+              <div key={i} className="flex items-center justify-between py-2 px-2 border-b border-border last:border-0">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] sm:text-[13px] font-medium text-text-primary truncate">{a.lab_title}</p>
+                  <p className="text-[10px] sm:text-[11px] text-text-secondary">{new Date(a.completed_at).toLocaleDateString()}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[12px] sm:text-[13px] font-bold text-text-primary">{a.score}%</span>
+                  <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 ${
+                    a.status === 'completed' ? 'bg-accent-green/20 text-accent-green' : 'bg-accent-amber/20 text-accent-amber'
+                  }`}>
+                    {a.status === 'completed' ? t('student.status.completed', lang) : t('student.status.inProgress', lang)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

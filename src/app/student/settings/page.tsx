@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
@@ -45,20 +44,27 @@ export default function StudentSettingsPage() {
   const [showDelete, setShowDelete] = useState(false)
   const [deleteText, setDeleteText] = useState('')
 
+  const [subscription, setSubscription] = useState<{ tier: string; status: string; expires_at: string | null; plan_name: string } | null>(null)
+
   useEffect(() => {
-    fetch('/api/profile')
-      .then(r => {
-        if (!r.ok) throw new Error()
-        return r.json()
-      })
-      .then(data => {
-        setProfile(data)
-        setName(data.full_name || '')
-        setLoading(false)
-      })
-      .catch(() => {
-        router.replace('/auth')
-      })
+    Promise.all([
+      fetch('/api/profile').then(r => { if (!r.ok) throw new Error(); return r.json() }),
+      fetch('/api/subscription').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([profileData, subData]) => {
+      setProfile(profileData)
+      setName(profileData.full_name || '')
+      if (subData?.subscription) {
+        setSubscription({
+          tier: subData.subscription.tier,
+          status: subData.subscription.status,
+          expires_at: subData.subscription.expires_at,
+          plan_name: subData.plan?.name || subData.subscription.tier,
+        })
+      }
+      setLoading(false)
+    }).catch(() => {
+      router.replace('/auth')
+    })
   }, [router])
 
   useEffect(() => {
@@ -172,13 +178,13 @@ export default function StudentSettingsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl">
-        <div className="space-y-6">
+      <div className="px-1 py-2">
+        <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <Card key={i} className="animate-pulse">
-              <div className="h-4 bg-bg-tertiary w-1/3 mb-3" />
-              <div className="h-3 bg-bg-tertiary w-1/2" />
-            </Card>
+            <div key={i} className="bg-bg-primary border border-border p-3 animate-pulse">
+              <div className="h-3 bg-bg-tertiary w-1/3 mb-2" />
+              <div className="h-2.5 bg-bg-tertiary w-1/2" />
+            </div>
           ))}
         </div>
       </div>
@@ -186,28 +192,49 @@ export default function StudentSettingsPage() {
   }
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">{t('nav.settings', lang)}</h1>
+    <div className="px-1 py-2">
+      <h1 className="text-[clamp(18px,4vw,28px)] font-bold text-text-primary mb-3">{t('nav.settings', lang)}</h1>
 
-      <div className="space-y-6">
+      <div className="space-y-3">
         {profile && (
-          <Card>
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-[16px] font-bold text-text-primary">{profile.full_name}</h3>
-                <p className="text-[12px] text-text-secondary">{profile.email}</p>
+          <div className="bg-bg-primary border border-border p-3">
+            <div className="flex items-start justify-between mb-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-[14px] font-bold text-text-primary">{profile.full_name}</h3>
+                <p className="text-[11px] text-text-secondary">{profile.email}</p>
               </div>
-              <Badge variant={profile.role === 'admin' ? 'info' : 'neutral'}>{profile.role}</Badge>
+              <Badge variant={profile.role === 'admin' ? 'info' : 'neutral'} className="text-[10px]">{profile.role}</Badge>
             </div>
-            <p className="text-[12px] text-text-secondary">
-              {t('profile.joined', lang)} {new Date(profile.created_at).toLocaleDateString()}
-            </p>
-          </Card>
+            <div className="flex items-center gap-3 flex-wrap">
+              <p className="text-[11px] text-text-secondary">
+                {t('profile.joined', lang)} {new Date(profile.created_at).toLocaleDateString()}
+              </p>
+              {subscription && (
+                <div className="flex items-center gap-1.5">
+                  <Badge variant={subscription.tier === 'free' ? 'neutral' : subscription.tier === 'enterprise' ? 'info' : 'success'} className="text-[10px]">
+                    {subscription.plan_name}
+                  </Badge>
+                  {subscription.expires_at && (
+                    <span className="text-[10px] text-text-secondary">
+                      {lang === 'sw' ? 'Inaisha' : 'Expires'} {new Date(subscription.expires_at).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+            {subscription && subscription.tier !== 'free' && (
+              <div className="mt-2 pt-2 border-t border-border">
+                <a href="/pricing" className="text-[11px] text-accent-blue underline">
+                  {lang === 'sw' ? 'Badilisha Mpango' : 'Manage Subscription'}
+                </a>
+              </div>
+            )}
+          </div>
         )}
 
-        <Card>
-          <h2 className="text-[16px] font-bold text-text-primary mb-4">{t('settings.profile', lang)}</h2>
-          <div className="space-y-4">
+        <div className="bg-bg-primary border border-border p-3">
+          <h2 className="text-[14px] font-bold text-text-primary mb-2">{t('settings.profile', lang)}</h2>
+          <div className="space-y-3">
             <Input
               label={t('profile.fullName', lang)}
               value={name}
@@ -218,110 +245,75 @@ export default function StudentSettingsPage() {
               {saved ? t('settings.saved', lang) : t('settings.saveChanges', lang)}
             </Button>
           </div>
-        </Card>
+        </div>
 
-        <Card>
-          <h2 className="text-[16px] font-bold text-text-primary mb-4">{t('settings.changePassword', lang)}</h2>
-          <div className="space-y-4">
-            <Input
-              label={t('settings.currentPassword', lang)}
-              type="password"
-              value={currentPw}
-              onChange={e => setCurrentPw(e.target.value)}
-              autoComplete="current-password"
-            />
-            <Input
-              label={t('settings.newPassword', lang)}
-              type="password"
-              value={newPw}
-              onChange={e => setNewPw(e.target.value)}
-              autoComplete="new-password"
-            />
-            <Input
-              label={t('settings.confirmPassword', lang)}
-              type="password"
-              value={confirmPw}
-              onChange={e => setConfirmPw(e.target.value)}
-              error={pwError || undefined}
-              autoComplete="new-password"
-            />
+        <div className="bg-bg-primary border border-border p-3">
+          <h2 className="text-[14px] font-bold text-text-primary mb-2">{t('settings.changePassword', lang)}</h2>
+          <div className="space-y-3">
+            <Input label={t('settings.currentPassword', lang)} type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} autoComplete="current-password" />
+            <Input label={t('settings.newPassword', lang)} type="password" value={newPw} onChange={e => setNewPw(e.target.value)} autoComplete="new-password" />
+            <Input label={t('settings.confirmPassword', lang)} type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} error={pwError || undefined} autoComplete="new-password" />
             <Button variant="primary" onClick={handleChangePassword} disabled={pwSaving} loading={pwSaving}>
               {pwSaved ? t('settings.passwordUpdated', lang) : t('settings.updatePassword', lang)}
             </Button>
           </div>
-        </Card>
+        </div>
 
-        <Card>
-          <h2 className="text-[16px] font-bold text-text-primary mb-4">{t('settings.language', lang)}</h2>
-          <p className="text-[14px] text-text-secondary mb-4">
+        <div className="bg-bg-primary border border-border p-3">
+          <h2 className="text-[14px] font-bold text-text-primary mb-2">{t('settings.language', lang)}</h2>
+          <p className="text-[12px] text-text-secondary mb-2">
             {t('settings.language', lang)}: {lang === 'en' ? 'English' : 'Kiswahili'}
           </p>
           <Button variant="secondary" onClick={toggle}>
             {t('settings.switchLang', lang)} {lang === 'en' ? 'Kiswahili' : 'English'}
           </Button>
-        </Card>
+        </div>
 
-        <Card>
-          <h2 className="text-[16px] font-bold text-text-primary mb-4">{t('settings.notifications', lang)}</h2>
-          <div className="space-y-4">
+        <div className="bg-bg-primary border border-border p-3">
+          <h2 className="text-[14px] font-bold text-text-primary mb-2">{t('settings.notifications', lang)}</h2>
+          <div className="space-y-3">
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <p className="text-[14px] text-text-primary font-medium">{t('settings.emailNotifications', lang)}</p>
-                <p className="text-[12px] text-text-secondary">{t('settings.emailNotificationsDesc', lang)}</p>
+                <p className="text-[12px] text-text-primary font-medium">{t('settings.emailNotifications', lang)}</p>
+                <p className="text-[10px] text-text-secondary">{t('settings.emailNotificationsDesc', lang)}</p>
               </div>
-              <button
-                onClick={() => setEmailNotifs(!emailNotifs)}
-                className={`relative w-10 h-6 transition-colors duration-200 ${emailNotifs ? 'bg-accent-blue' : 'bg-bg-tertiary border border-border-strong'}`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white transition-transform duration-200 ${emailNotifs ? 'translate-x-4' : ''}`} />
+              <button onClick={() => setEmailNotifs(!emailNotifs)} className={`relative w-9 h-5 transition-colors duration-200 ${emailNotifs ? 'bg-accent-blue' : 'bg-bg-tertiary border border-border-strong'}`}>
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white transition-transform duration-200 ${emailNotifs ? 'translate-x-4' : ''}`} />
               </button>
             </label>
-
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <p className="text-[14px] text-text-primary font-medium">{t('settings.labReminders', lang)}</p>
-                <p className="text-[12px] text-text-secondary">{t('settings.labRemindersDesc', lang)}</p>
+                <p className="text-[12px] text-text-primary font-medium">{t('settings.labReminders', lang)}</p>
+                <p className="text-[10px] text-text-secondary">{t('settings.labRemindersDesc', lang)}</p>
               </div>
-              <button
-                onClick={() => setLabReminders(!labReminders)}
-                className={`relative w-10 h-6 transition-colors duration-200 ${labReminders ? 'bg-accent-blue' : 'bg-bg-tertiary border border-border-strong'}`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white transition-transform duration-200 ${labReminders ? 'translate-x-4' : ''}`} />
+              <button onClick={() => setLabReminders(!labReminders)} className={`relative w-9 h-5 transition-colors duration-200 ${labReminders ? 'bg-accent-blue' : 'bg-bg-tertiary border border-border-strong'}`}>
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white transition-transform duration-200 ${labReminders ? 'translate-x-4' : ''}`} />
               </button>
             </label>
-
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <p className="text-[14px] text-text-primary font-medium">{t('settings.gradeAlerts', lang)}</p>
-                <p className="text-[12px] text-text-secondary">{t('settings.gradeAlertsDesc', lang)}</p>
+                <p className="text-[12px] text-text-primary font-medium">{t('settings.gradeAlerts', lang)}</p>
+                <p className="text-[10px] text-text-secondary">{t('settings.gradeAlertsDesc', lang)}</p>
               </div>
-              <button
-                onClick={() => setGradeAlerts(!gradeAlerts)}
-                className={`relative w-10 h-6 transition-colors duration-200 ${gradeAlerts ? 'bg-accent-blue' : 'bg-bg-tertiary border border-border-strong'}`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white transition-transform duration-200 ${gradeAlerts ? 'translate-x-4' : ''}`} />
+              <button onClick={() => setGradeAlerts(!gradeAlerts)} className={`relative w-9 h-5 transition-colors duration-200 ${gradeAlerts ? 'bg-accent-blue' : 'bg-bg-tertiary border border-border-strong'}`}>
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white transition-transform duration-200 ${gradeAlerts ? 'translate-x-4' : ''}`} />
               </button>
             </label>
-
             <Button variant="primary" onClick={handleSavePrefs}>
               {prefSaved ? t('settings.preferencesSaved', lang) : t('settings.saveChanges', lang)}
             </Button>
           </div>
-        </Card>
+        </div>
 
-        <Card>
-          <h2 className="text-[16px] font-bold text-text-primary mb-4">{t('settings.offline', lang)}</h2>
-          <p className="text-[14px] text-text-secondary mb-4">{t('student.clearCacheDesc', lang)}</p>
+        <div className="bg-bg-primary border border-border p-3">
+          <h2 className="text-[14px] font-bold text-text-primary mb-2">{t('settings.offline', lang)}</h2>
+          <p className="text-[12px] text-text-secondary mb-2">{t('student.clearCacheDesc', lang)}</p>
           {showClearCache ? (
-            <div className="space-y-3">
-              <p className="text-[13px] text-text-secondary">{t('settings.clearCacheMsg', lang)}</p>
-              <div className="flex gap-2">
-                <Button variant="danger" onClick={handleClearCache}>
-                  {t('common.confirm', lang)}
-                </Button>
-                <Button variant="ghost" onClick={() => setShowClearCache(false)}>
-                  {t('common.cancel', lang)}
-                </Button>
+            <div className="space-y-2">
+              <p className="text-[11px] text-text-secondary">{t('settings.clearCacheMsg', lang)}</p>
+              <div className="flex gap-1.5">
+                <Button variant="danger" onClick={handleClearCache}>{t('common.confirm', lang)}</Button>
+                <Button variant="ghost" onClick={() => setShowClearCache(false)}>{t('common.cancel', lang)}</Button>
               </div>
             </div>
           ) : (
@@ -329,34 +321,23 @@ export default function StudentSettingsPage() {
               {cacheCleared ? t('student.clearCacheConfirm', lang) : t('student.clearCache', lang)}
             </Button>
           )}
-        </Card>
+        </div>
 
-        <Card className="border-accent-red/30">
-          <h2 className="text-[16px] font-bold text-accent-red mb-2">{t('settings.deleteAccount', lang)}</h2>
-          <p className="text-[13px] text-text-secondary mb-4">{t('settings.deleteAccountDesc', lang)}</p>
+        <div className="bg-bg-primary border border-border p-3 border-accent-red/30">
+          <h2 className="text-[14px] font-bold text-accent-red mb-1">{t('settings.deleteAccount', lang)}</h2>
+          <p className="text-[11px] text-text-secondary mb-2">{t('settings.deleteAccountDesc', lang)}</p>
           {showDelete ? (
-            <div className="space-y-3">
-              <Input
-                label={t('settings.deleteAccountConfirm', lang)}
-                value={deleteText}
-                onChange={e => setDeleteText(e.target.value)}
-                placeholder="DELETE"
-              />
-              <div className="flex gap-2">
-                <Button variant="danger" onClick={handleDeleteAccount} disabled={deleteText !== 'DELETE'}>
-                  {t('settings.deleteAccount', lang)}
-                </Button>
-                <Button variant="ghost" onClick={() => { setShowDelete(false); setDeleteText('') }}>
-                  {t('common.cancel', lang)}
-                </Button>
+            <div className="space-y-2">
+              <Input label={t('settings.deleteAccountConfirm', lang)} value={deleteText} onChange={e => setDeleteText(e.target.value)} placeholder="DELETE" />
+              <div className="flex gap-1.5">
+                <Button variant="danger" onClick={handleDeleteAccount} disabled={deleteText !== 'DELETE'}>{t('settings.deleteAccount', lang)}</Button>
+                <Button variant="ghost" onClick={() => { setShowDelete(false); setDeleteText('') }}>{t('common.cancel', lang)}</Button>
               </div>
             </div>
           ) : (
-            <Button variant="danger" onClick={() => setShowDelete(true)}>
-              {t('settings.deleteAccount', lang)}
-            </Button>
+            <Button variant="danger" onClick={() => setShowDelete(true)}>{t('settings.deleteAccount', lang)}</Button>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   )

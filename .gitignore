@@ -1,120 +1,38 @@
-# ==========================================
-# CASUYA VIRTUAL LABORATORY PLATFORM
-# Git Ignore Rules — Proprietary Software
-# ==========================================
-# This file protects intellectual property by excluding
-# build artifacts, secrets, dependencies, and caches.
-# Unauthorized reproduction is prohibited.
+# dependencies
+node_modules/
 
-# ==========================================
-# BUILD OUTPUT
-# ==========================================
+# next.js
 .next/
 out/
+
+# production
 build/
 dist/
-*.tsbuildinfo
-tsconfig.tsbuildinfo
 
-# ==========================================
-# DEPENDENCIES
-# ==========================================
-node_modules/
-.pnp
-.pnp.js
-
-# ==========================================
-# ENVIRONMENT & SECRETS
-# NEVER commit these files
-# ==========================================
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# env files
 .env*.local
+.env
 
-# Supabase local
-supabase/.temp/
-supabase/.env
-
-# ==========================================
-# SENSITIVE DATA FILES
-# ==========================================
-*.pem
-*.key
-*.cert
-*.crt
-*.p12
-*.pfx
-*.jks
-secrets.json
-credentials.json
-service-account*.json
-firebase*.json
-
-# ==========================================
-# DEBUG & LOGS
-# ==========================================
+# debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-.pnpm-store/
 
-# ==========================================
-# OS & EDITOR ARTIFACTS
-# ==========================================
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-*.swp
-*.swo
-*~
-.vscode/settings.json
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/
 .idea/
-*.iml
 
-# ==========================================
-# COVERAGE & TESTING
-# ==========================================
-coverage/
-.nyc_output/
-*.lcov
-*.profraw
-*.profdata
+# OS
+.DS_Store
+Thumbs.db
 
-# ==========================================
-# CACHE
-# ==========================================
-.cache/
-.parcel-cache/
-*.cache
-.eslintcache
-
-# ==========================================
-# SUPABASE LOCAL
-# ==========================================
-supabase/functions/.temp/
-supabase/config.toml
-
-# ==========================================
-# VERCEL / DEPLOYMENT
-# ==========================================
-.vercel/
-.netlify/
-.firebase/
-
-# ==========================================
-# TEMPORARY & MISC
-# ==========================================
-*.tmp
-*.temp
-*.bak
-*.orig
-*.rej
+# uploads
+public/images/
+public/labs/

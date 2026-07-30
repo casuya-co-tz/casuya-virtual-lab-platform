@@ -5,7 +5,6 @@ import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Card } from '@/components/ui/Card'
 import { LivePreview } from '@/components/admin/LivePreview'
 
 interface Subtopic {
@@ -23,9 +22,10 @@ export default function NewLabPage() {
     title: '',
     title_sw: '',
     description: '',
-    html_threejs_code: '',
+    html_code: '',
     subject: 'physics',
-    is_published: false,
+    is_published: true,
+    is_premium: false,
   })
   const [error, setError] = useState('')
 
@@ -44,37 +44,41 @@ export default function NewLabPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     })
-    if (!res.ok) { setError(t('admin.failedCreate', lang)); return }
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      setError(data?.error || t('admin.failedCreate', lang))
+      return
+    }
     router.push('/admin/labs')
     router.refresh()
   }
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">{t('admin.newLab', lang)}</h1>
-      <Card>
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+    <div className="mx-auto px-1 sm:px-2">
+      <h1 className="text-[clamp(18px,4vw,26px)] font-bold text-text-primary mb-2">{t('admin.newLab', lang)}</h1>
+      <div className="bg-bg-primary border border-border p-2">
+        <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
           <Input label={t('admin.titleEnglish', lang)} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
           <Input label={t('admin.titleSwahili', lang)} value={form.title_sw} onChange={e => setForm({ ...form, title_sw: e.target.value })} />
-          <label className="text-[12px] font-bold uppercase text-text-secondary">{t('admin.description', lang)}</label>
+          <label className="text-[11px] font-bold uppercase text-text-secondary">{t('admin.description', lang)}</label>
           <textarea
-            className="w-full border border-border-DEFAULT bg-bg-primary text-text-primary p-3 text-[14px]"
+            className="w-full border border-border bg-bg-primary text-text-primary p-1 text-[13px]"
             rows={3}
             value={form.description}
             onChange={e => setForm({ ...form, description: e.target.value })}
           />
-          <label className="text-[12px] font-bold uppercase text-text-secondary">Lab HTML / Three.js Code</label>
+          <label className="text-[11px] font-bold uppercase text-text-secondary">Lab HTML / Three.js Code</label>
           <textarea
-            className="w-full border border-border-DEFAULT bg-bg-primary text-text-primary p-3 text-[14px] font-mono"
+            className="w-full border border-border bg-bg-primary text-text-primary p-1 text-[13px] font-mono"
             rows={10}
-            value={form.html_threejs_code}
-            onChange={e => setForm({ ...form, html_threejs_code: e.target.value })}
+            value={form.html_code}
+            onChange={e => setForm({ ...form, html_code: e.target.value })}
             placeholder="Paste your lab HTML or Three.js code here..."
           />
-          <LivePreview code={form.html_threejs_code} />
-          <label className="text-[12px] font-bold uppercase text-text-secondary">{t('admin.subject', lang)}</label>
+          <LivePreview code={form.html_code} />
+          <label className="text-[11px] font-bold uppercase text-text-secondary">{t('admin.subject', lang)}</label>
           <select
-            className="w-full border border-border-DEFAULT bg-bg-primary text-text-primary p-3 text-[14px]"
+            className="w-full border border-border bg-bg-primary text-text-primary p-1 text-[13px]"
             value={form.subject}
             onChange={e => setForm({ ...form, subject: e.target.value })}
           >
@@ -82,9 +86,9 @@ export default function NewLabPage() {
             <option value="chemistry">Chemistry</option>
             <option value="biology">Biology</option>
           </select>
-          <label className="text-[12px] font-bold uppercase text-text-secondary">{t('admin.subtopic', lang)}</label>
+          <label className="text-[11px] font-bold uppercase text-text-secondary">{t('admin.subtopic', lang)}</label>
           <select
-            className="w-full border border-border-DEFAULT bg-bg-primary text-text-primary p-3 text-[14px]"
+            className="w-full border border-border bg-bg-primary text-text-primary p-1 text-[13px]"
             value={form.subtopic_id}
             onChange={e => setForm({ ...form, subtopic_id: e.target.value })}
           >
@@ -93,17 +97,21 @@ export default function NewLabPage() {
               <option key={st.id} value={st.id}>{st.title}</option>
             ))}
           </select>
-          <label className="flex items-center gap-2">
+          <label className="flex items-center gap-1">
             <input type="checkbox" checked={form.is_published} onChange={e => setForm({ ...form, is_published: e.target.checked })} />
-            <span className="text-[14px] text-text-primary">{t('admin.published', lang)}</span>
+            <span className="text-[13px] text-text-primary">{t('admin.published', lang)}</span>
           </label>
-          {error && <p className="text-[12px] text-accent-red">{error}</p>}
-          <div className="flex gap-3">
-            <Button variant="primary" type="submit">{t('admin.createLab', lang)}</Button>
-            <Button variant="secondary" type="button" onClick={() => router.back()}>{t('common.cancel', lang)}</Button>
+          <label className="flex items-center gap-1">
+            <input type="checkbox" checked={form.is_premium} onChange={e => setForm({ ...form, is_premium: e.target.checked })} />
+            <span className="text-[13px] text-text-primary">Premium</span>
+          </label>
+          {error && <p className="text-[11px] text-accent-red">{error}</p>}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="primary" type="submit" className="w-full sm:w-auto">{t('admin.createLab', lang)}</Button>
+            <Button variant="secondary" type="button" onClick={() => router.back()} className="w-full sm:w-auto">{t('common.cancel', lang)}</Button>
           </div>
         </form>
-      </Card>
+      </div>
     </div>
   )
 }

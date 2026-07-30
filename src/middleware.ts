@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { endpointRateLimiters } from '@/lib/rate-limiter'
-import { getSessionUserFromCookie } from '@/lib/session-role'
+import { isDeveloperKeyFormat, parseBearerToken } from '@/lib/api-key-format'
+import type { SessionUser } from '@/lib/session'
 
 const RATE_LIMIT_CONFIG: Record<string, string> = {
   '/api/v1/labs/[id]': '/api/v1/labs',
@@ -9,31 +10,30 @@ const RATE_LIMIT_CONFIG: Record<string, string> = {
   '/api/v1/public': '/api/v1/search',
 }
 
-function generateNonce(): string {
-  try {
-    const array = new Uint8Array(16)
-    crypto.getRandomValues(array)
-    return Array.from(array, b => b.toString(16).padStart(2, '0')).join('')
-  } catch {
-    return Math.random().toString(36).slice(2, 18)
-  }
-}
-
 function addCspHeaders(response: NextResponse): NextResponse {
-  const nonce = generateNonce()
   const isDev = process.env.NODE_ENV === 'development'
+  const cdn = 'https://cdn.jsdelivr.net'
   const csp = isDev
-    ? `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://p.typekit.net; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co ws: wss:; font-src 'self' data: https://fonts.gstatic.com https://use.typekit.net; frame-src 'self'; frame-ancestors 'self'; form-action 'self'; object-src 'none'`
-    : `default-src 'self'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://p.typekit.net; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; font-src 'self' data: https://fonts.gstatic.com https://use.typekit.net; frame-src 'self'; frame-ancestors 'self'; form-action 'self'; object-src 'none'`
+    ? `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ${cdn}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://p.typekit.net; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co ws: wss:; font-src 'self' data: https://fonts.gstatic.com https://use.typekit.net; frame-src 'self' blob:; frame-ancestors 'self'; form-action 'self'; object-src 'none'`
+    : `default-src 'self'; script-src 'self' 'unsafe-inline' ${cdn}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://p.typekit.net; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co; font-src 'self' data: https://fonts.gstatic.com https://use.typekit.net; frame-src 'self' blob:; frame-ancestors 'self'; form-action 'self'; object-src 'none'`
   response.headers.set('Content-Security-Policy', csp)
   return response
 }
 
-async function getSessionUser(req: NextRequest) {
-  return getSessionUserFromCookie(
-    req.cookies.get('sid')?.value ?? null,
-    req.cookies.get('role')?.value ?? null,
-  )
+async function getSessionUser(req: NextRequest): Promise<SessionUser | null> {
+  const sid = req.cookies.get('sid')?.value
+  if (!sid) return null
+
+  try {
+    const res = await fetch(new URL('/api/auth/session', req.url), {
+      headers: { cookie: req.headers.get('cookie') || '' },
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.user ?? null
+  } catch {
+    return null
+  }
 }
 
 export async function middleware(req: NextRequest) {
@@ -41,20 +41,23 @@ export async function middleware(req: NextRequest) {
     const pathname = req.nextUrl.pathname
 
     if (pathname.startsWith('/api/v1')) {
-      if (!pathname.startsWith('/api/v1/public')) {
-        const authHeader = req.headers.get('authorization')
-        if (!authHeader?.startsWith('Bearer ')) {
-          return NextResponse.json({ error: 'Missing or invalid API key' }, { status: 401 })
-        }
-
-        const token = authHeader.slice(7)
-        const envKey = process.env.API_KEY
-        if (!envKey || token !== envKey) {
-          return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
+      const isPublic = pathname.startsWith('/api/v1/public')
+      if (!isPublic) {
+        const token = parseBearerToken(req.headers.get('authorization'))
+        if (!token || !isDeveloperKeyFormat(token)) {
+          return NextResponse.json(
+            {
+              error: 'Missing or invalid API key',
+              message: 'Use Authorization: Bearer <public_token>:<secret>',
+            },
+            { status: 401 }
+          )
         }
       }
 
-      const limiterKey = RATE_LIMIT_CONFIG[pathname] || pathname.split('/').slice(0, 3).join('/')
+      const limiterKey = isPublic
+        ? '/api/v1/public'
+        : RATE_LIMIT_CONFIG[pathname] || pathname.split('/').slice(0, 3).join('/')
       const limiter = endpointRateLimiters[limiterKey as keyof typeof endpointRateLimiters] || endpointRateLimiters['/api/v1']
       if (limiter) {
         const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown'
@@ -70,7 +73,7 @@ export async function middleware(req: NextRequest) {
       }
     }
 
-    if (pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname === '/favicon.svg' || pathname === '/manifest.json' || pathname === '/sw.js') {
+    if (pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname === '/favicon.svg' || pathname === '/manifest.json' || pathname === '/sw.js' || pathname.startsWith('/labs/')) {
       return NextResponse.next()
     }
 
@@ -81,8 +84,9 @@ export async function middleware(req: NextRequest) {
     const isAdminPage = pathname.startsWith('/admin')
     const isStudentPage = pathname.startsWith('/student')
     const isDeveloperPage = pathname.startsWith('/developer')
+    const isTeacherPage = pathname.startsWith('/teacher')
 
-    if (isAdminPage || isStudentPage || isDeveloperPage) {
+    if (isAdminPage || isStudentPage || isDeveloperPage || isTeacherPage) {
       const user = await getSessionUser(req)
       if (!user) {
         return NextResponse.redirect(new URL('/auth', req.url))
@@ -92,8 +96,15 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL('/student', req.url))
       }
 
+      if (isTeacherPage && user.role !== 'teacher' && user.role !== 'admin') {
+        return NextResponse.redirect(new URL('/student', req.url))
+      }
+
       if (isStudentPage && user.role !== 'student' && user.role !== 'admin') {
-        return NextResponse.redirect(new URL('/admin', req.url))
+        if (user.role === 'teacher') {
+          return NextResponse.redirect(new URL('/teacher', req.url))
+        }
+        return NextResponse.redirect(new URL('/auth', req.url))
       }
 
       // developer page is accessible to any authenticated user

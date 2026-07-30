@@ -1,14 +1,9 @@
 import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-
-async function getUserId(): Promise<string | null> {
-  const cookieStore = await cookies()
-  return cookieStore.get('sid')?.value || null
-}
+import { getUserIdFromSession } from '@/lib/auth-guard'
 
 export async function GET() {
-  const userId = await getUserId()
+  const userId = await getUserIdFromSession()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
@@ -27,7 +22,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const userId = await getUserId()
+  const userId = await getUserIdFromSession()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {

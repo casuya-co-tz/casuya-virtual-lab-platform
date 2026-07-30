@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
-import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Table, Tr, Td } from '@/components/ui/Table'
@@ -56,26 +55,30 @@ export default function AdminSettingsPage() {
 
   return (
     <div>
-      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">{t('admin.settings', lang)}</h1>
-      <Card className="mb-6">
-        <h3 className="text-[16px] font-bold text-text-primary mb-4">{t('admin.addSetting', lang)}</h3>
-        <div className="flex gap-3 items-end">
-          <Input label={t('admin.tableKey', lang)} value={newKey} onChange={e => setNewKey(e.target.value)} />
-          <Input label={t('admin.tableValue', lang)} value={newValue} onChange={e => setNewValue(e.target.value)} />
-          <Button variant="primary" onClick={addSetting}>{t('admin.add', lang)}</Button>
+      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-2">{t('admin.settings', lang)}</h1>
+      <div className="bg-bg-primary border border-border p-2 mb-2">
+        <h3 className="text-[14px] font-bold text-text-primary mb-2">{t('admin.addSetting', lang)}</h3>
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:items-end">
+          <Input label={t('admin.tableKey', lang)} value={newKey} onChange={e => setNewKey(e.target.value)} className="w-full sm:w-auto" />
+          <Input label={t('admin.tableValue', lang)} value={newValue} onChange={e => setNewValue(e.target.value)} className="w-full sm:w-auto" />
+          <Button variant="primary" onClick={addSetting} className="w-full sm:w-auto">{t('admin.add', lang)}</Button>
         </div>
-      </Card>
-      <Card>
+      </div>
+      <div className="bg-bg-primary border border-border p-2">
+        <div className="-mx-4 sm:mx-0 overflow-x-auto">
+          <div className="min-w-[500px] sm:min-w-0">
         <Table headers={[t('admin.tableKey', lang), t('admin.tableValue', lang), t('admin.tableActions', lang)]}>
           {settings.map(s => (
             <Tr key={s.key}>
-              <Td>{s.key}</Td>
-              <Td>{JSON.stringify(s.value)}</Td>
-              <Td><button onClick={() => removeSetting(s.key)} className="text-[12px] text-accent-red underline">{t('admin.delete', lang)}</button></Td>
+              <Td className="text-[12px]">{s.key}</Td>
+              <Td className="text-[12px]">{JSON.stringify(s.value)}</Td>
+              <Td><button onClick={() => removeSetting(s.key)} className="text-[11px] text-accent-red underline">{t('admin.delete', lang)}</button></Td>
             </Tr>
           ))}
         </Table>
-      </Card>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { query } from '@/lib/db'
+import { getUserIdFromSession } from '@/lib/auth-guard'
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('sid')?.value
+    const userId = await getUserIdFromSession()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { id } = params
@@ -33,8 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     )
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('Report Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

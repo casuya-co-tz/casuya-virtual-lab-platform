@@ -1,15 +1,6 @@
 import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-
-async function getDeveloperId(): Promise<string | null> {
-  const cookieStore = await cookies()
-  const sid = cookieStore.get('sid')?.value
-  const role = cookieStore.get('role')?.value
-  if (!sid || (role !== 'admin' && role !== 'developer')) return null
-  const result = await query('SELECT id FROM developer_profiles WHERE id = $1', [sid])
-  return result.rows.length > 0 ? sid : null
-}
+import { getDeveloperId } from '@/lib/developer-auth'
 
 export async function GET() {
   const developerId = await getDeveloperId()
@@ -17,7 +8,10 @@ export async function GET() {
 
   try {
     const result = await query(
-      'SELECT * FROM developer_profiles WHERE id = $1',
+      `SELECT dp.*, pp.max_api_keys
+       FROM developer_profiles dp
+       LEFT JOIN pricing_plans pp ON pp.slug = dp.api_tier
+       WHERE dp.id = $1`,
       [developerId]
     )
     if (result.rows.length === 0) return NextResponse.json(null)

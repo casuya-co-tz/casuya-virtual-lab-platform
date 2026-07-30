@@ -11,11 +11,12 @@ export interface SignupRequest {
 
 export interface LabCreateRequest {
   title: string
-  title_sw: string
+  title_sw?: string
   description?: string
-  subject: 'physics' | 'chemistry' | 'biology'
-  subtopic_id: string
-  html_threejs_code?: string
+  subject: string
+  html_code: string
+  thumbnail?: string
+  is_premium?: boolean
   is_published?: boolean
 }
 
@@ -24,8 +25,8 @@ export interface LabUpdateRequest {
   title_sw?: string
   description?: string
   subject?: string
-  subtopic_id?: string
-  html_threejs_code?: string
+  thumbnail?: string
+  is_premium?: boolean
   is_published?: boolean
 }
 

@@ -38,7 +38,7 @@ export function DocsEditor({ initial, onSave }: DocsEditorProps) {
         <textarea
           value={content}
           onChange={e => setContent(e.target.value)}
-          className="w-full h-96 px-3 py-2 bg-bg-secondary border border-border-DEFAULT text-[14px] text-text-primary font-mono resize-y focus:outline-none focus:ring-2 focus:ring-border-focus"
+          className="w-full h-96 px-3 py-2 bg-bg-secondary border border-border text-[14px] text-text-primary font-mono resize-y focus:outline-none focus:ring-2 focus:ring-border-focus"
           placeholder="Write documentation in Markdown..."
         />
       </div>

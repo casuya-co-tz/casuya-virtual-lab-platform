@@ -1,15 +1,9 @@
 import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-
-async function getUserId(): Promise<string | null> {
-  const cookieStore = await cookies()
-  const sid = cookieStore.get('sid')
-  return sid?.value || null
-}
+import { getUserIdFromSession } from '@/lib/auth-guard'
 
 export async function GET() {
-  const userId = await getUserId()
+  const userId = await getUserIdFromSession()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
@@ -28,7 +22,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const userId = await getUserId()
+  const userId = await getUserIdFromSession()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
@@ -98,7 +92,8 @@ export async function POST(req: Request) {
 
     const result = await query(queryText, queryParams)
     return NextResponse.json(result.rows[0], { status: 201 })
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (err) {
+    console.error('Failed to save progress:', err)
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal server error' }, { status: 500 })
   }
 }

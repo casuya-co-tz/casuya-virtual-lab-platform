@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { requireAuth } from '@/lib/auth-guard'
+import { mobileCheckout, PROVIDER_MAP, formatAccountNumber } from '@/lib/azampay'
 
 export async function POST(req: Request) {
   try {
@@ -10,14 +11,19 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { plan_id, phone, provider } = body
+    const { plan_id, phone, provider: rawProvider } = body
 
-    if (!plan_id || !phone || !provider) {
+    if (!plan_id || !phone || !rawProvider) {
       return NextResponse.json({ error: 'MISSING_REQUIRED_FIELDS' }, { status: 400 })
     }
 
-    if (!['azampesa', 'mpesa', 'tigopesa'].includes(provider)) {
-      return NextResponse.json({ error: 'INVALID_PROVIDER' }, { status: 400 })
+    const provider = PROVIDER_MAP[rawProvider.toLowerCase()]
+    if (!provider) {
+      return NextResponse.json({
+        error: 'INVALID_PROVIDER',
+        valid: ['Mpesa', 'Airtel', 'Tigo', 'Halopesa', 'Azampesa'],
+        message: 'TTCL is not supported by AzamPay. Please use Vodacom, Airtel, Mixx by Yas, Halopesa, or Azampesa.',
+      }, { status: 400 })
     }
 
     const planResult = await query(
@@ -32,26 +38,55 @@ export async function POST(req: Request) {
     const plan = planResult.rows[0]
 
     const txResult = await query(
-      `INSERT INTO payment_transactions (user_id, plan_id, amount, currency, provider, status)
-       VALUES ($1, $2, $3, $4, $5, 'pending')
+      `INSERT INTO payment_transactions (user_id, plan_id, amount, currency, provider, status, metadata)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6)
        RETURNING id`,
-      [userId, plan_id, plan.price, plan.currency, provider]
+      [userId, plan_id, plan.price, plan.currency, provider, JSON.stringify({ phone })]
     )
 
     const transactionId = txResult.rows[0].id
 
+    if (!process.env.AZAMPESA_APP_NAME || !process.env.AZAMPESA_CLIENT_ID) {
+      return NextResponse.json({
+        success: false,
+        transaction_id: transactionId,
+        error: 'Payment gateway not configured',
+      }, { status: 503 })
+    }
+
+    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/azampesa/callback`
+
+    const gatewayResult = await mobileCheckout({
+      amount: String(plan.price),
+      accountNumber: formatAccountNumber(phone),
+      externalId: transactionId,
+      provider,
+      currency: plan.currency,
+      callbackUrl,
+    })
+
+    if (gatewayResult.success && gatewayResult.transactionId) {
+      await query(
+        `UPDATE payment_transactions SET provider_transaction_id = $1, metadata = jsonb_set(COALESCE(metadata, '{}'), '{gateway_ref}', $2::jsonb) WHERE id = $3`,
+        [gatewayResult.transactionId, JSON.stringify(gatewayResult.transactionId), transactionId]
+      )
+    }
+
+    if (!gatewayResult.success) {
+      return NextResponse.json({
+        success: false,
+        transaction_id: transactionId,
+        error: gatewayResult.message || 'Payment initiation failed',
+      }, { status: 502 })
+    }
+
     return NextResponse.json({
       success: true,
       transaction_id: transactionId,
-      message: `Payment of TSh ${plan.price} initiated via ${provider}. Check your phone for the prompt.`,
-      plan: {
-        name: plan.name,
-        name_sw: plan.name_sw,
-        price: plan.price,
-        currency: plan.currency,
-      },
+      message: `Payment of TSh ${plan.price.toLocaleString()} initiated. Check your phone for the prompt.`,
+      plan: { name: plan.name, name_sw: plan.name_sw, price: plan.price, currency: plan.currency },
     }, { status: 200 })
-  } catch (err: any) {
-    return NextResponse.json({ error: 'PAYMENT_EXCEPTION', details: err.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

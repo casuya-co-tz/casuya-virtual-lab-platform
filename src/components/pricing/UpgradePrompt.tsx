@@ -11,6 +11,7 @@ interface UpgradePromptProps {
 export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ recommendedPlan, lang, onClose }) => {
   const t = (key: string) => (pricingTranslations[lang] as Record<string, string>)[key] || key
   const sectionTarget = recommendedPlan === 'developer' ? 'developer' : 'standard'
+  const paymentSlug = recommendedPlan === 'developer' ? 'dev_basic' : 'basic'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -31,15 +32,21 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ recommendedPlan, l
 
         <div className="mt-6 space-y-2">
           <a
-            href={`/pricing?section=${sectionTarget}`}
-            className="w-full flex items-center justify-center py-2.5 px-4 rounded-lg bg-primary text-white font-medium text-sm hover:bg-opacity-90 shadow-sm transition-all text-center"
+            href={`/payment?plan=${paymentSlug}&section=${sectionTarget}`}
+            className="w-full flex items-center justify-center py-2.5 px-4 rounded-lg bg-accent-blue text-white font-medium text-sm hover:opacity-90 shadow-sm transition-all text-center"
           >
             {t('pricing.upgradePrompt.cta')}
+          </a>
+          <a
+            href={`/pricing?section=${sectionTarget}`}
+            className="w-full flex items-center justify-center py-2 px-4 rounded-lg border border-border bg-bg-secondary text-text-secondary font-medium text-sm hover:bg-bg-tertiary transition-all"
+          >
+            {lang === 'sw' ? 'Angalia Mikataba Yote' : 'View All Plans'}
           </a>
           {onClose && (
             <button
               onClick={onClose}
-              className="w-full py-2 px-4 rounded-lg border border-border-default bg-bg-secondary text-text-secondary font-medium text-sm hover:bg-bg-tertiary transition-all"
+              className="w-full py-2 px-4 rounded-lg border border-border bg-bg-secondary text-text-secondary font-medium text-sm hover:bg-bg-tertiary transition-all"
             >
               {lang === 'sw' ? 'Ghairi' : 'Cancel'}
             </button>

@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
-import { cookies } from 'next/headers'
 import crypto from 'crypto'
-
-async function getDeveloperId(): Promise<string | null> {
-  const cookieStore = await cookies()
-  const sid = cookieStore.get('sid')?.value
-  const role = cookieStore.get('role')?.value
-  if (!sid) return null
-  if (role === 'developer' || role === 'admin') {
-    const result = await query('SELECT id FROM developer_profiles WHERE id = $1', [sid])
-    return result.rows.length > 0 ? sid : null
-  }
-  return null
-}
+import { getDeveloperId } from '@/lib/developer-auth'
+import { isAllowedWebhookUrl } from '@/lib/webhook-url'
 
 export async function GET() {
   const developerId = await getDeveloperId()
@@ -39,6 +28,9 @@ export async function POST(req: Request) {
     if (!url) return NextResponse.json({ error: 'URL required' }, { status: 400 })
 
     try { new URL(url) } catch { return NextResponse.json({ error: 'Invalid URL' }, { status: 400 }) }
+    if (!isAllowedWebhookUrl(url)) {
+      return NextResponse.json({ error: 'Webhook URL must be a public HTTPS endpoint' }, { status: 400 })
+    }
 
     const webhookLimit = await query(
       `SELECT pp.max_api_keys FROM developer_profiles dp JOIN pricing_plans pp ON pp.id = dp.plan_id WHERE dp.id = $1`,

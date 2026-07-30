@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
-import { Card } from '@/components/ui/Card'
+
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
@@ -152,26 +152,26 @@ export default function CurriculumPage() {
 
   return (
     <div>
-      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">{t('admin.curriculum', lang)}</h1>
+      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-2">{t('admin.curriculum', lang)}</h1>
       
-      <div className="space-y-6">
+      <div className="space-y-3">
         {subjects.map(subject => (
-          <Card key={subject.id}>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl">{subject.icon}</span>
-              <h2 className="text-xl font-bold text-text-primary">
+          <div key={subject.id} className="bg-bg-primary border border-border p-2">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">{subject.icon}</span>
+              <h2 className="text-lg font-bold text-text-primary">
                 {lang === 'sw' ? subject.name_sw : subject.name}
               </h2>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-2 overflow-x-auto">
               {subject.topics && subject.topics.filter(t => t.id).map(topic => (
-                <div key={topic.id} className="border border-border-DEFAULT p-3 sm:p-4 bg-bg-secondary ml-2 sm:ml-4">
-                  <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-3 gap-2">
-                    <h3 className="font-bold text-text-primary">
+                <div key={topic.id} className="border border-border p-2 sm:p-3 bg-bg-secondary ml-1 sm:ml-2 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-2 gap-1">
+                    <h3 className="font-bold text-text-primary text-[14px]">
                       {lang === 'sw' ? topic.title_sw : topic.title}
                     </h3>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1">
                       <button onClick={() => openSubtopicModal('create', topic.id)} className="text-[12px] text-accent-blue underline">
                         + {t('admin.addSubtopic', lang)}
                       </button>
@@ -185,17 +185,17 @@ export default function CurriculumPage() {
                   </div>
                   
                   {topic.subtopics && topic.subtopics.filter(st => st.id).length > 0 ? (
-                    <div className="ml-2 sm:ml-4 space-y-2">
+                    <div className="ml-1 sm:ml-2 space-y-1">
                       {topic.subtopics.filter(st => st.id).map(subtopic => (
-                        <div key={subtopic.id} className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center border border-border-strong p-2 bg-bg-primary gap-2">
-                          <span className="text-[14px] text-text-secondary">
+                        <div key={subtopic.id} className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center border border-border-strong p-1 bg-bg-primary gap-1">
+                          <span className="text-[13px] text-text-secondary">
                             {lang === 'sw' ? subtopic.title_sw : subtopic.title}
                           </span>
-                          <div className="flex flex-wrap gap-2">
-                            <button onClick={() => openSubtopicModal('edit', topic.id, subtopic)} className="text-[12px] text-text-secondary underline">
+                          <div className="flex flex-wrap gap-1">
+                            <button onClick={() => openSubtopicModal('edit', topic.id, subtopic)} className="text-[11px] text-text-secondary underline">
                               {t('admin.editSubtopic', lang) || 'Edit'}
                             </button>
-                            <button onClick={() => deleteSubtopic(subtopic.id)} className="text-[12px] text-accent-red underline">
+                            <button onClick={() => deleteSubtopic(subtopic.id)} className="text-[11px] text-accent-red underline">
                               {t('admin.deleteSubtopic', lang) || 'Delete'}
                             </button>
                           </div>
@@ -203,33 +203,33 @@ export default function CurriculumPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="ml-2 sm:ml-4 text-[12px] text-text-disabled">No subtopics.</p>
+                    <p className="ml-1 sm:ml-2 text-[11px] text-text-disabled">No subtopics.</p>
                   )}
                 </div>
               ))}
-              <Button variant="secondary" onClick={() => openTopicModal('create', subject.id)} className="ml-2 sm:ml-4">
+              <Button variant="secondary" onClick={() => openTopicModal('create', subject.id)} className="ml-1 sm:ml-2">
                 + {t('admin.addTopic', lang)}
               </Button>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
       {/* Modal for Topic */}
       {isTopicModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-bg-primary p-4 sm:p-6 w-full max-w-md border border-border-DEFAULT shadow-xl">
-            <h2 className="text-lg font-bold mb-4 text-text-primary">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-2">
+          <div className="bg-bg-primary p-2 sm:p-3 w-full max-w-sm border border-border shadow-xl">
+            <h2 className="text-[14px] font-bold mb-2 text-text-primary">
               {modalMode === 'create' ? t('admin.addTopic', lang) : t('admin.editTopic', lang)}
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-2">
               <Input label="Title (English)" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
               <Input label="Title (Swahili)" value={formData.title_sw} onChange={e => setFormData({...formData, title_sw: e.target.value})} />
               <Input label="Sort Order" type="number" value={formData.sort_order.toString()} onChange={e => setFormData({...formData, sort_order: parseInt(e.target.value) || 0})} />
             </div>
-            <div className="flex gap-3 mt-6">
-              <Button variant="secondary" className="flex-1" onClick={() => setIsTopicModalOpen(false)}>{t('common.cancel', lang)}</Button>
-              <Button variant="primary" className="flex-1" onClick={saveTopic}>{t('common.save', lang)}</Button>
+            <div className="flex flex-col sm:flex-row gap-2 mt-3">
+              <Button variant="secondary" className="w-full sm:flex-1" onClick={() => setIsTopicModalOpen(false)}>{t('common.cancel', lang)}</Button>
+              <Button variant="primary" className="w-full sm:flex-1" onClick={saveTopic}>{t('common.save', lang)}</Button>
             </div>
           </div>
         </div>
@@ -237,19 +237,19 @@ export default function CurriculumPage() {
 
       {/* Modal for Subtopic */}
       {isSubtopicModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-bg-primary p-4 sm:p-6 w-full max-w-md border border-border-DEFAULT shadow-xl">
-            <h2 className="text-lg font-bold mb-4 text-text-primary">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-2">
+          <div className="bg-bg-primary p-2 sm:p-3 w-full max-w-sm border border-border shadow-xl">
+            <h2 className="text-[14px] font-bold mb-2 text-text-primary">
               {modalMode === 'create' ? t('admin.addSubtopic', lang) : t('admin.editSubtopic', lang)}
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-2">
               <Input label="Title (English)" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
               <Input label="Title (Swahili)" value={formData.title_sw} onChange={e => setFormData({...formData, title_sw: e.target.value})} />
               <Input label="Sort Order" type="number" value={formData.sort_order.toString()} onChange={e => setFormData({...formData, sort_order: parseInt(e.target.value) || 0})} />
             </div>
-            <div className="flex gap-3 mt-6">
-              <Button variant="secondary" className="flex-1" onClick={() => setIsSubtopicModalOpen(false)}>{t('common.cancel', lang)}</Button>
-              <Button variant="primary" className="flex-1" onClick={saveSubtopic}>{t('common.save', lang)}</Button>
+            <div className="flex flex-col sm:flex-row gap-2 mt-3">
+              <Button variant="secondary" className="w-full sm:flex-1" onClick={() => setIsSubtopicModalOpen(false)}>{t('common.cancel', lang)}</Button>
+              <Button variant="primary" className="w-full sm:flex-1" onClick={saveSubtopic}>{t('common.save', lang)}</Button>
             </div>
           </div>
         </div>

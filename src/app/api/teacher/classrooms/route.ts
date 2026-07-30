@@ -21,15 +21,15 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const userId = await requireAuth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const roleCheck = await query(`SELECT role FROM profiles WHERE id = $1`, [userId])
-  if (roleCheck.rows[0]?.role !== 'teacher' && roleCheck.rows[0]?.role !== 'admin') {
-    return NextResponse.json({ error: 'Teacher access required' }, { status: 403 })
-  }
-
   try {
+    const userId = await requireAuth()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const roleCheck = await query(`SELECT role FROM profiles WHERE id = $1`, [userId])
+    if (roleCheck.rows[0]?.role !== 'teacher' && roleCheck.rows[0]?.role !== 'admin') {
+      return NextResponse.json({ error: 'Teacher access required' }, { status: 403 })
+    }
+
     const { name, subject, max_students } = await req.json()
     if (!name) return NextResponse.json({ error: 'Name required' }, { status: 400 })
 

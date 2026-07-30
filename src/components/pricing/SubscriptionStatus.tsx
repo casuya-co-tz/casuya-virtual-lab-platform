@@ -17,9 +17,9 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ lang, st
   const percentage = isInfinite ? 0 : Math.min(100, (status.usageCount / status.usageLimit!) * 100)
 
   return (
-    <div className="p-5 rounded-xl border border-border-default bg-bg-secondary shadow-sm max-w-sm">
+    <div className="p-5 rounded-xl border border-border bg-bg-secondary shadow-sm max-w-sm">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
           {lang === 'sw' ? 'Kifurushi Chako' : 'Subscription Status'}
         </span>
         <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-accent-green/10 text-accent-green border border-accent-green/20">
@@ -33,16 +33,16 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ lang, st
             <span>{lang === 'sw' ? 'Matumizi ya Mfumo' : 'API Request Resource Pool'}</span>
             <span>{status.usageCount.toLocaleString()} / {status.usageLimit.toLocaleString()}</span>
           </div>
-          <div className="w-full bg-bg-tertiary h-2 rounded-full overflow-hidden border border-border-default">
+          <div className="w-full bg-bg-tertiary h-2 rounded-full overflow-hidden border border-border">
             <div
-              className={`h-full transition-all duration-500 ${percentage > 85 ? 'bg-red-500' : 'bg-primary'}`}
+              className={`h-full transition-all duration-500 ${percentage > 85 ? 'bg-red-500' : 'bg-accent-blue'}`}
               style={{ width: `${percentage}%` }}
             />
           </div>
         </div>
       )}
 
-      <div className="mt-4 pt-3 border-t border-border-default flex items-center justify-between text-xs text-text-muted">
+      <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-text-secondary">
         <span>{lang === 'sw' ? 'Mwisho wa Kifurushi:' : 'Renewal Date:'}</span>
         <span className="font-semibold text-text-secondary">
           {status.expiresAt

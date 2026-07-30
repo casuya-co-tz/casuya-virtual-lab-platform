@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
-import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 
@@ -35,57 +34,53 @@ export default function PastPapersPage() {
   const subjects = ['all', 'physics', 'chemistry', 'biology']
 
   return (
-    <div className="min-h-screen bg-bg-secondary px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-2">{t('pastPapers.title', lang)}</h1>
-        <p className="text-[14px] text-text-secondary mb-6">{t('pastPapers.subtitle', lang)}</p>
+    <div className="min-h-screen bg-bg-secondary px-1 py-2">
+      <h1 className="text-[clamp(18px,4vw,28px)] font-bold text-text-primary mb-1">{t('pastPapers.title', lang)}</h1>
+      <p className="text-[12px] sm:text-[14px] text-text-secondary mb-3">{t('pastPapers.subtitle', lang)}</p>
 
-        <div className="flex gap-2 mb-6 flex-wrap">
-          {subjects.map(s => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`px-4 py-2 rounded-xl text-[13px] font-bold transition-all ${
-                filter === s ? 'bg-accent-blue text-white' : 'bg-bg-primary border border-border-default text-text-secondary hover:border-border-strong'
-              }`}
-            >
-              {s === 'all' ? t('common.all', lang) : t(`subject.${s}`, lang)}
-            </button>
+      <div className="flex gap-1.5 mb-3 flex-wrap">
+        {subjects.map(s => (
+          <button
+            key={s}
+            onClick={() => setFilter(s)}
+            className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold transition-all ${
+              filter === s ? 'bg-accent-blue text-white' : 'bg-bg-primary border border-border text-text-secondary hover:border-border-strong'
+            }`}
+          >
+            {s === 'all' ? t('common.all', lang) : t(`subject.${s}`, lang)}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="text-text-secondary">{t('common.loading', lang)}</p>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-8 text-text-secondary">{t('pastPapers.noPapers', lang)}</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {filtered.map(paper => (
+            <div key={paper.id} className="bg-bg-primary border border-border p-2 sm:p-3">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1.5 mb-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[13px] sm:text-[14px] font-bold text-text-primary break-words">
+                    {lang === 'sw' ? paper.title_sw : paper.title}
+                  </h3>
+                  <p className="text-[11px] sm:text-[12px] text-text-secondary mt-0.5">
+                    {t(`subject.${paper.subject}`, lang)} &middot; {paper.year} &middot; {t('pastPapers.paper', lang)} {paper.paper_number}
+                  </p>
+                </div>
+                {paper.is_premium && <Badge variant="info" className="self-start shrink-0 text-[10px]">{t('pastPapers.premium', lang)}</Badge>}
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <span className="text-[11px] sm:text-[12px] text-text-secondary">{paper.exam_body}</span>
+                <a href={`/student/past-papers/${paper.id}/practice`} className="w-full sm:w-auto">
+                  <Button variant="secondary" className="!h-7 !text-[11px] w-full sm:w-auto">{t('pastPapers.startPractice', lang)}</Button>
+                </a>
+              </div>
+            </div>
           ))}
         </div>
-
-        {loading ? (
-          <p className="text-text-secondary">{t('common.loading', lang)}</p>
-        ) : filtered.length === 0 ? (
-          <Card className="text-center py-12">
-            <p className="text-text-secondary">{t('pastPapers.noPapers', lang)}</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map(paper => (
-              <Card key={paper.id} hover interactive>
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="text-[15px] font-bold text-text-primary">
-                      {lang === 'sw' ? paper.title_sw : paper.title}
-                    </h3>
-                    <p className="text-[12px] text-text-secondary mt-1">
-                      {t(`subject.${paper.subject}`, lang)} &middot; {paper.year} &middot; {t('pastPapers.paper', lang)} {paper.paper_number}
-                    </p>
-                  </div>
-                  {paper.is_premium && <Badge variant="info">{t('pastPapers.premium', lang)}</Badge>}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] text-text-secondary">{paper.exam_body}</span>
-                  <a href={`/student/past-papers/${paper.id}`}>
-                    <Button variant="secondary" className="!h-8 !text-[12px]">{t('pastPapers.startPractice', lang)}</Button>
-                  </a>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }

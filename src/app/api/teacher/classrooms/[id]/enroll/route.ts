@@ -16,7 +16,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const { student_email } = await req.json()
     if (!student_email) return NextResponse.json({ error: 'Student email required' }, { status: 400 })
 
-    const student = await query(`SELECT id FROM profiles WHERE full_name ILIKE $1 OR id::text = $1`, [student_email])
+    const student = await query(
+      `SELECT p.id FROM profiles p
+       JOIN auth.users u ON u.id = p.id
+       WHERE u.email = $1 AND p.role = 'student'`,
+      [String(student_email).trim().toLowerCase()]
+    )
     if (student.rows.length === 0) return NextResponse.json({ error: 'Student not found' }, { status: 404 })
 
     const studentId = student.rows[0].id
@@ -53,13 +58,25 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
+    const classroom = await query(
+      `SELECT id FROM classrooms WHERE id = $1 AND teacher_id = $2`,
+      [params.id, userId]
+    )
+    if (classroom.rows.length === 0) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
     const { student_id } = await req.json()
     if (!student_id) return NextResponse.json({ error: 'student_id required' }, { status: 400 })
 
-    await query(
-      `DELETE FROM classroom_enrollments WHERE classroom_id = $1 AND student_id = $2`,
+    const result = await query(
+      `DELETE FROM classroom_enrollments WHERE classroom_id = $1 AND student_id = $2 RETURNING id`,
       [params.id, student_id]
     )
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
+    }
+
     return NextResponse.json({ removed: true })
   } catch {
     return NextResponse.json({ error: 'Failed' }, { status: 500 })

@@ -14,8 +14,8 @@ export async function GET() {
     )
 
     return NextResponse.json(result.rows, { status: 200 })
-  } catch (err: any) {
-    return NextResponse.json({ error: 'ADMIN_READ_EXCEPTION', details: err.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -45,7 +45,7 @@ export async function PUT(req: Request) {
     )
 
     return NextResponse.json({ message: 'PLAN_UPDATED' }, { status: 200 })
-  } catch (err: any) {
-    return NextResponse.json({ error: 'ADMIN_WRITE_EXCEPTION', details: err.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -12,7 +12,7 @@ interface StatsGridProps {
 
 export function StatsGrid({ stats }: StatsGridProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {stats.map(s => (
         <Card key={s.label}>
           <p className="text-[12px] uppercase text-text-secondary">{s.label}</p>

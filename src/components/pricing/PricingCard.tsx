@@ -19,7 +19,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
 }) => {
   return (
     <div className={`relative flex flex-col p-6 rounded-xl border transition-all ${
-      isCurrent ? 'border-accent-blue bg-bg-tertiary' : 'border-border-default hover:border-border-strong'
+      isCurrent ? 'border-accent-blue bg-bg-tertiary' : 'border-border hover:border-border-strong'
     }`}>
       {isCurrent && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-0.5 rounded-full bg-accent-blue text-white">
@@ -46,15 +46,17 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         ))}
       </ul>
       <button
-        onClick={onSelect}
-        disabled={isCurrent}
+        onClick={price === 0 ? undefined : onSelect}
+        disabled={isCurrent || price === 0}
         className={`w-full py-2.5 rounded-lg font-medium text-sm transition-all ${
           isCurrent
-            ? 'bg-bg-muted text-text-muted cursor-not-allowed'
-            : 'bg-primary text-white hover:bg-opacity-90'
+            ? 'bg-bg-tertiary text-text-secondary cursor-not-allowed'
+            : price === 0
+            ? 'bg-accent-green/10 text-accent-green cursor-default'
+            : 'bg-accent-blue text-white hover:opacity-90'
         }`}
       >
-        {isCurrent ? (lang === 'sw' ? 'Ya Sasa' : 'Current') : (ctaLabel || (lang === 'sw' ? 'Chagua' : 'Select'))}
+        {isCurrent ? (lang === 'sw' ? 'Ya Sasa' : 'Current') : price === 0 ? (lang === 'sw' ? 'Bure' : 'Free') : (ctaLabel || (lang === 'sw' ? 'Boresha' : 'Upgrade'))}
       </button>
     </div>
   )

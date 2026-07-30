@@ -1,21 +1,14 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { query } from '@/lib/db'
+import { requireTeacherOrAdmin } from '@/lib/auth-guard'
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('sid')?.value
-    
+    const userId = await requireTeacherOrAdmin()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Verify role
     const profileResult = await query('SELECT * FROM profiles WHERE id = $1', [userId])
     const profile = profileResult.rows[0]
-    
-    if (!profile || profile.role !== 'teacher') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
 
     let students: any[] = []
     if (profile.school_id) {
@@ -67,8 +60,7 @@ export async function GET() {
       students: students,
       teacherSchoolId: profile.school_id
     })
-  } catch (err: any) {
-    console.error('Teacher Dashboard Error:', err)
-    return NextResponse.json({ error: 'Internal Server Error', details: err.message || err }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

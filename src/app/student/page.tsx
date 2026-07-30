@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
-import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LabCard } from '@/components/student/LabCard'
 
@@ -24,15 +23,14 @@ export default function StudentDashboard() {
   useEffect(() => {
     Promise.all([
       fetch('/api/progress').then(r => r.ok ? r.json() : []),
-      fetch('/api/labs').then(r => r.ok ? r.json() : []),
+      fetch('/api/labs').then(r => r.ok ? r.json() : { data: [] }),
     ])
       .then(([progressData, labsData]) => {
         const progressList = Array.isArray(progressData) ? progressData : []
         setLabs(progressList)
 
-        const allLabsList = Array.isArray(labsData) ? labsData : []
+        const allLabsList = Array.isArray(labsData.data) ? labsData.data : []
         const published = allLabsList
-          .filter((l: { is_published: boolean }) => l.is_published)
           .map((l: { id: string; title: string; title_sw?: string; subject: string }) => ({
             lab_id: l.id,
             title: l.title,
@@ -53,39 +51,37 @@ export default function StudentDashboard() {
   const pct = Math.round((completedCount / totalLabs) * 100)
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-6">
-        <span className="text-[14px] font-bold text-accent-green">&check; {t('student.online', lang)}</span>
+    <div className="px-1 py-2">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <span className="text-[12px] sm:text-[13px] font-bold text-accent-green">&check; {t('student.online', lang)}</span>
         {labs.length > 0 && (
           <>
-            <span className="text-[14px] text-text-secondary">|</span>
-            <span className="text-[14px] text-text-secondary">{pct}% {t('student.progress', lang)}</span>
+            <span className="text-[12px] text-text-secondary">|</span>
+            <span className="text-[12px] text-text-secondary">{pct}% {t('student.progress', lang)}</span>
           </>
         )}
       </div>
-      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">
+      <h1 className="text-[clamp(18px,4vw,28px)] font-bold text-text-primary mb-3">
         {t('nav.dashboard', lang)}
       </h1>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-40 bg-bg-tertiary animate-pulse" />
+            <div key={i} className="h-32 bg-bg-tertiary animate-pulse" />
           ))}
         </div>
       ) : displayLabs.length === 0 ? (
-        <Card>
-          <div className="text-center py-8">
-            <p className="text-[14px] text-text-secondary mb-4">
-              {t('student.noLabsYet', lang)}
-            </p>
-            <a href="/student/physics">
-              <Button variant="primary">{t('student.browseSubjects', lang)}</Button>
-            </a>
-          </div>
-        </Card>
+        <div className="text-center py-6 border border-border bg-bg-primary">
+          <p className="text-[13px] text-text-secondary mb-3">
+            {t('student.noLabsYet', lang)}
+          </p>
+          <a href="/student/physics">
+            <Button variant="primary">{t('student.browseSubjects', lang)}</Button>
+          </a>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {displayLabs.map(lab => (
             <LabCard
               key={lab.lab_id}

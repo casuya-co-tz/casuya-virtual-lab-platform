@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
-import { Card } from '@/components/ui/Card'
+
 import { Badge } from '@/components/ui/Badge'
 import { Table, Tr, Td } from '@/components/ui/Table'
 
@@ -45,16 +45,17 @@ export default function AdminReportsPage() {
 
   return (
     <div>
-      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-6">{t('admin.viewReports', lang)}</h1>
-      <Card>
+      <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-2">{t('admin.viewReports', lang)}</h1>
+      <div className="bg-bg-primary border border-border p-2">
+        <div className="-mx-4 sm:mx-0 overflow-x-auto">
         <Table headers={[t('admin.tableUser', lang), t('admin.reviewRating', lang), t('admin.reviewText', lang), 'Reason', t('admin.tableDate', lang), t('admin.reviewStatus', lang), t('admin.tableActions', lang)]}>
           {reports.map(rp => (
             <Tr key={rp.id}>
-              <Td className="text-[13px]">{rp.reporter_name}</Td>
-              <Td><span className="text-accent-amber">{'★'.repeat(rp.rating)}</span></Td>
-              <Td className="max-w-[200px]"><p className="text-[13px] text-text-secondary truncate">{rp.review_text}</p></Td>
-              <Td className="max-w-[200px]"><p className="text-[13px] text-text-secondary">{rp.reason}</p></Td>
-              <Td className="text-[13px]">{new Date(rp.created_at).toLocaleDateString()}</Td>
+              <Td className="text-[12px]">{rp.reporter_name}</Td>
+              <Td><span className="text-accent-amber text-[12px]">{'★'.repeat(rp.rating)}</span></Td>
+              <Td className="max-w-[150px]"><p className="text-[12px] text-text-secondary truncate">{rp.review_text}</p></Td>
+              <Td className="max-w-[150px]"><p className="text-[12px] text-text-secondary">{rp.reason}</p></Td>
+              <Td className="text-[12px]">{new Date(rp.created_at).toLocaleDateString()}</Td>
               <Td>
                 <Badge variant={rp.resolved_at ? 'success' : 'warning'}>
                   {rp.resolved_at ? 'Resolved' : 'Pending'}
@@ -62,16 +63,16 @@ export default function AdminReportsPage() {
               </Td>
               <Td>
                 {!rp.resolved_at && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => resolveReport(rp.id)}
-                      className="text-[12px] underline"
+                      className="text-[11px] underline"
                     >
                       Resolve
                     </button>
                     <a
                       href={`/admin/reviews`}
-                      className="text-[12px] text-accent-blue underline"
+                      className="text-[11px] text-accent-blue underline"
                     >
                       Manage Review
                     </a>
@@ -82,11 +83,12 @@ export default function AdminReportsPage() {
           ))}
           {reports.length === 0 && (
             <Tr>
-              <Td colSpan={7} className="text-center text-text-secondary py-8">{t('admin.noData', lang)}</Td>
+              <Td colSpan={7} className="text-center text-text-secondary py-2">{t('admin.noData', lang)}</Td>
             </Tr>
           )}
         </Table>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

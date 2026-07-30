@@ -1,6 +1,5 @@
 import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { requireAuth } from '@/lib/auth-guard'
 
 export async function POST() {
@@ -12,8 +11,8 @@ export async function POST() {
   try {
     const result = await query(
       `UPDATE subscriptions
-       SET status = 'cancelled', updated_at = NOW()
-       WHERE profile_id = $1 AND status = 'active'
+       SET status = 'cancelled'
+       WHERE user_id = $1 AND status = 'active'
        RETURNING id, tier, status, expires_at`,
       [userId]
     )

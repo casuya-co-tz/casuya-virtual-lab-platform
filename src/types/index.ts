@@ -9,16 +9,14 @@ export interface Profile {
 
 export interface Lab {
   id: string
-  subtopic_id: string
   title: string
   title_sw: string
   description: string | null
-  subject: 'physics' | 'chemistry' | 'biology'
-  html_threejs_code: string | null
+  subject: string
+  html_code: string | null
   is_published: boolean
-  version: number
-  security_score: number
-  created_by: string | null
+  is_premium: boolean
+  current_version: number
   created_at: string
   updated_at: string
 }
