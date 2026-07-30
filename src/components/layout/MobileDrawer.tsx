@@ -1,4 +1,5 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 
@@ -10,8 +11,16 @@ interface MobileDrawerProps {
 
 export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
   const { lang } = useLanguage()
+  const router = useRouter()
 
   if (!isOpen) return null
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    onClose()
+    router.push('/')
+    router.refresh()
+  }
 
   const base = `/${userRole}`
 
@@ -67,7 +76,7 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
   return (
     <div className="fixed inset-0 z-50">
       <div className="fixed inset-0 bg-black/70" onClick={onClose} />
-      <div className="fixed left-0 top-0 h-full w-72 bg-bg-tertiary border-r border-border-strong p-2">
+      <div className="fixed left-0 top-0 h-full w-72 bg-bg-tertiary border-r border-border-strong p-2 relative flex flex-col">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-accent-blue/20 rounded flex items-center justify-center">
@@ -95,6 +104,18 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
             </a>
           ))}
         </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border-strong bg-bg-tertiary">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[13px] font-medium text-accent-red border border-accent-red/30 hover:bg-accent-red/10 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   )
