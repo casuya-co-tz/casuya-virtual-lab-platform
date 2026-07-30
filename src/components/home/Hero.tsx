@@ -1,4 +1,5 @@
 'use client'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
@@ -7,11 +8,19 @@ import { Button } from '@/components/ui/Button'
 export function Hero() {
   const router = useRouter()
   const { lang } = useLanguage()
+  const [statsData, setStatsData] = useState({ total_students: 0, total_labs: 0, uptime: '99.97%' })
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setStatsData(d) })
+      .catch(() => {})
+  }, [])
 
   const stats = [
-    { value: '243,817', label: t('stats.students', lang) },
-    { value: '187', label: t('stats.labs', lang) },
-    { value: '99.97%', label: t('stats.uptime', lang) },
+    { value: statsData.total_students.toLocaleString(), label: t('stats.students', lang) },
+    { value: String(statsData.total_labs), label: t('stats.labs', lang) },
+    { value: statsData.uptime, label: t('stats.uptime', lang) },
   ]
 
   return (
