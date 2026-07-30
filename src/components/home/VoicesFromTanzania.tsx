@@ -130,41 +130,12 @@ export function VoicesFromTanzania() {
     return elapsed < 30 * 60 * 1000
   }
 
-  const hardcodedVoices = [
-    {
-      text: lang === 'sw'
-        ? 'Nilitumia Casuya kujiandaa kwa Mtihani wa NECTA wa Fizikia na nikapata alama 92. Ulinganisho wa optiki ulikuwa sawia na mpango wa mtihani wa kweli. Kila mwanafunzi nchini Tanzania anahitaji hii.'
-        : 'I used Casuya to prepare for my NECTA Physics Practical and scored a 92. The optics simulation was exactly like the real exam setup. Every student in Tanzania needs this.',
-      author: 'Aisha Mwangi, Form VI Student — Dar es Salaam',
-      avatar: '👩🏾‍🎓',
-    },
-    {
-      text: lang === 'sw'
-        ? 'Shule yetu hauna vifaa vya maabara vilivyofanya kazi. Kwa Casuya, nilionyesha utitiriko, mzunguko, na Sheria ya Boyle kwa njia ya mwingiliano. Kiwango cha kupita kwa wanafunzi wangu kiliongeka kutoka 61% hadi 89% katika muhula mmoja.'
-        : 'Our school has no functioning lab equipment. With Casuya, I demonstrated titration, circuits, and Boyle\'s Law interactively. My students\' pass rate went from 61% to 89% in one term.',
-      author: 'David Nkosi, Head of Science — Arusha Secondary School',
-      avatar: '👨🏾‍🏫',
-    },
-  ]
-
   return (
     <section className="px-4 sm:px-6 py-10 sm:py-20 lg:py-24 bg-bg-primary border-b border-border">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-[clamp(22px,5vw,38px)] font-extrabold text-text-primary text-center tracking-tight mb-8 sm:mb-14">
           {t('home.voicesTitle', lang)}
         </h2>
-
-        {/* Hardcoded Highlighted Voices */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-10 sm:mb-14">
-          {hardcodedVoices.map((v, i) => (
-            <div key={i} className="flex flex-col p-5 sm:p-7 bg-bg-secondary border border-border relative overflow-hidden">
-              <div className="absolute top-3 right-4 text-[32px] sm:text-[44px] opacity-10 select-none">&ldquo;</div>
-              <div className="text-[28px] sm:text-[36px] mb-3">{v.avatar}</div>
-              <p className="text-[13px] sm:text-[15px] italic text-text-primary mb-5 relative z-10 leading-relaxed">&ldquo;{v.text}&rdquo;</p>
-              <p className="text-[12px] sm:text-[13px] font-bold text-accent-blue mt-auto">— {v.author}</p>
-            </div>
-          ))}
-        </div>
 
         {/* Dynamic User Reviews */}
         {reviews.length > 0 && (
