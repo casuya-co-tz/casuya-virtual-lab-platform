@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Chemistry Practical Quiz</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    background: #161b22;
+    color: #c9d1d9;
+    overflow: hidden;
+  }
+
+  /* ── FRAME ── */
+  .frame {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    background: #161b22;
+    border: none;
+    border-radius: 0;
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #30363d;
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .header h1 {
+    font-size: clamp(1rem, 3vw, 2rem);
+    color: #58a6ff;
+    margin-bottom: 0.2rem;
+    letter-spacing: -0.02em;
+  }
+
+  .header p {
+    font-size: clamp(0.65rem, 1.5vw, 0.95rem);
+    color: #8b949e;
+  }
+
+  /* ── QUESTIONS CONTAINER ── */
+  .questions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+    flex: 1;
+  }
+
+  /* ── SINGLE QUESTION ── */
+  .question {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 1rem 1.4rem;
+    width: 100%;
+    flex-shrink: 0;
+    transition: border-color 0.2s;
+  }
+
+  .question:hover {
+    border-color: #58a6ff44;
+  }
+
+  /* ── QUESTION NUMBER ── */
+  .question .q-num {
+    font-weight: 700;
+    color: #58a6ff;
+    margin-bottom: 0.3rem;
+    font-size: clamp(0.8rem, 1.4vw, 1rem);
+  }
+
+  /* ── QUESTION TEXT ── */
+  .question .q-text {
+    line-height: 1.6;
+    margin-bottom: 0.6rem;
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
+  }
+
+  /* ── HINT BUTTON ── */
+  .question .hint-btn {
+    background: none;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: clamp(0.7rem, 1.2vw, 0.85rem);
+    transition: all 0.2s;
+  }
+
+  .question .hint-btn:hover,
+  .question .hint-btn:focus {
+    background: #21262d;
+    color: #c9d1d9;
+    border-color: #58a6ff;
+    outline: none;
+  }
+
+  /* ── HINT TEXT ── */
+  .question .hint {
+    display: none;
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: #1c2433;
+    border-left: 3px solid #58a6ff;
+    border-radius: 0 4px 4px 0;
+    font-size: clamp(0.72rem, 1.3vw, 0.9rem);
+    color: #8b949e;
+    line-height: 1.5;
+    width: 100%;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (min-width: 1600px) { html { font-size: 18px; } }
+  @media (min-width: 2000px) { html { font-size: 20px; } }
+  @media (max-width: 400px) {
+    html { font-size: 14px; }
+    .frame { padding: 0.5rem 0.5rem; }
+    .question { padding: 0.7rem 0.6rem; }
+  }
+  @media (max-height: 420px) and (orientation: landscape) {
+    .frame { padding: 0.4rem 1rem; }
+    .question { padding: 0.5rem 0.8rem; }
+    .header { margin-bottom: 0.4rem; padding-bottom: 0.3rem; }
+    .questions { gap: 0.3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <div class="header">
+    <h1>Chemistry Practical Quiz</h1>
+    <p>Structured laboratory evaluation with crisp, high-contrast layouts.</p>
+  </div>
+
+  <div class="questions">
+    <!-- ════════════════════════════════════════════
+         PASTE YOUR HTML QUESTIONS BELOW
+         Each block must follow this structure:
+
+         <div class="question">
+           <div class="q-num">1.</div>
+           <div class="q-text">Your question here?</div>
+           <button class="hint-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">&#128161; Show Hint</button>
+           <div class="hint">Your hint text here.</div>
+         </div>
+
+         ════════════════════════════════════════════ -->
+
+    <div class="question">
+      <div class="q-num">1.</div>
+      <div class="q-text">During a titration, why is a white tile placed directly underneath the conical flask?</div>
+      <button class="hint-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">&#128161; Show Hint</button>
+      <div class="hint">The white tile provides a clean background so the colour change of the indicator at the endpoint can be observed clearly against a neutral surface.</div>
+    </div>
+
+    <div class="question">
+      <div class="q-num">2.</div>
+      <div class="q-text">Which of the following indicators is considered most suitable for the titration of a strong acid against a weak base?</div>
+      <button class="hint-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">&#128161; Show Hint</button>
+      <div class="hint">Methyl Orange is preferred because its pH transition range (3.1–4.4) aligns with the acidic equivalence point of a strong acid–weak base titration.</div>
+    </div>
+
+    <div class="question">
+      <div class="q-num">3.</div>
+      <div class="q-text">When a few drops of dilute hydrochloric acid are added to an unknown salt, a colorless, odorless gas is evolved that turns lime water milky. Which anion is most likely present in the salt?</div>
+      <button class="hint-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">&#128161; Show Hint</button>
+      <div class="hint">The gas is carbon dioxide, produced from the carbonate (CO₃²⁻) or hydrogen carbonate (HCO₃⁻) anion reacting with acid, which turns limewater milky by forming CaCO₃ precipitate.</div>
+    </div>
+
+    <div class="question">
+      <div class="q-num">4.</div>
+      <div class="q-text">If concentrated acid is accidentally spilled on the laboratory bench, what is the safest initial action to take?</div>
+      <button class="hint-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">&#128161; Show Hint</button>
+      <div class="hint">Flood the spill area with copious amounts of water to dilute the acid, then wipe up with a suitable absorbent material and neutralize if needed.</div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+         END — paste more questions above this line
+         ════════════════════════════════════════════ -->
+  </div>
+
+</div>
+</body>
+</html>
