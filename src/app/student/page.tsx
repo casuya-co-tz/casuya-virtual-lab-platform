@@ -53,7 +53,6 @@ export default function StudentDashboard() {
   return (
     <div className="px-1 py-2">
       <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className="text-[12px] sm:text-[13px] font-bold text-accent-green">&check; {t('student.online', lang)}</span>
         {labs.length > 0 && (
           <>
             <span className="text-[12px] text-text-secondary">|</span>

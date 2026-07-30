@@ -9,12 +9,12 @@ type ProviderIconProps = {
 
 const providerData: Record<string, { src: string; alt: string; bgColor: string }> = {
   mpesa: {
-    src: '/images/payment-providers/mpesa.png',
+    src: '/images/payment-providers/mpesa.svg',
     alt: 'M-Pesa',
     bgColor: '#00A859'
   },
   airtel: {
-    src: '/images/payment-providers/airtel.png',
+    src: '/images/payment-providers/airtel.svg',
     alt: 'Airtel Money',
     bgColor: '#ED1B24'
   },
@@ -24,12 +24,12 @@ const providerData: Record<string, { src: string; alt: string; bgColor: string }
     bgColor: '#003399'
   },
   halopesa: {
-    src: '/images/payment-providers/halopesa.png',
+    src: '/images/payment-providers/halopesa.svg',
     alt: 'Halopesa',
     bgColor: '#7C3AED'
   },
   azampesa: {
-    src: '/images/payment-providers/azampesa.png',
+    src: '/images/payment-providers/azampesa.svg',
     alt: 'Azampesa',
     bgColor: '#059669'
   }
