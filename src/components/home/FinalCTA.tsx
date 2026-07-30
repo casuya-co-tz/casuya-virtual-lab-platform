@@ -13,7 +13,7 @@ export function FinalCTA() {
             Ready to Transform Your Science Education?
           </h2>
           <p className="text-[14px] sm:text-[17px] text-text-secondary mb-6 sm:mb-8 max-w-2xl leading-relaxed">
-            Join thousands of Tanzanian students and teachers who have already revolutionized their learning experience with Casuya Virtual Labs.
+            Join Tanzanian students, teachers, schools and developers who have already revolutionized their learning experience with Casuya Virtual Labs.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Button variant="primary" className="!h-11 sm:!h-14 !px-6 sm:!px-10 text-[14px] sm:text-[15px] w-full sm:w-auto" onClick={() => router.push('/auth')}>

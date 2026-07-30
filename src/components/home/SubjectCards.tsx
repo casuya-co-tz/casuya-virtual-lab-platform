@@ -1,19 +1,28 @@
 'use client'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 import { useUser } from '@/contexts/UserContext'
 
 const subjects = [
-  { id: 'physics', icon: '⚡', desc: 'Circuits, Optics, Mechanics, Waves', labs: 12 },
-  { id: 'chemistry', icon: '🧪', desc: 'Titration, pH, Reactions, Bonds', labs: 8 },
-  { id: 'biology', icon: '🔬', desc: 'Anatomy, Genetics, Ecology, Cells', labs: 6 },
+  { id: 'physics', icon: '⚡', desc: 'Circuits, Optics, Mechanics, Waves' },
+  { id: 'chemistry', icon: '🧪', desc: 'Titration, pH, Reactions, Bonds' },
+  { id: 'biology', icon: '🔬', desc: 'Anatomy, Genetics, Ecology, Cells' },
 ]
 
 export function SubjectCards() {
   const router = useRouter()
   const { lang } = useLanguage()
   const { user, loading } = useUser()
+  const [counts, setCounts] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    fetch('/api/labs/count')
+      .then(r => r.ok ? r.json() : {})
+      .then(setCounts)
+      .catch(() => {})
+  }, [])
 
   function handleClick(id: string) {
     if (loading) return
@@ -40,7 +49,7 @@ export function SubjectCards() {
               <p className="text-[13px] sm:text-[14px] text-text-secondary leading-relaxed mb-5 flex-1">{s.desc}</p>
 
               <div className="flex items-center justify-between border-t border-border pt-4 mt-auto">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-accent-blue bg-accent-blue/10 px-2 py-1">{s.labs} Labs</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-accent-blue bg-accent-blue/10 px-2 py-1">{counts[s.id] ?? 0} Labs</span>
                 <button
                   onClick={() => handleClick(s.id)}
                   className="text-[13px] font-bold text-text-primary hover:text-accent-blue transition-colors uppercase tracking-wider"
