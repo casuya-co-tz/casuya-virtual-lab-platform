@@ -22,7 +22,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     fetch('/api/profile')
-      .then(r => { if (r.ok) return r.json(); throw new Error() })
+      .then(r => r.ok ? r.json() : null)
       .then(data => setUser(data))
       .catch(() => setUser(null))
       .finally(() => {
