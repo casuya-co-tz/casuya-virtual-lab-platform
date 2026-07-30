@@ -14,10 +14,10 @@ interface Doc {
 }
 
 export default function DeveloperDocsPage() {
-  const { lang } = useLanguage()
+  const { lang, mounted } = useLanguage()
   const [docs, setDocs] = useState<Doc[]>([])
   const [loading, setLoading] = useState(true)
-  const [origin, setOrigin] = useState('https://casuya.com')
+  const [origin, setOrigin] = useState('')
 
   useEffect(() => {
     setOrigin(window.location.origin)

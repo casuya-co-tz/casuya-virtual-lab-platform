@@ -9,61 +9,62 @@ interface SidebarProps {
 
 export function Sidebar({ userRole: overrideRole }: SidebarProps) {
   const pathname = usePathname()
-  const { lang } = useLanguage()
+  const { lang, mounted } = useLanguage()
   const userRole = overrideRole || (pathname.startsWith('/admin') ? 'admin' : pathname.startsWith('/teacher') ? 'teacher' : pathname.startsWith('/developer') ? 'developer' : 'student')
+  const effectiveLang = mounted ? lang : 'en'
 
   const base = `/${userRole}`
 
   const subjectItems = [
-    { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics`, active: pathname.startsWith(`${base}/physics`) },
-    { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry`, active: pathname.startsWith(`${base}/chemistry`) },
-    { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology`, active: pathname.startsWith(`${base}/biology`) },
+    { icon: '🔬', label: effectiveLang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics`, active: pathname.startsWith(`${base}/physics`) },
+    { icon: '🧪', label: effectiveLang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry`, active: pathname.startsWith(`${base}/chemistry`) },
+    { icon: '🦠', label: effectiveLang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology`, active: pathname.startsWith(`${base}/biology`) },
   ]
 
   const studentItems = [
-    { icon: '📊', label: t('nav.dashboard', lang), href: '/student', active: pathname === '/student' },
+    { icon: '📊', label: t('nav.dashboard', effectiveLang), href: '/student', active: pathname === '/student' },
     ...subjectItems,
-    { icon: '🔍', label: t('nav.search', lang), href: '/search', active: pathname === '/search' },
-    { icon: '📝', label: lang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: '/student/past-papers', active: pathname === '/student/past-papers' },
-    { icon: '📈', label: lang === 'sw' ? 'Maendeleo' : 'Progress', href: '/student/progress', active: pathname === '/student/progress' },
-    { icon: '💳', label: t('nav.pricing', lang), href: '/pricing', active: pathname === '/pricing' },
-    { icon: '⚙️', label: t('nav.settings', lang), href: '/student/settings', active: pathname === '/student/settings' },
+    { icon: '🔍', label: t('nav.search', effectiveLang), href: '/search', active: pathname === '/search' },
+    { icon: '📝', label: effectiveLang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: '/student/past-papers', active: pathname === '/student/past-papers' },
+    { icon: '📈', label: effectiveLang === 'sw' ? 'Maendeleo' : 'Progress', href: '/student/progress', active: pathname === '/student/progress' },
+    { icon: '💳', label: t('nav.pricing', effectiveLang), href: '/pricing', active: pathname === '/pricing' },
+    { icon: '⚙️', label: t('nav.settings', effectiveLang), href: '/student/settings', active: pathname === '/student/settings' },
   ]
 
   const adminItems = [
-    { icon: '📊', label: t('admin.dashboard', lang), href: '/admin', active: pathname === '/admin' },
-    { icon: '📚', label: t('admin.curriculum', lang), href: '/admin/curriculum', active: pathname.startsWith('/admin/curriculum') },
-    { icon: '🧪', label: t('admin.labs', lang), href: '/admin/labs', active: pathname.startsWith('/admin/labs') },
-    { icon: '👥', label: t('admin.users', lang), href: '/admin/users', active: pathname === '/admin/users' },
-    { icon: '💬', label: t('admin.reviews', lang), href: '/admin/reviews', active: pathname === '/admin/reviews' },
-    { icon: '🚩', label: t('admin.viewReports', lang), href: '/admin/reports', active: pathname === '/admin/reports' },
-    { icon: '💳', label: t('admin.billing', lang), href: '/admin/billing', active: pathname === '/admin/billing' },
-    { icon: '🔑', label: t('admin.apiKeys', lang), href: '/admin/api-keys', active: pathname === '/admin/api-keys' },
-    { icon: '📄', label: t('admin.docs', lang), href: '/admin/docs', active: pathname === '/admin/docs' },
-    { icon: '🔍', label: t('admin.audit', lang), href: '/admin/audit', active: pathname === '/admin/audit' },
-    { icon: '📈', label: t('admin.analytics', lang), href: '/admin/analytics', active: pathname === '/admin/analytics' },
-    { icon: '📝', label: t('admin.pastPapers', lang), href: '/admin/past-papers', active: pathname === '/admin/past-papers' },
-    { icon: '🛠️', label: t('admin.support', lang), href: '/admin/support', active: pathname === '/admin/support' },
-    { icon: '⚙️', label: t('admin.settings', lang), href: '/admin/settings', active: pathname === '/admin/settings' },
+    { icon: '📊', label: t('admin.dashboard', effectiveLang), href: '/admin', active: pathname === '/admin' },
+    { icon: '📚', label: t('admin.curriculum', effectiveLang), href: '/admin/curriculum', active: pathname.startsWith('/admin/curriculum') },
+    { icon: '🧪', label: t('admin.labs', effectiveLang), href: '/admin/labs', active: pathname.startsWith('/admin/labs') },
+    { icon: '👥', label: t('admin.users', effectiveLang), href: '/admin/users', active: pathname === '/admin/users' },
+    { icon: '💬', label: t('admin.reviews', effectiveLang), href: '/admin/reviews', active: pathname === '/admin/reviews' },
+    { icon: '🚩', label: t('admin.viewReports', effectiveLang), href: '/admin/reports', active: pathname === '/admin/reports' },
+    { icon: '💳', label: t('admin.billing', effectiveLang), href: '/admin/billing', active: pathname === '/admin/billing' },
+    { icon: '🔑', label: t('admin.apiKeys', effectiveLang), href: '/admin/api-keys', active: pathname === '/admin/api-keys' },
+    { icon: '📄', label: t('admin.docs', effectiveLang), href: '/admin/docs', active: pathname === '/admin/docs' },
+    { icon: '🔍', label: t('admin.audit', effectiveLang), href: '/admin/audit', active: pathname === '/admin/audit' },
+    { icon: '📈', label: t('admin.analytics', effectiveLang), href: '/admin/analytics', active: pathname === '/admin/analytics' },
+    { icon: '📝', label: t('admin.pastPapers', effectiveLang), href: '/admin/past-papers', active: pathname === '/admin/past-papers' },
+    { icon: '🛠️', label: t('admin.support', effectiveLang), href: '/admin/support', active: pathname === '/admin/support' },
+    { icon: '⚙️', label: t('admin.settings', effectiveLang), href: '/admin/settings', active: pathname === '/admin/settings' },
   ]
 
   const teacherItems = [
-    { icon: '📊', label: t('nav.dashboard', lang), href: '/teacher', active: pathname === '/teacher' },
-    { icon: '👥', label: lang === 'sw' ? 'Madarasa' : 'Classrooms', href: '/teacher/classrooms', active: pathname.startsWith('/teacher/classrooms') },
-    { icon: '🔍', label: t('nav.search', lang), href: '/search', active: pathname === '/search' },
-    { icon: '📝', label: lang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: '/teacher/past-papers', active: pathname === '/teacher/past-papers' },
-    { icon: '💳', label: t('nav.pricing', lang), href: '/pricing', active: pathname === '/pricing' },
-    { icon: '⚙️', label: t('nav.settings', lang), href: '/teacher/settings', active: pathname === '/teacher/settings' },
+    { icon: '📊', label: t('nav.dashboard', effectiveLang), href: '/teacher', active: pathname === '/teacher' },
+    { icon: '👥', label: effectiveLang === 'sw' ? 'Madarasa' : 'Classrooms', href: '/teacher/classrooms', active: pathname.startsWith('/teacher/classrooms') },
+    { icon: '🔍', label: t('nav.search', effectiveLang), href: '/search', active: pathname === '/search' },
+    { icon: '📝', label: effectiveLang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: '/teacher/past-papers', active: pathname === '/teacher/past-papers' },
+    { icon: '💳', label: t('nav.pricing', effectiveLang), href: '/pricing', active: pathname === '/pricing' },
+    { icon: '⚙️', label: t('nav.settings', effectiveLang), href: '/teacher/settings', active: pathname === '/teacher/settings' },
   ]
 
   const developerItems = [
-    { icon: '📊', label: t('nav.dashboard', lang), href: '/developer', active: pathname === '/developer' },
-    { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics`, active: pathname.startsWith(`${base}/physics`) },
-    { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry`, active: pathname.startsWith(`${base}/chemistry`) },
-    { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology`, active: pathname.startsWith(`${base}/biology`) },
-    { icon: '📄', label: lang === 'sw' ? 'Docs' : 'Docs', href: '/developer/docs', active: pathname === '/developer/docs' },
-    { icon: '📈', label: lang === 'sw' ? 'Uchambuzi' : 'Analytics', href: '/developer/analytics', active: pathname === '/developer/analytics' },
-    { icon: '⚙️', label: t('nav.settings', lang), href: '/developer/settings', active: pathname === '/developer/settings' },
+    { icon: '📊', label: t('nav.dashboard', effectiveLang), href: '/developer', active: pathname === '/developer' },
+    { icon: '🔬', label: effectiveLang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics`, active: pathname.startsWith(`${base}/physics`) },
+    { icon: '🧪', label: effectiveLang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry`, active: pathname.startsWith(`${base}/chemistry`) },
+    { icon: '🦠', label: effectiveLang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology`, active: pathname.startsWith(`${base}/biology`) },
+    { icon: '📄', label: effectiveLang === 'sw' ? 'Docs' : 'Docs', href: '/developer/docs', active: pathname === '/developer/docs' },
+    { icon: '📈', label: effectiveLang === 'sw' ? 'Uchambuzi' : 'Analytics', href: '/developer/analytics', active: pathname === '/developer/analytics' },
+    { icon: '⚙️', label: t('nav.settings', effectiveLang), href: '/developer/settings', active: pathname === '/developer/settings' },
   ]
 
   const items = userRole === 'admin' ? adminItems : userRole === 'teacher' ? teacherItems : userRole === 'developer' ? developerItems : studentItems

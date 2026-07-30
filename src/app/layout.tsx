@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { WebVitals } from '@/components/shared/WebVitals'
+import { HtmlLang } from '@/components/shared/HtmlLang'
 import './globals.css'
 
 const inter = Inter({
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <body className="font-sans">
+        <HtmlLang />
         {children}
         <WebVitals />
         <Script src="/js/init.js" strategy="afterInteractive" />

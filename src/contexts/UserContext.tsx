@@ -10,24 +10,29 @@ interface UserProfile {
 interface UserContextValue {
   user: UserProfile | null
   loading: boolean
+  mounted: boolean
 }
 
-const UserContext = createContext<UserContextValue>({ user: null, loading: true })
+const UserContext = createContext<UserContextValue>({ user: null, loading: true, mounted: false })
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     fetch('/api/profile')
       .then(r => { if (r.ok) return r.json(); throw new Error() })
       .then(data => setUser(data))
       .catch(() => setUser(null))
-      .finally(() => setLoading(false))
+      .finally(() => {
+        setLoading(false)
+        setMounted(true)
+      })
   }, [])
 
   return (
-    <UserContext.Provider value={{ user, loading }}>
+    <UserContext.Provider value={{ user, loading, mounted }}>
       {children}
     </UserContext.Provider>
   )

@@ -13,10 +13,11 @@ interface NavbarProps {
 
 export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const { user, loading } = useUser()
+  const { user, loading, mounted } = useUser()
   const pathname = usePathname()
   const router = useRouter()
-  const { lang, toggle } = useLanguage()
+  const { lang, toggle, mounted: langMounted } = useLanguage()
+  const isMounted = mounted && langMounted
 
   useEffect(() => {
     if (!loading && !user) {
@@ -56,32 +57,32 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
           CASUYA
         </a>
 
-        <div className="hidden md:flex items-center gap-5">
+        <div className="hidden md:flex items-center gap-5" suppressHydrationWarning>
           {user && (
             <a href={dashboardHref} className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
-              {t('nav.dashboard', lang)}
+              {t('nav.dashboard', isMounted ? lang : 'en')}
             </a>
           )}
           {(!user || user.role === 'student' || user.role === 'admin') && (
             <a href={user ? '/student' : '/auth'} className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
-              {t('nav.subjects', lang)}
+              {t('nav.subjects', isMounted ? lang : 'en')}
             </a>
           )}
           <a href="/search" className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
-            {t('nav.search', lang)}
+            {t('nav.search', isMounted ? lang : 'en')}
           </a>
           <a href="/pricing" className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
-            {t('nav.pricing', lang)}
+            {t('nav.pricing', isMounted ? lang : 'en')}
           </a>
           {(!user || user.role === 'admin') && (
             <a href={user ? '/developer' : '/auth'} className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
-              {t('nav.developer', lang)}
+              {t('nav.developer', isMounted ? lang : 'en')}
             </a>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <LanguageToggle lang={lang} onToggle={toggle} />
+          <LanguageToggle lang={isMounted ? lang : 'en'} onToggle={toggle} />
           {user ? (
             <div className="hidden md:flex items-center gap-2">
               <a href={dashboardHref} className="text-[13px] text-text-primary font-bold truncate max-w-[100px]">
@@ -90,7 +91,7 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
               <button onClick={handleLogout} className="h-8 px-2 text-[11px] text-accent-blue underline">Logout</button>
             </div>
           ) : (
-            <Button variant="primary" className="hidden md:block !h-9 !px-4 !text-[12px]" onClick={() => router.push('/auth')}>{t('nav.login', lang)}</Button>
+            <Button variant="primary" className="hidden md:block !h-9 !px-4 !text-[12px]" onClick={() => router.push('/auth')}>{t('nav.login', isMounted ? lang : 'en')}</Button>
           )}
           <button
             className="md:hidden w-10 h-10 flex items-center justify-center text-text-primary"
@@ -146,32 +147,32 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
                 {user.full_name}
               </a>
             )}
-            <div className="py-2">
+            <div className="py-2" suppressHydrationWarning>
               {user && (
                 <a href={dashboardHref} onClick={() => setMenuOpen(false)} className="flex items-center h-11 px-4 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors">
-                  {t('nav.dashboard', lang)}
+                  {t('nav.dashboard', isMounted ? lang : 'en')}
                 </a>
               )}
               {(!user || user.role === 'student' || user.role === 'admin') && (
                 <a href={user ? '/student' : '/auth'} onClick={() => setMenuOpen(false)} className="flex items-center h-11 px-4 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors">
-                  {t('nav.subjects', lang)}
+                  {t('nav.subjects', isMounted ? lang : 'en')}
                 </a>
               )}
               <a href="/search" onClick={() => setMenuOpen(false)} className="flex items-center h-11 px-4 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors">
-                {t('nav.search', lang)}
+                {t('nav.search', isMounted ? lang : 'en')}
               </a>
               <a href="/pricing" onClick={() => setMenuOpen(false)} className="flex items-center h-11 px-4 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors">
-                {t('nav.pricing', lang)}
+                {t('nav.pricing', isMounted ? lang : 'en')}
               </a>
               {(!user || user.role === 'admin') && (
                 <a href={user ? '/developer' : '/auth'} onClick={() => setMenuOpen(false)} className="flex items-center h-11 px-4 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors">
-                  {t('nav.developer', lang)}
+                  {t('nav.developer', isMounted ? lang : 'en')}
                 </a>
               )}
             </div>
 
             <div className="border-t border-border py-2 px-4">
-              <LanguageToggle lang={lang} onToggle={toggle} />
+              <LanguageToggle lang={isMounted ? lang : 'en'} onToggle={toggle} />
             </div>
           </div>
 
@@ -179,7 +180,7 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
             {user ? (
               <div className="flex flex-col gap-2">
                 <a href={dashboardHref} onClick={() => setMenuOpen(false)} className="text-[13px] text-text-secondary hover:text-text-primary text-center">
-                  {t('nav.dashboard', lang)}
+                  {t('nav.dashboard', isMounted ? lang : 'en')}
                 </a>
                 <button onClick={handleLogout} className="h-10 w-full text-[13px] border border-accent-red text-accent-red hover:bg-accent-red/10 transition-colors">
                   Logout
@@ -187,7 +188,7 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
               </div>
             ) : (
               <Button variant="primary" className="w-full !h-10" onClick={() => { setMenuOpen(false); router.push('/auth') }}>
-                {t('nav.login', lang)}
+                {t('nav.login', isMounted ? lang : 'en')}
               </Button>
             )}
           </div>
