@@ -94,3 +94,134 @@ input, select, textarea, button {
 .animate-slide-in-right {
   animation: slide-in-right 0.2s ease-out;
 }
+
+/* Mesh Gradient / Aurora Background */
+.mesh-gradient-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.mesh-gradient-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(59, 130, 246, 0.15), transparent),
+    radial-gradient(ellipse 60% 60% at 80% 20%, rgba(139, 92, 246, 0.12), transparent),
+    radial-gradient(ellipse 50% 80% at 60% 80%, rgba(16, 185, 129, 0.1), transparent),
+    radial-gradient(ellipse 70% 40% at 10% 90%, rgba(236, 72, 153, 0.08), transparent);
+  animation: mesh-drift 8s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mesh-gradient-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes mesh-drift {
+  0% {
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(59, 130, 246, 0.15), transparent),
+      radial-gradient(ellipse 60% 60% at 80% 20%, rgba(139, 92, 246, 0.12), transparent),
+      radial-gradient(ellipse 50% 80% at 60% 80%, rgba(16, 185, 129, 0.1), transparent),
+      radial-gradient(ellipse 70% 40% at 10% 90%, rgba(236, 72, 153, 0.08), transparent);
+  }
+  50% {
+    background:
+      radial-gradient(ellipse 70% 60% at 40% 60%, rgba(139, 92, 246, 0.18), transparent),
+      radial-gradient(ellipse 80% 40% at 70% 30%, rgba(59, 130, 246, 0.12), transparent),
+      radial-gradient(ellipse 60% 70% at 30% 20%, rgba(236, 72, 153, 0.1), transparent),
+      radial-gradient(ellipse 50% 50% at 80% 80%, rgba(16, 185, 129, 0.12), transparent);
+  }
+  100% {
+    background:
+      radial-gradient(ellipse 60% 70% at 70% 50%, rgba(16, 185, 129, 0.15), transparent),
+      radial-gradient(ellipse 70% 50% at 20% 70%, rgba(236, 72, 153, 0.12), transparent),
+      radial-gradient(ellipse 80% 60% at 50% 20%, rgba(139, 92, 246, 0.1), transparent),
+      radial-gradient(ellipse 50% 60% at 90% 40%, rgba(59, 130, 246, 0.14), transparent);
+  }
+}
+
+[data-theme="dark"] .mesh-gradient-bg::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(59, 130, 246, 0.2), transparent),
+    radial-gradient(ellipse 60% 60% at 80% 20%, rgba(139, 92, 246, 0.18), transparent),
+    radial-gradient(ellipse 50% 80% at 60% 80%, rgba(16, 185, 129, 0.15), transparent),
+    radial-gradient(ellipse 70% 40% at 10% 90%, rgba(236, 72, 153, 0.12), transparent);
+}
+
+/* Glow orb effect */
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: orb-float 10s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.glow-orb-1 {
+  width: 300px;
+  height: 300px;
+  background: rgba(59, 130, 246, 0.3);
+  top: -100px;
+  right: -50px;
+  animation-delay: 0s;
+}
+
+.glow-orb-2 {
+  width: 250px;
+  height: 250px;
+  background: rgba(139, 92, 246, 0.25);
+  bottom: -80px;
+  left: -30px;
+  animation-delay: -3s;
+}
+
+.glow-orb-3 {
+  width: 200px;
+  height: 200px;
+  background: rgba(16, 185, 129, 0.2);
+  top: 50%;
+  left: 50%;
+  animation-delay: -6s;
+}
+
+@keyframes orb-float {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.1); }
+  66% { transform: translate(-20px, 30px) scale(0.9); }
+  100% { transform: translate(10px, -10px) scale(1.05); }
+}
+
+/* Grid overlay */
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="dark"] .grid-overlay {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+}
+
+/* Noise texture */
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}

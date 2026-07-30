@@ -15,7 +15,18 @@ export function Hero() {
   ]
 
   return (
-    <section className="px-4 sm:px-6 py-10 sm:py-20 lg:py-24 border-b border-border bg-bg-primary overflow-hidden">
+    <section className="relative px-4 sm:px-6 py-10 sm:py-20 lg:py-24 border-b border-border bg-bg-primary overflow-hidden mesh-gradient-bg">
+      {/* Glow orbs */}
+      <div className="glow-orb glow-orb-1" />
+      <div className="glow-orb glow-orb-2" />
+      <div className="glow-orb glow-orb-3" />
+
+      {/* Grid overlay */}
+      <div className="grid-overlay" />
+
+      {/* Noise texture */}
+      <div className="noise-overlay" />
+
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
 
         {/* Left Side */}
