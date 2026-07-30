@@ -150,6 +150,14 @@ export default function CurriculumPage() {
 
   if (loading) return <p className="text-text-secondary">{t('admin.loading', lang)}</p>
 
+  const iconMap: Record<string, string> = {
+    physics: '🔬',
+    chemistry: '🧪',
+    biology: '🦠',
+    maths: '📐',
+    mathematics: '📐',
+  }
+
   return (
     <div>
       <h1 className="text-[clamp(20px,4vw,28px)] font-bold text-text-primary mb-2">{t('admin.curriculum', lang)}</h1>
@@ -158,7 +166,7 @@ export default function CurriculumPage() {
         {subjects.map(subject => (
           <div key={subject.id} className="bg-bg-primary border border-border p-2">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">{subject.icon}</span>
+              <span className="text-xl">{iconMap[subject.name?.toLowerCase()] || subject.icon}</span>
               <h2 className="text-lg font-bold text-text-primary">
                 {lang === 'sw' ? subject.name_sw : subject.name}
               </h2>
