@@ -7,61 +7,50 @@ import { query } from '@/lib/db'
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const adminId = await requireAdmin()
-  if (adminId) {
-    try {
-      const lab = await getLab(params.id)
-      if (lab) {
-        let localOverrides: Record<string, unknown> = {}
-        try {
-          const local = await query(
-            'SELECT is_published, is_premium, subtopic_id FROM labs WHERE id = $1',
-            [params.id]
-          )
-          if (local.rows[0]) {
-            localOverrides = local.rows[0]
-          }
-        } catch {}
-        return NextResponse.json({ ...lab, ...localOverrides })
-      }
-      try {
-        const local = await query(
-          'SELECT id, title, title_sw, description, subject, html_threejs_code AS html_code, subtopic_id, is_published, is_premium, version AS current_version, updated_at FROM labs WHERE id = $1',
-          [params.id]
-        )
-        if (local.rows[0]) {
-          return NextResponse.json(local.rows[0])
-        }
-      } catch {}
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    } catch {
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-    }
+
+  async function fetchLocal() {
+    return query(
+      'SELECT id, title, title_sw, description, subject, html_threejs_code AS html_code, subtopic_id, is_published, is_premium, version AS current_version, updated_at FROM labs WHERE id = $1' + (adminId ? '' : ' AND is_published = true'),
+      [params.id]
+    )
   }
 
   try {
-    const lab = await getLab(params.id)
-    if (!lab) {
+    if (adminId) {
       try {
-        const local = await query(
-          'SELECT id, title, title_sw, description, subject, html_threejs_code AS html_code, subtopic_id, is_published, is_premium, version AS current_version, updated_at FROM labs WHERE id = $1 AND is_published = true',
-          [params.id]
-        )
-        if (local.rows[0]) {
-          return NextResponse.json(local.rows[0])
+        const lab = await getLab(params.id)
+        if (lab) {
+          let localOverrides: Record<string, unknown> = {}
+          try {
+            const local = await query(
+              'SELECT is_published, is_premium, subtopic_id FROM labs WHERE id = $1',
+              [params.id]
+            )
+            if (local.rows[0]) localOverrides = local.rows[0]
+          } catch {}
+          return NextResponse.json({ ...lab, ...localOverrides })
         }
       } catch {}
+      const local = await fetchLocal()
+      if (local.rows[0]) return NextResponse.json(local.rows[0])
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    if (lab.is_premium) {
-      const session = await getSessionFromCookies()
-      if (!session || !(await canAccessPremiumContent(session.id, session.role))) {
-        const { html_code, scoring_config, ...labMetadata } = lab
-        return NextResponse.json({ ...labMetadata, code_gated: true })
+    const lab = await getLab(params.id)
+    if (lab) {
+      if (lab.is_premium) {
+        const session = await getSessionFromCookies()
+        if (!session || !(await canAccessPremiumContent(session.id, session.role))) {
+          const { html_code, scoring_config, ...labMetadata } = lab
+          return NextResponse.json({ ...labMetadata, code_gated: true })
+        }
       }
+      return NextResponse.json(lab)
     }
 
-    return NextResponse.json(lab)
+    const local = await fetchLocal()
+    if (local.rows[0]) return NextResponse.json(local.rows[0])
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -77,10 +66,36 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const body = await req.json()
 
     const { id: _id, created_at: _ca, updated_at: _ua, ...cleanBody } = body
-    const lab = await updateLab(params.id, cleanBody)
+
+    let lab
+    try {
+      lab = await updateLab(params.id, cleanBody)
+    } catch {}
 
     if (!lab) {
-      return NextResponse.json({ error: 'Not found or update failed' }, { status: 404 })
+      try {
+        const existing = await query('SELECT id, version FROM labs WHERE id = $1', [params.id])
+        if (existing.rows.length === 0) {
+          return NextResponse.json({ error: 'Not found' }, { status: 404 })
+        }
+        await query(
+          `UPDATE labs SET
+             title = $1, title_sw = $2, description = $3, subject = $4,
+             html_threejs_code = $5, subtopic_id = $6, thumbnail = $7,
+             is_published = $8, is_premium = $9, version = version + 1, updated_at = NOW()
+           WHERE id = $10`,
+          [
+            body.title || null, body.title_sw || null,
+            body.description || null, body.subject || null,
+            body.html_code || null, body.subtopic_id || null,
+            body.thumbnail || null,
+            body.is_published !== undefined ? body.is_published : false,
+            body.is_premium !== undefined ? body.is_premium : false,
+            params.id,
+          ]
+        )
+        return NextResponse.json({ id: params.id, saved: 'local' })
+      } catch { return NextResponse.json({ error: 'Not found or update failed' }, { status: 404 }) }
     }
 
     try {
