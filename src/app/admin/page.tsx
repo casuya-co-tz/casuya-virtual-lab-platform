@@ -19,6 +19,7 @@ interface Lab {
   id: string
   title: string
   subject: string
+  is_published: boolean
   is_premium: boolean
   current_version: number
   updated_at: string
@@ -67,7 +68,7 @@ export default function AdminDashboard() {
             <Tr key={lab.id}>
               <Td>{lab.title}</Td>
               <Td>{lab.subject}</Td>
-              <Td><Badge variant={lab.is_premium ? 'success' : 'neutral'}>{lab.is_premium ? t('admin.published', lang) : t('admin.draft', lang)}</Badge></Td>
+              <Td><Badge variant={lab.is_published ? 'success' : 'neutral'}>{lab.is_published ? t('admin.published', lang) : t('admin.draft', lang)}</Badge>{lab.is_premium && <Badge variant="warning" className="ml-1">Premium</Badge>}</Td>
               <Td>v{lab.current_version}</Td>
               <Td><a href={`/admin/labs/${lab.id}`} className="text-[11px] text-accent-blue underline">{t('admin.edit', lang)}</a></Td>
             </Tr>
