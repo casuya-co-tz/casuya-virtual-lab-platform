@@ -71,6 +71,9 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
           <a href="/search" className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
             {t('nav.search', isMounted ? lang : 'en')}
           </a>
+          <a href="/blog" className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
+            Blog
+          </a>
           <a href="/pricing" className="text-[13px] text-text-secondary hover:text-text-primary transition-colors">
             {t('nav.pricing', isMounted ? lang : 'en')}
           </a>
@@ -163,6 +166,9 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
               </a>
               <a href="/pricing" onClick={() => setMenuOpen(false)} className="flex items-center h-11 px-4 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors">
                 {t('nav.pricing', isMounted ? lang : 'en')}
+              </a>
+              <a href="/blog" onClick={() => setMenuOpen(false)} className="flex items-center h-11 px-4 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors">
+                Blog
               </a>
               {(!user || user.role === 'admin') && (
                 <a href={user ? '/developer' : '/auth'} onClick={() => setMenuOpen(false)} className="flex items-center h-11 px-4 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors">

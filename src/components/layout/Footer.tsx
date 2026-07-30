@@ -11,6 +11,7 @@ export function Footer() {
         <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 sm:gap-4">
           <a href="/privacy" className="text-[11px] sm:text-[12px] text-text-secondary hover:text-text-primary transition-colors">{t('footer.privacy', lang)}</a>
           <a href="/terms" className="text-[11px] sm:text-[12px] text-text-secondary hover:text-text-primary transition-colors">{t('footer.terms', lang)}</a>
+          <a href="/blog" className="text-[11px] sm:text-[12px] text-text-secondary hover:text-text-primary transition-colors">Blog</a>
           <a href="/docs" className="text-[11px] sm:text-[12px] text-text-secondary hover:text-text-primary transition-colors">{t('footer.docs', lang)}</a>
           <a href="/developer/docs" className="text-[11px] sm:text-[12px] text-text-secondary hover:text-text-primary transition-colors">{t('footer.api', lang)}</a>
           <a href="/contact" className="text-[11px] sm:text-[12px] text-text-secondary hover:text-text-primary transition-colors">{t('footer.contact', lang)}</a>

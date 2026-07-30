@@ -42,6 +42,7 @@ export function Sidebar({ userRole: overrideRole }: SidebarProps) {
     { icon: '💳', label: t('admin.billing', effectiveLang), href: '/admin/billing', active: pathname === '/admin/billing' },
     { icon: '🔑', label: t('admin.apiKeys', effectiveLang), href: '/admin/api-keys', active: pathname === '/admin/api-keys' },
     { icon: '📄', label: t('admin.docs', effectiveLang), href: '/admin/docs', active: pathname === '/admin/docs' },
+    { icon: '📝', label: 'Blog', href: '/admin/blog', active: pathname.startsWith('/admin/blog') },
     { icon: '🔍', label: t('admin.audit', effectiveLang), href: '/admin/audit', active: pathname === '/admin/audit' },
     { icon: '📈', label: t('admin.analytics', effectiveLang), href: '/admin/analytics', active: pathname === '/admin/analytics' },
     { icon: '📝', label: t('admin.pastPapers', effectiveLang), href: '/admin/past-papers', active: pathname === '/admin/past-papers' },
