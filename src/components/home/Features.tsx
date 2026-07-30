@@ -2,7 +2,7 @@ export function Features() {
   const features = [
     { title: 'SWAHILI NATIVE', desc: 'Full Swahili language support across the platform' },
     { title: 'OFFLINE READY', desc: 'Continue labs without internet, sync when reconnected' },
-    { title: 'AZAMPESA', desc: 'Mobile money payments for premium lab access' },
+    { title: 'AZAMPAY', desc: 'Mobile money payment merchant for premium access' },
     { title: 'NECTA ALIGNED', desc: 'Curriculum-matched simulations for Tanzanian exams' },
   ]
 

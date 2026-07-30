@@ -27,6 +27,7 @@ export function Sidebar({ userRole: overrideRole }: SidebarProps) {
     { icon: '🔍', label: t('nav.search', effectiveLang), href: '/search', active: pathname === '/search' },
     { icon: '📝', label: effectiveLang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: '/student/past-papers', active: pathname === '/student/past-papers' },
     { icon: '📈', label: effectiveLang === 'sw' ? 'Maendeleo' : 'Progress', href: '/student/progress', active: pathname === '/student/progress' },
+    { icon: '💬', label: t('nav.reviews', effectiveLang), href: '/student/reviews', active: pathname === '/student/reviews' },
     { icon: '💳', label: t('nav.pricing', effectiveLang), href: '/pricing', active: pathname === '/pricing' },
     { icon: '⚙️', label: t('nav.settings', effectiveLang), href: '/student/settings', active: pathname === '/student/settings' },
   ]
@@ -53,6 +54,7 @@ export function Sidebar({ userRole: overrideRole }: SidebarProps) {
     { icon: '👥', label: effectiveLang === 'sw' ? 'Madarasa' : 'Classrooms', href: '/teacher/classrooms', active: pathname.startsWith('/teacher/classrooms') },
     { icon: '🔍', label: t('nav.search', effectiveLang), href: '/search', active: pathname === '/search' },
     { icon: '📝', label: effectiveLang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: '/teacher/past-papers', active: pathname === '/teacher/past-papers' },
+    { icon: '💬', label: t('nav.reviews', effectiveLang), href: '/teacher/reviews', active: pathname === '/teacher/reviews' },
     { icon: '💳', label: t('nav.pricing', effectiveLang), href: '/pricing', active: pathname === '/pricing' },
     { icon: '⚙️', label: t('nav.settings', effectiveLang), href: '/teacher/settings', active: pathname === '/teacher/settings' },
   ]
@@ -62,6 +64,7 @@ export function Sidebar({ userRole: overrideRole }: SidebarProps) {
     { icon: '🔬', label: effectiveLang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics`, active: pathname.startsWith(`${base}/physics`) },
     { icon: '🧪', label: effectiveLang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry`, active: pathname.startsWith(`${base}/chemistry`) },
     { icon: '🦠', label: effectiveLang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology`, active: pathname.startsWith(`${base}/biology`) },
+    { icon: '💬', label: t('nav.reviews', effectiveLang), href: '/developer/reviews', active: pathname === '/developer/reviews' },
     { icon: '📄', label: effectiveLang === 'sw' ? 'Docs' : 'Docs', href: '/developer/docs', active: pathname === '/developer/docs' },
     { icon: '📈', label: effectiveLang === 'sw' ? 'Uchambuzi' : 'Analytics', href: '/developer/analytics', active: pathname === '/developer/analytics' },
     { icon: '⚙️', label: t('nav.settings', effectiveLang), href: '/developer/settings', active: pathname === '/developer/settings' },

@@ -178,7 +178,7 @@ export function VoicesFromTanzania() {
                   ) : (
                     <>
                       <p className="text-[13px] text-text-secondary italic mb-3">&ldquo;{r.review_text}&rdquo;</p>
-                      <p className="text-[11px] font-bold text-text-primary mb-2">— {r.profiles?.full_name}</p>
+                      <p className="text-[11px] font-bold text-text-primary mb-2">— {r.profiles?.full_name} <span className="font-normal text-text-secondary">{new Date(r.created_at).toLocaleDateString(lang === 'sw' ? 'sw-TZ' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span></p>
                     </>
                   )}
 

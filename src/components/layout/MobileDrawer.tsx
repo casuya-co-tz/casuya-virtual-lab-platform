@@ -32,6 +32,7 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
     { icon: '🔍', label: t('nav.search', lang), href: '/search' },
     { icon: '📝', label: lang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: `${base}/past-papers` },
     { icon: '📈', label: lang === 'sw' ? 'Maendeleo' : 'Progress', href: `${base}/progress` },
+    { icon: '💬', label: t('nav.reviews', lang), href: `${base}/reviews` },
     { icon: '💳', label: t('nav.pricing', lang), href: '/pricing' },
     { icon: '⚙️', label: t('nav.settings', lang), href: `${base}/settings` },
   ]
@@ -57,6 +58,7 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
     { icon: '👥', label: lang === 'sw' ? 'Madarasa' : 'Classrooms', href: '/teacher/classrooms' },
     { icon: '🔍', label: t('nav.search', lang), href: '/search' },
     { icon: '📝', label: lang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: `${base}/past-papers` },
+    { icon: '💬', label: t('nav.reviews', lang), href: `${base}/reviews` },
     { icon: '💳', label: t('nav.pricing', lang), href: '/pricing' },
     { icon: '⚙️', label: t('nav.settings', lang), href: `${base}/settings` },
   ]
@@ -66,6 +68,7 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
     { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics` },
     { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry` },
     { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology` },
+    { icon: '💬', label: t('nav.reviews', lang), href: `${base}/reviews` },
     { icon: '📄', label: 'Docs', href: '/developer/docs' },
     { icon: '📈', label: lang === 'sw' ? 'Uchambuzi' : 'Analytics', href: '/developer/analytics' },
     { icon: '⚙️', label: t('nav.settings', lang), href: '/developer/settings' },
