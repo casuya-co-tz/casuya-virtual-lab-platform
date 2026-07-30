@@ -14,41 +14,7 @@ export async function GET(req: Request) {
 
   maybeSync()
 
-  if (adminId) {
-    try {
-      const result = await getLabs({ subject, page, limit })
-      if (result.data && Array.isArray(result.data)) {
-        try {
-          const ids = result.data.map((lab: any) => lab.id)
-          if (ids.length > 0) {
-            const placeholders = ids.map((_: any, i: number) => `$${i + 1}`).join(',')
-            const localRows = await query(
-              `SELECT id, is_published, is_premium FROM labs WHERE id IN (${placeholders})`,
-              ids
-            )
-            const localMap: Record<string, any> = {}
-            for (const row of localRows.rows) {
-              localMap[row.id] = { is_published: row.is_published, is_premium: row.is_premium }
-            }
-            for (const lab of result.data) {
-              if (localMap[lab.id]) {
-                lab.is_published = localMap[lab.id].is_published
-                lab.is_premium = localMap[lab.id].is_premium
-              } else {
-                lab.is_published = true
-              }
-            }
-          }
-        } catch {}
-      }
-      return NextResponse.json(result)
-    } catch (err) {
-      console.error('Failed to fetch labs (admin):', err)
-      return NextResponse.json({ error: 'Failed to fetch labs' }, { status: 500 })
-    }
-  }
-
-  try {
+  async function fetchFromExternal() {
     const result = await getLabs({ subject, page, limit })
     if (result.data && Array.isArray(result.data)) {
       try {
@@ -74,9 +40,45 @@ export async function GET(req: Request) {
         }
       } catch {}
     }
+    return result
+  }
+
+  async function fetchFromLocal() {
+    let sql = 'SELECT id, title, title_sw, subject, description, is_published, is_premium, version as current_version, updated_at FROM labs'
+    const params: unknown[] = []
+    const conditions: string[] = []
+
+    if (subject) {
+      conditions.push('subject = $' + (params.length + 1))
+      params.push(subject)
+    }
+    if (!adminId) {
+      conditions.push('is_published = true')
+    }
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ')
+    }
+    sql += ' ORDER BY updated_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2)
+
+    const countSql = 'SELECT COUNT(*) FROM labs' + (conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '')
+    const countResult = await query(countSql, params)
+    const total = parseInt(countResult.rows[0].count)
+
+    const dataResult = await query(sql, [...params, limit, (page - 1) * limit])
+    return { data: dataResult.rows, total }
+  }
+
+  try {
+    let result
+    try {
+      result = await fetchFromExternal()
+      if (!result.data || result.data.length === 0) throw new Error('No data from external')
+    } catch {
+      result = await fetchFromLocal()
+    }
     return NextResponse.json(result)
   } catch (err) {
-    console.error('Failed to fetch labs (public):', err)
+    console.error('Failed to fetch labs:', err)
     return NextResponse.json({ error: 'Failed to fetch labs' }, { status: 500 })
   }
 }
