@@ -1,7 +1,31 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { getLabs, getLab, searchLabs, getSubjects, getAnalyticsTimeseries, getTopLabs, duplicateLab } from '@/lib/lab-manager'
-import type { LabListItem, LabContent, SubjectCount, SearchResult, AnalyticsTimeseriesEntry, TopLabEntry } from '@/lib/lab-manager'
+
+interface LabListItem {
+  id: string
+  title: string
+  subject: string
+  is_premium: boolean
+  current_version: number
+  updated_at: string
+}
+
+interface LabContent extends LabListItem {
+  content: any
+  title_sw?: string
+  description?: string
+}
+
+interface SubjectCount {
+  subject: string
+  count: number
+}
+
+interface SearchResult {
+  id: string
+  title: string
+  subject: string
+}
 
 interface UseLabsOptions {
   subject?: string
@@ -22,10 +46,14 @@ export function useLabs(options?: UseLabsOptions) {
     setLoading(true)
     setError('')
     try {
-      const result = await getLabs({ subject, page, limit })
-      setLabs(result.data)
-      setTotal(result.total)
-      setPages(result.pages)
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+      if (subject) params.set('subject', subject)
+      const r = await fetch(`/api/labs?${params}`)
+      if (!r.ok) throw new Error()
+      const json = await r.json()
+      setLabs(json.data || [])
+      setTotal(json.total || 0)
+      setPages(json.pages || 0)
     } catch {
       setError('Failed to fetch labs')
     }
@@ -49,11 +77,12 @@ export function useLab(id: string | null) {
     setLoading(true)
     setError('')
     try {
-      const result = await getLab(id)
-      if (!result) {
+      const r = await fetch(`/api/labs/${id}`)
+      if (!r.ok) {
         setError('Lab not found')
       } else {
-        setLab(result)
+        const json = await r.json()
+        setLab(json)
       }
     } catch {
       setError('Failed to fetch lab')
@@ -81,8 +110,12 @@ export function useLabSearch(query: string, subject?: string) {
     setLoading(true)
     setError('')
     try {
-      const result = await searchLabs(q, subject)
-      setResults(result.results)
+      const params = new URLSearchParams({ q })
+      if (subject) params.set('subject', subject)
+      const r = await fetch(`/api/search?${params}`)
+      if (!r.ok) throw new Error()
+      const json = await r.json()
+      setResults(json.results || [])
     } catch {
       setError('Search failed')
     }
@@ -101,68 +134,12 @@ export function useSubjects() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getSubjects()
-      .then(setSubjects)
+    fetch('/api/subjects')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setSubjects(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
   return { subjects, loading }
-}
-
-export function useAnalyticsTimeseries() {
-  const [data, setData] = useState<AnalyticsTimeseriesEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  const fetch = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const result = await getAnalyticsTimeseries()
-      setData(result)
-    } catch {
-      setError('Failed to fetch analytics')
-    }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { fetch() }, [fetch])
-
-  return { data, loading, error, refetch: fetch }
-}
-
-export function useTopLabs() {
-  const [data, setData] = useState<TopLabEntry[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    getTopLabs()
-      .then(setData)
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
-
-  return { data, loading }
-}
-
-export function useDuplicateLab() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const duplicate = useCallback(async (id: string, title?: string) => {
-    setLoading(true)
-    setError('')
-    try {
-      const result = await duplicateLab(id, title)
-      setLoading(false)
-      return result
-    } catch {
-      setError('Failed to duplicate lab')
-      setLoading(false)
-      return null
-    }
-  }, [])
-
-  return { duplicate, loading, error }
 }

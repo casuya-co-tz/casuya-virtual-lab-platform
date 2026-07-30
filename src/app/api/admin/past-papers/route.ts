@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function GET(req: NextRequest) {
+  const userId = await requireAdmin()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { searchParams } = new URL(req.url)
   const subject = searchParams.get('subject')
   const year = searchParams.get('year')
@@ -24,6 +28,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const userId = await requireAdmin()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await req.json()
     const { subject, year, paper_number, exam_body, title, title_sw, is_premium, sort_order, html_content } = body

@@ -36,3 +36,17 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function DELETE() {
+  const userId = await getUserIdFromSession()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  try {
+    await query('DELETE FROM user_sessions WHERE user_id = $1', [userId])
+    await query('DELETE FROM profiles WHERE id = $1', [userId])
+    await query('DELETE FROM auth.users WHERE id = $1', [userId])
+    return NextResponse.json({ ok: true })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

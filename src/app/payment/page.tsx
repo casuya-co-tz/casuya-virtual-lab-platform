@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, FormEvent, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
@@ -42,6 +42,14 @@ function detectProvider(phone: string): string | null {
 }
 
 export default function PaymentPage() {
+  return (
+    <Suspense>
+      <PaymentContent />
+    </Suspense>
+  )
+}
+
+function PaymentContent() {
   const { lang } = useLanguage()
   const searchParams = useSearchParams()
   const planSlug = searchParams.get('plan')

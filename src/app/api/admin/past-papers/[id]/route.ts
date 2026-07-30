@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  const userId = await requireAdmin()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const result = await query(
       'SELECT id, subject, year, paper_number, exam_body, title, title_sw, questions, is_premium, sort_order, created_at FROM past_papers WHERE id = $1',
@@ -17,6 +21,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const userId = await requireAdmin()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await req.json()
     const { subject, year, paper_number, exam_body, title, title_sw, is_premium, sort_order, html_content } = body
@@ -43,6 +50,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const userId = await requireAdmin()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const result = await query('DELETE FROM past_papers WHERE id = $1 RETURNING id', [params.id])
     if (result.rows.length === 0) {

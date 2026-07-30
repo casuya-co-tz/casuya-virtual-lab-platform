@@ -71,7 +71,7 @@ export function LabTimer({ mode = 'stopwatch', durationMinutes = 60, onTimeUp, o
       }`}>
         {formatTime(mode === 'countdown' ? seconds : seconds)}
       </span>
-      {mode === 'countdown' && isOvertime && (
+      {isOvertime && (
         <span className="text-[11px] text-accent-amber font-bold ml-1">OVERTIME</span>
       )}
       <button
