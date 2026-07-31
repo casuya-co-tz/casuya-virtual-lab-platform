@@ -1,5 +1,5 @@
 'use client'
-import { ReactNode, useState } from 'react'
+import { ReactNode, memo, useCallback, useState } from 'react'
 
 interface Tab {
   id: string
@@ -12,8 +12,12 @@ interface TabsProps {
   defaultTab?: string
 }
 
-export function Tabs({ tabs, defaultTab }: TabsProps) {
+export const Tabs = memo(function Tabs({ tabs, defaultTab }: TabsProps) {
   const [active, setActive] = useState(defaultTab ?? tabs[0]?.id)
+
+  const handleClick = useCallback((id: string) => {
+    setActive(id)
+  }, [])
 
   return (
     <div>
@@ -21,7 +25,7 @@ export function Tabs({ tabs, defaultTab }: TabsProps) {
         {tabs.map(t => (
           <button
             key={t.id}
-            onClick={() => setActive(t.id)}
+            onClick={() => handleClick(t.id)}
             className={`px-4 py-2 text-[14px] font-bold uppercase tracking-[0.5px] transition-all duration-120 ease-out
               ${active === t.id ? 'text-accent-blue border-b-2 border-accent-blue' : 'text-text-secondary hover:text-text-primary'}`}
           >
@@ -32,4 +36,4 @@ export function Tabs({ tabs, defaultTab }: TabsProps) {
       <div className="pt-4">{tabs.find(t => t.id === active)?.content}</div>
     </div>
   )
-}
+})

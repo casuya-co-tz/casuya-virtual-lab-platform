@@ -1,4 +1,7 @@
-export function Features() {
+'use client'
+import { memo } from 'react'
+
+export const Features = memo(function Features() {
   const features = [
     { title: 'SWAHILI NATIVE', desc: 'Full Swahili language support across the platform' },
     { title: 'OFFLINE READY', desc: 'Continue labs without internet, sync when reconnected' },
@@ -26,4 +29,4 @@ export function Features() {
       </div>
     </section>
   )
-}
+})

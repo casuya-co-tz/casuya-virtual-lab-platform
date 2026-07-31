@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Link from 'next/link'
@@ -30,7 +31,7 @@ const linkLabels: Record<string, Record<string, string>> = {
   completed: { en: 'Review', sw: 'Kagua' },
 }
 
-export function LabCard({ id, title, title_sw, subject, status, score, lang = 'en' }: LabCardProps) {
+export const LabCard = memo(function LabCard({ id, title, title_sw, subject, status, score, lang = 'en' }: LabCardProps) {
   const config = statusConfig[status] || statusConfig.not_started
   const subjectLabel = subjectLabels[subject]?.[lang] || subject
   const linkLabel = linkLabels[status]?.[lang] || 'View'
@@ -56,4 +57,4 @@ export function LabCard({ id, title, title_sw, subject, status, score, lang = 'e
       </Link>
     </Card>
   )
-}
+})

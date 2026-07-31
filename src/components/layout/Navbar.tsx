@@ -11,6 +11,10 @@ interface NavbarProps {
   onSidebarToggle?: () => void
 }
 
+const CACHE_TTL = 30000
+let cachedUser: ReturnType<typeof useUser>['user'] | undefined = undefined
+let cacheTime = 0
+
 export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
   const [menuOpen, setMenuOpen] = useState(false)
   const { user, loading, mounted } = useUser()
@@ -18,6 +22,13 @@ export function Navbar({ onSidebarToggle }: NavbarProps = {}) {
   const router = useRouter()
   const { lang, toggle, mounted: langMounted } = useLanguage()
   const isMounted = mounted && langMounted
+
+  useEffect(() => {
+    if (user) {
+      cachedUser = user
+      cacheTime = Date.now()
+    }
+  }, [user])
 
   useEffect(() => {
     if (!loading && !user) {

@@ -1,4 +1,5 @@
 'use client'
+import { memo, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
@@ -9,11 +10,70 @@ interface MobileDrawerProps {
   userRole: 'student' | 'admin' | 'teacher' | 'developer'
 }
 
-export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
+export const MobileDrawer = memo(function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
   const { lang } = useLanguage()
   const router = useRouter()
 
-  if (!isOpen) return null
+  const items = useMemo(() => {
+    const base = `/${userRole}`
+
+    if (userRole === 'student') {
+      return [
+        { icon: '📊', label: t('nav.dashboard', lang), href: '/student' },
+        { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics` },
+        { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry` },
+        { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology` },
+        { icon: '🔍', label: t('nav.search', lang), href: '/search' },
+        { icon: '📝', label: lang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: `${base}/past-papers` },
+        { icon: '📈', label: lang === 'sw' ? 'Maendeleo' : 'Progress', href: `${base}/progress` },
+        { icon: '💬', label: t('nav.reviews', lang), href: `${base}/reviews` },
+        { icon: '💳', label: t('nav.pricing', lang), href: '/pricing' },
+        { icon: '⚙️', label: t('nav.settings', lang), href: `${base}/settings` },
+      ]
+    }
+
+    if (userRole === 'admin') {
+      return [
+        { icon: '📊', label: t('admin.dashboard', lang), href: '/admin' },
+        { icon: '📚', label: t('admin.curriculum', lang), href: '/admin/curriculum' },
+        { icon: '🧪', label: t('admin.labs', lang), href: '/admin/labs' },
+        { icon: '👥', label: t('admin.users', lang), href: '/admin/users' },
+        { icon: '💬', label: t('admin.reviews', lang), href: '/admin/reviews' },
+        { icon: '🚩', label: t('admin.viewReports', lang), href: '/admin/reports' },
+        { icon: '💳', label: t('admin.billing', lang), href: '/admin/billing' },
+        { icon: '🔑', label: t('admin.apiKeys', lang), href: '/admin/api-keys' },
+        { icon: '📄', label: t('admin.docs', lang), href: '/admin/docs' },
+        { icon: '🔍', label: t('admin.audit', lang), href: '/admin/audit' },
+        { icon: '📈', label: t('admin.analytics', lang), href: '/admin/analytics' },
+        { icon: '🛠️', label: t('admin.support', lang), href: '/admin/support' },
+        { icon: '⚙️', label: t('admin.settings', lang), href: '/admin/settings' },
+      ]
+    }
+
+    if (userRole === 'teacher') {
+      return [
+        { icon: '📊', label: t('nav.dashboard', lang), href: '/teacher' },
+        { icon: '👥', label: lang === 'sw' ? 'Madarasa' : 'Classrooms', href: '/teacher/classrooms' },
+        { icon: '🔍', label: t('nav.search', lang), href: '/search' },
+        { icon: '📝', label: lang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: `${base}/past-papers` },
+        { icon: '💬', label: t('nav.reviews', lang), href: `${base}/reviews` },
+        { icon: '💳', label: t('nav.pricing', lang), href: '/pricing' },
+        { icon: '⚙️', label: t('nav.settings', lang), href: `${base}/settings` },
+      ]
+    }
+
+    // developer
+    return [
+      { icon: '📊', label: t('nav.dashboard', lang), href: '/developer' },
+      { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics` },
+      { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry` },
+      { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology` },
+      { icon: '💬', label: t('nav.reviews', lang), href: `${base}/reviews` },
+      { icon: '📄', label: 'Docs', href: '/developer/docs' },
+      { icon: '📈', label: lang === 'sw' ? 'Uchambuzi' : 'Analytics', href: '/developer/analytics' },
+      { icon: '⚙️', label: t('nav.settings', lang), href: '/developer/settings' },
+    ]
+  }, [userRole, lang])
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -22,59 +82,7 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
     router.refresh()
   }
 
-  const base = `/${userRole}`
-
-  const studentItems = [
-    { icon: '📊', label: t('nav.dashboard', lang), href: '/student' },
-    { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics` },
-    { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry` },
-    { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology` },
-    { icon: '🔍', label: t('nav.search', lang), href: '/search' },
-    { icon: '📝', label: lang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: `${base}/past-papers` },
-    { icon: '📈', label: lang === 'sw' ? 'Maendeleo' : 'Progress', href: `${base}/progress` },
-    { icon: '💬', label: t('nav.reviews', lang), href: `${base}/reviews` },
-    { icon: '💳', label: t('nav.pricing', lang), href: '/pricing' },
-    { icon: '⚙️', label: t('nav.settings', lang), href: `${base}/settings` },
-  ]
-
-  const adminItems = [
-    { icon: '📊', label: t('admin.dashboard', lang), href: '/admin' },
-    { icon: '📚', label: t('admin.curriculum', lang), href: '/admin/curriculum' },
-    { icon: '🧪', label: t('admin.labs', lang), href: '/admin/labs' },
-    { icon: '👥', label: t('admin.users', lang), href: '/admin/users' },
-    { icon: '💬', label: t('admin.reviews', lang), href: '/admin/reviews' },
-    { icon: '🚩', label: t('admin.viewReports', lang), href: '/admin/reports' },
-    { icon: '💳', label: t('admin.billing', lang), href: '/admin/billing' },
-    { icon: '🔑', label: t('admin.apiKeys', lang), href: '/admin/api-keys' },
-    { icon: '📄', label: t('admin.docs', lang), href: '/admin/docs' },
-    { icon: '🔍', label: t('admin.audit', lang), href: '/admin/audit' },
-    { icon: '📈', label: t('admin.analytics', lang), href: '/admin/analytics' },
-    { icon: '🛠️', label: t('admin.support', lang), href: '/admin/support' },
-    { icon: '⚙️', label: t('admin.settings', lang), href: '/admin/settings' },
-  ]
-
-  const teacherItems = [
-    { icon: '📊', label: t('nav.dashboard', lang), href: '/teacher' },
-    { icon: '👥', label: lang === 'sw' ? 'Madarasa' : 'Classrooms', href: '/teacher/classrooms' },
-    { icon: '🔍', label: t('nav.search', lang), href: '/search' },
-    { icon: '📝', label: lang === 'sw' ? 'Majaribio ya Zamani' : 'Past Papers', href: `${base}/past-papers` },
-    { icon: '💬', label: t('nav.reviews', lang), href: `${base}/reviews` },
-    { icon: '💳', label: t('nav.pricing', lang), href: '/pricing' },
-    { icon: '⚙️', label: t('nav.settings', lang), href: `${base}/settings` },
-  ]
-
-  const developerItems = [
-    { icon: '📊', label: t('nav.dashboard', lang), href: '/developer' },
-    { icon: '🔬', label: lang === 'sw' ? 'Fizikia' : 'Physics', href: `${base}/physics` },
-    { icon: '🧪', label: lang === 'sw' ? 'Kemia' : 'Chemistry', href: `${base}/chemistry` },
-    { icon: '🦠', label: lang === 'sw' ? 'Biolojia' : 'Biology', href: `${base}/biology` },
-    { icon: '💬', label: t('nav.reviews', lang), href: `${base}/reviews` },
-    { icon: '📄', label: 'Docs', href: '/developer/docs' },
-    { icon: '📈', label: lang === 'sw' ? 'Uchambuzi' : 'Analytics', href: '/developer/analytics' },
-    { icon: '⚙️', label: t('nav.settings', lang), href: '/developer/settings' },
-  ]
-
-  const items = userRole === 'admin' ? adminItems : userRole === 'teacher' ? teacherItems : userRole === 'developer' ? developerItems : studentItems
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50">
@@ -122,4 +130,4 @@ export function MobileDrawer({ isOpen, onClose, userRole }: MobileDrawerProps) {
       </div>
     </div>
   )
-}
+})

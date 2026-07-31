@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
@@ -17,11 +17,11 @@ export function Hero() {
       .catch(() => {})
   }, [])
 
-  const stats = [
+  const stats = useMemo(() => [
     { value: statsData.total_students.toLocaleString(), label: t('stats.students', lang) },
     { value: String(statsData.total_labs), label: t('stats.labs', lang) },
     { value: statsData.uptime, label: t('stats.uptime', lang) },
-  ]
+  ], [statsData.total_students, statsData.total_labs, statsData.uptime, lang])
 
   return (
     <section className="relative px-4 sm:px-6 py-10 sm:py-20 lg:py-24 border-b border-border bg-bg-primary overflow-hidden mesh-gradient-bg">

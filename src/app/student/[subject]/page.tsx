@@ -3,14 +3,10 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { maybeSync } from '@/lib/lab-sync'
 
+export const revalidate = 60
+
 interface Props {
   params: { subject: string }
-}
-
-interface LabRow {
-  id: string
-  title: string
-  title_sw: string
 }
 
 interface TopicRow {
@@ -19,7 +15,13 @@ interface TopicRow {
   title_sw: string
   subtopic_count: number
   lab_count: number
-  labs: LabRow[] | null
+  labs: { id: string; title: string; title_sw: string }[] | null
+}
+
+interface LabRow {
+  id: string
+  title: string
+  title_sw: string
 }
 
 export default async function SubjectPage({ params }: Props) {
@@ -34,13 +36,17 @@ export default async function SubjectPage({ params }: Props) {
 
   const topicsResult = await query(
     `SELECT t.id, t.title, t.title_sw,
-            (SELECT COUNT(*) FROM subtopics st WHERE st.topic_id = t.id) AS subtopic_count,
-            (SELECT COUNT(*) FROM labs l JOIN subtopics st2 ON st2.id = l.subtopic_id WHERE st2.topic_id = t.id AND l.is_published = true) AS lab_count,
-            (SELECT json_agg(json_build_object('id', l.id, 'title', l.title, 'title_sw', l.title_sw) ORDER BY l.created_at)
-             FROM labs l JOIN subtopics st3 ON st3.id = l.subtopic_id
-             WHERE st3.topic_id = t.id AND l.is_published = true) AS labs
+            COUNT(DISTINCT st.id) AS subtopic_count,
+            COUNT(DISTINCT CASE WHEN l.is_published = true THEN l.id END) AS lab_count,
+            json_agg(
+              CASE WHEN l.is_published = true THEN json_build_object('id', l.id, 'title', l.title, 'title_sw', l.title_sw) END
+              ORDER BY (CASE WHEN l.is_published = true THEN 0 ELSE 1 END), l.created_at
+            ) FILTER (WHERE l.is_published = true) AS labs
      FROM topics t
+     LEFT JOIN subtopics st ON st.topic_id = t.id
+     LEFT JOIN labs l ON l.subtopic_id = st.id
      WHERE t.subject_id = $1
+     GROUP BY t.id, t.title, t.title_sw, t.sort_order
      ORDER BY t.sort_order`,
     [subject.id]
   )

@@ -1,7 +1,8 @@
 'use client'
+import { memo } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 
-export function HowItWorks() {
+export const HowItWorks = memo(function HowItWorks() {
   const { lang } = useLanguage()
 
   const steps = [
@@ -46,4 +47,4 @@ export function HowItWorks() {
       </div>
     </section>
   )
-}
+})

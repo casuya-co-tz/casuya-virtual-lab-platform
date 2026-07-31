@@ -1,10 +1,7 @@
 'use client'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 
 export function FinalCTA() {
-  const router = useRouter()
-
   return (
     <section className="px-4 sm:px-6 py-10 sm:py-20 lg:py-24 bg-bg-primary border-b border-border">
       <div className="max-w-7xl mx-auto">
@@ -16,12 +13,16 @@ export function FinalCTA() {
             Join Tanzanian students, teachers, schools and developers who have already revolutionized their learning experience with Casuya Virtual Labs.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <Button variant="primary" className="!h-11 sm:!h-14 !px-6 sm:!px-10 text-[14px] sm:text-[15px] w-full sm:w-auto" onClick={() => router.push('/auth')}>
-              Create Free Account
-            </Button>
-            <Button variant="secondary" className="!h-11 sm:!h-14 !px-6 sm:!px-10 text-[14px] sm:text-[15px] w-full sm:w-auto" onClick={() => router.push('/contact')}>
-              Contact Sales for Schools
-            </Button>
+            <a href="/auth">
+              <Button variant="primary" className="!h-11 sm:!h-14 !px-6 sm:!px-10 text-[14px] sm:text-[15px] w-full sm:w-auto">
+                Create Free Account
+              </Button>
+            </a>
+            <a href="/contact">
+              <Button variant="secondary" className="!h-11 sm:!h-14 !px-6 sm:!px-10 text-[14px] sm:text-[15px] w-full sm:w-auto">
+                Contact Sales for Schools
+              </Button>
+            </a>
           </div>
         </div>
       </div>

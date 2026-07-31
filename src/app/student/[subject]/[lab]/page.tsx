@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -44,6 +44,14 @@ export default function LabPlayer({ params }: Props) {
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [liveScore, setLiveScore] = useState<number | null>(null)
 
+  const saveRef = useRef({ saving: false, liveScore: 0, lab: '' })
+  const submitRef = useRef({ saving: false, liveScore: 0, lab: '' })
+
+  useEffect(() => {
+    saveRef.current.lab = lab
+    submitRef.current.lab = lab
+  }, [lab])
+
   useEffect(() => {
     Promise.all([
       fetch(`/api/labs/${lab}`).then(r => {
@@ -67,14 +75,16 @@ export default function LabPlayer({ params }: Props) {
       })
   }, [lab])
 
-  async function handleSave(score?: number) {
+  const handleSave = useCallback(async (score?: number) => {
+    if (saveRef.current.saving) return
+    saveRef.current.saving = true
     setSaving(true)
     setError('')
     try {
       const res = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lab_id: lab, status: 'in_progress', score: score ?? liveScore ?? 0 }),
+        body: JSON.stringify({ lab_id: saveRef.current.lab, status: 'in_progress', score: score ?? liveScore ?? 0 }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => null)
@@ -83,10 +93,13 @@ export default function LabPlayer({ params }: Props) {
     } catch {
       setError('Network error. Please check your connection.')
     }
+    saveRef.current.saving = false
     setSaving(false)
-  }
+  }, [liveScore])
 
-  async function handleSubmit(score?: number) {
+  const handleSubmit = useCallback(async (score?: number) => {
+    if (submitRef.current.saving) return
+    submitRef.current.saving = true
     setSaving(true)
     setError('')
     const finalScore = score ?? liveScore ?? 0
@@ -94,7 +107,7 @@ export default function LabPlayer({ params }: Props) {
       const res = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lab_id: lab, status: 'completed', score: finalScore }),
+        body: JSON.stringify({ lab_id: submitRef.current.lab, status: 'completed', score: finalScore }),
       })
       if (res.ok) {
         setProgress({ status: 'completed', score: finalScore })
@@ -105,21 +118,77 @@ export default function LabPlayer({ params }: Props) {
     } catch {
       setError('Network error. Please check your connection.')
     }
+    submitRef.current.saving = false
     setSaving(false)
-  }
+  }, [liveScore])
 
-  const hasCode = labData?.html_code && labData.html_code.trim().length > 0
-  const displayName = lang === 'sw' ? (labData?.title_sw || labData?.title) : (labData?.title || lab.replace(/-/g, ' '))
-  const isPaywalled = labData?.is_premium && !hasActiveSub
-
-  const handleLabProgress = (event: LabProgressEvent) => {
+  const handleLabProgress = useCallback((event: LabProgressEvent) => {
     setLiveScore(event.score)
     if (event.status === 'completed') {
       handleSubmit(event.score)
     } else if (event.status === 'in_progress') {
       handleSave(event.score)
     }
-  }
+  }, [handleSubmit, handleSave])
+
+  const hasCode = labData?.html_code && labData.html_code.trim().length > 0
+  const displayName = lang === 'sw' ? (labData?.title_sw || labData?.title) : (labData?.title || lab.replace(/-/g, ' '))
+  const isPaywalled = labData?.is_premium && !hasActiveSub
+
+  const tabs = useMemo(() => [
+    {
+      id: 'simulation',
+      label: t('student.simulation', lang),
+      content: isPaywalled ? (
+        <div className="bg-bg-secondary border border-border h-[60vh] max-h-[500px] flex items-center justify-center">
+          <div className="text-center px-2">
+            <p className="text-[13px] text-text-secondary mb-3">{lang === 'sw' ? 'Maabara hii inahitaji usajili wa premium' : 'This lab requires a premium subscription'}</p>
+            <Button variant="primary" onClick={() => setShowUpgrade(true)}>{lang === 'sw' ? 'Boresha Sasa' : 'Upgrade Now'}</Button>
+          </div>
+        </div>
+      ) : hasCode ? (
+        <div className="border border-border">
+          <div className="flex items-center justify-between px-2 py-1 bg-bg-tertiary border-b border-border">
+            <span className="text-[11px] text-text-secondary uppercase">{t('student.labEnvironment', lang)}</span>
+            <Button variant="ghost" onClick={() => setPreviewKey(k => k + 1)} className="!h-6 !text-[10px]">{t('student.refresh', lang)}</Button>
+          </div>
+          <LabTimer autoStart={false} />
+          <SimulationWrapper htmlCode={labData!.html_code!} previewKey={previewKey} onProgress={handleLabProgress} />
+        </div>
+      ) : (
+        <div className="bg-bg-secondary border border-border h-[60vh] max-h-[500px] flex items-center justify-center">
+          <div className="text-center px-2">
+            <p className="text-[13px] text-text-secondary mb-1">{t('student.noLabCode', lang)}</p>
+            <p className="text-[11px] text-text-disabled">{t('student.contactInstructor', lang)}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'instructions',
+      label: t('student.instructions', lang),
+      content: (
+        <div className="bg-bg-primary border border-border p-2">
+          <h3 className="text-[14px] font-bold text-text-primary mb-1">{t('student.instructions', lang)}</h3>
+          <p className="text-[12px] sm:text-[13px] text-text-secondary leading-relaxed">{labData?.description || 'Follow the steps below to complete this lab experiment.'}</p>
+        </div>
+      ),
+    },
+    {
+      id: 'results',
+      label: t('student.results', lang),
+      content: (
+        <div className="bg-bg-primary border border-border p-2">
+          <h3 className="text-[14px] font-bold text-text-primary mb-1">{t('student.results', lang)}</h3>
+          {progress?.status === 'completed' ? (
+            <p className="text-[12px] sm:text-[13px] text-accent-green">{t('student.score', lang)}: {progress.score}/100</p>
+          ) : (
+            <p className="text-[12px] sm:text-[13px] text-text-secondary">Complete the simulation to see your results here.</p>
+          )}
+        </div>
+      ),
+    },
+  ], [lang, isPaywalled, hasCode, labData, previewKey, handleLabProgress, progress])
 
   if (isPaywalled && showUpgrade) {
     return (
@@ -178,62 +247,7 @@ export default function LabPlayer({ params }: Props) {
         <div className="p-2 bg-accent-red/10 border border-accent-red/30 text-accent-red text-[12px]">{error}</div>
       )}
 
-      <Tabs
-        tabs={[
-          {
-            id: 'simulation',
-            label: t('student.simulation', lang),
-            content: isPaywalled ? (
-              <div className="bg-bg-secondary border border-border h-[60vh] max-h-[500px] flex items-center justify-center">
-                <div className="text-center px-2">
-                  <p className="text-[13px] text-text-secondary mb-3">{lang === 'sw' ? 'Maabara hii inahitaji usajili wa premium' : 'This lab requires a premium subscription'}</p>
-                  <Button variant="primary" onClick={() => setShowUpgrade(true)}>{lang === 'sw' ? 'Boresha Sasa' : 'Upgrade Now'}</Button>
-                </div>
-              </div>
-            ) : hasCode ? (
-              <div className="border border-border">
-                <div className="flex items-center justify-between px-2 py-1 bg-bg-tertiary border-b border-border">
-                  <span className="text-[11px] text-text-secondary uppercase">{t('student.labEnvironment', lang)}</span>
-                  <Button variant="ghost" onClick={() => setPreviewKey(k => k + 1)} className="!h-6 !text-[10px]">{t('student.refresh', lang)}</Button>
-                </div>
-                <LabTimer autoStart={false} />
-                <SimulationWrapper htmlCode={labData!.html_code!} previewKey={previewKey} onProgress={handleLabProgress} />
-              </div>
-            ) : (
-              <div className="bg-bg-secondary border border-border h-[60vh] max-h-[500px] flex items-center justify-center">
-                <div className="text-center px-2">
-                  <p className="text-[13px] text-text-secondary mb-1">{t('student.noLabCode', lang)}</p>
-                  <p className="text-[11px] text-text-disabled">{t('student.contactInstructor', lang)}</p>
-                </div>
-              </div>
-            ),
-          },
-          {
-            id: 'instructions',
-            label: t('student.instructions', lang),
-            content: (
-              <div className="bg-bg-primary border border-border p-2">
-                <h3 className="text-[14px] font-bold text-text-primary mb-1">{t('student.instructions', lang)}</h3>
-                <p className="text-[12px] sm:text-[13px] text-text-secondary leading-relaxed">{labData?.description || 'Follow the steps below to complete this lab experiment.'}</p>
-              </div>
-            ),
-          },
-          {
-            id: 'results',
-            label: t('student.results', lang),
-            content: (
-              <div className="bg-bg-primary border border-border p-2">
-                <h3 className="text-[14px] font-bold text-text-primary mb-1">{t('student.results', lang)}</h3>
-                {progress?.status === 'completed' ? (
-                  <p className="text-[12px] sm:text-[13px] text-accent-green">{t('student.score', lang)}: {progress.score}/100</p>
-                ) : (
-                  <p className="text-[12px] sm:text-[13px] text-text-secondary">Complete the simulation to see your results here.</p>
-                )}
-              </div>
-            ),
-          },
-        ]}
-      />
+      <Tabs tabs={tabs} />
 
       <div className="flex flex-col sm:flex-row gap-2">
         <Button variant="primary" onClick={() => handleSubmit()} disabled={saving}>{saving ? t('common.save', lang) + '...' : t('student.submit', lang)}</Button>

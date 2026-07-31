@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 
@@ -16,26 +16,36 @@ interface SimulationWrapperProps {
   onProgress?: (event: LabProgressEvent) => void
 }
 
+const IMPORT_MAP_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0'
+
+const STYLE_INJECTION = `
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: transparent;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+`
+
 export function SimulationWrapper({ htmlCode, previewKey, onProgress }: SimulationWrapperProps) {
   const [isLoading, setIsLoading] = useState(true)
-  const [frameSrc, setFrameSrc] = useState('')
-  const prevBlobUrl = useRef('')
   const { lang } = useLanguage()
+  const prevBlobUrl = useRef('')
 
-  useEffect(() => {
-    setIsLoading(true)
-
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-
+  const frameSrc = useMemo(() => {
     let modified = htmlCode.replace(
       /<script\s+src=["'][^"']*three(?:\.min)?\.js["']><\/script>/gi,
-      `<script src="${origin}/js/three.min.js"></script>`
+      `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/js/three.min.js"></script>`
     )
 
     modified = modified.replace(/<meta[^>]*http-equiv=["']Content-Security-Policy["'][^>]*>/gi, '')
     modified = modified.replace(/<script\s+type=["']importmap["'][^>]*>[\s\S]*?<\/script>/gi, '')
 
-    const IMPORT_MAP_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0'
     const importMap = `<script type="importmap">{
   "imports": {
     "three": "${IMPORT_MAP_CDN}/build/three.module.js",
@@ -43,21 +53,7 @@ export function SimulationWrapper({ htmlCode, previewKey, onProgress }: Simulati
   }
 }</script>`
 
-    const styleInjection = `
-      <style>
-        body {
-          margin: 0;
-          padding: 0;
-          overflow: hidden;
-          background-color: transparent;
-        }
-        canvas {
-          display: block;
-        }
-      </style>
-    `
-
-    const headInjection = `${importMap}${styleInjection}`
+    const headInjection = `${importMap}${STYLE_INJECTION}`
 
     if (modified.includes('</head>')) {
       modified = modified.replace('</head>', `${headInjection}</head>`)
@@ -72,7 +68,9 @@ export function SimulationWrapper({ htmlCode, previewKey, onProgress }: Simulati
     const blob = new Blob([modified], { type: 'text/html' })
     const url = URL.createObjectURL(blob)
     prevBlobUrl.current = url
-    setFrameSrc(url)
+    setIsLoading(true)
+    return url
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [htmlCode, previewKey])
 
   useEffect(() => {
@@ -107,7 +105,7 @@ export function SimulationWrapper({ htmlCode, previewKey, onProgress }: Simulati
           <p className="text-[14px] text-text-secondary animate-pulse">{t('student.loadingLab', lang)}</p>
         </div>
       )}
-      
+
       {frameSrc && (
         <iframe
           key={previewKey}

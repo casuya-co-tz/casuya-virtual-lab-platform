@@ -1,5 +1,5 @@
 'use client'
-import { HTMLAttributes, useEffect, useRef } from 'react'
+import { HTMLAttributes, memo, useEffect, useRef } from 'react'
 
 interface ModalProps extends HTMLAttributes<HTMLDivElement> {
   open: boolean
@@ -8,7 +8,7 @@ interface ModalProps extends HTMLAttributes<HTMLDivElement> {
   title?: string
 }
 
-export function Modal({ open, onClose, onConfirm, title, className = '', children, ...props }: ModalProps) {
+export const Modal = memo(function Modal({ open, onClose, onConfirm, title, className = '', children, ...props }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -45,4 +45,4 @@ export function Modal({ open, onClose, onConfirm, title, className = '', childre
       </div>
     </div>
   )
-}
+})

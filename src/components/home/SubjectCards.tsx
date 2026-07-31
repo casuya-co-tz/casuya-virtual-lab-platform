@@ -18,10 +18,12 @@ export function SubjectCards() {
   const [counts, setCounts] = useState<Record<string, number>>({})
 
   useEffect(() => {
-    fetch('/api/labs/count')
+    const controller = new AbortController()
+    fetch('/api/labs/count', { signal: controller.signal })
       .then(r => r.ok ? r.json() : {})
       .then(setCounts)
       .catch(() => {})
+    return () => controller.abort()
   }, [])
 
   function handleClick(id: string) {

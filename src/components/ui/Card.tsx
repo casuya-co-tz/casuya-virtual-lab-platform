@@ -1,5 +1,5 @@
 'use client'
-import { HTMLAttributes, forwardRef } from 'react'
+import { HTMLAttributes, forwardRef, memo } from 'react'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   hover?: boolean
@@ -7,7 +7,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   interactive?: boolean
 }
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(
+export const Card = memo(forwardRef<HTMLDivElement, CardProps>(
   ({ hover, selected, interactive, className = '', children, ...props }, ref) => {
     return (
       <div
@@ -23,5 +23,5 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       </div>
     )
   }
-)
+))
 Card.displayName = 'Card'
