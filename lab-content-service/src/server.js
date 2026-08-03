@@ -19,6 +19,14 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '3100');
 const HOST = process.env.HOST || '127.0.0.1';
 
+// Trust the X-Forwarded-For header ONLY when deployed behind a known reverse
+// proxy. By default this is unset, so express-rate-limit keys on the socket
+// address and spoofed X-Forwarded-For values cannot bypass the limiter.
+if (process.env.TRUST_PROXY && process.env.TRUST_PROXY !== 'false') {
+  const hops = Number(process.env.TRUST_PROXY);
+  app.set('trust proxy', Number.isFinite(hops) && hops >= 0 ? hops : 1);
+}
+
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,

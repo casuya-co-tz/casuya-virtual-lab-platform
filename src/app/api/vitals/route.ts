@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { getUserIdFromSession } from '@/lib/auth-guard'
 import { SimpleRateLimiter } from '@/lib/rate-limiter'
+import { getClientIp } from '@/lib/client-ip'
 
 const ALLOWED_METRICS = new Set(['CLS', 'FCP', 'FID', 'INP', 'LCP', 'TTFB'])
 const vitalsLimiter = new SimpleRateLimiter(60000, 120)
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for') || 'unknown'
+    const ip = getClientIp(req.headers.get('x-forwarded-for'), req.ip)
     const rateCheck = vitalsLimiter.check(ip, '/api/vitals')
     if (!rateCheck.allowed) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })

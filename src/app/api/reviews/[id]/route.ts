@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { logAuditEvent } from '@/lib/audit-logger'
 import { getUserIdFromSession } from '@/lib/auth-guard'
+import { sanitizePlainText } from '@/lib/sanitize'
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -40,7 +41,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       }
     }
 
-    const sanitized = review_text ? review_text.replace(/<[^>]*>/g, '') : undefined
+    const sanitized = review_text !== undefined && review_text ? sanitizePlainText(review_text) : undefined
 
     const result = await query(
       `UPDATE reviews SET

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { requireAdmin } from '@/lib/auth-guard'
+import { sanitizeSafe, needsSandbox } from '@/lib/sanitize'
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const userId = await requireAdmin()
@@ -47,8 +48,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const isPremium = is_premium === true || is_premium === 'true'
 
     // Preserve existing questions when html_content is absent/empty (partial update).
+    const rawHtml = html_content ? String(html_content) : ''
+    const storedHtml = needsSandbox(rawHtml) ? rawHtml : sanitizeSafe(rawHtml)
     const questions = html_content
-      ? JSON.stringify({ _html: html_content })
+      ? JSON.stringify({ _html: storedHtml })
       : existing.rows[0].questions
 
     const result = await query(

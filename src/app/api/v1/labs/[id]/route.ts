@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateApiKey, trackApiUsage, enforceDeveloperQuota, hasApiScope } from '@/lib/api-tracker'
 import { getLab } from '@/lib/lab-manager'
+import { getClientIp } from '@/lib/client-ip'
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await validateApiKey(req.headers.get('authorization'))
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       auth.credentialId,
       `/api/v1/labs/${params.id}`,
       lab ? 200 : 404,
-      req.headers.get('x-forwarded-for') || undefined
+      getClientIp(req.headers.get('x-forwarded-for'), req.ip)
     )
 
     if (!lab) {
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json(lab)
   } catch {
-    await trackApiUsage(auth.credentialId, `/api/v1/labs/${params.id}`, 500, req.headers.get('x-forwarded-for') || undefined)
+    await trackApiUsage(auth.credentialId, `/api/v1/labs/${params.id}`, 500, getClientIp(req.headers.get('x-forwarded-for'), req.ip))
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

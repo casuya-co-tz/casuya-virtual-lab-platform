@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { endpointRateLimiters } from '@/lib/rate-limiter'
 import { isDeveloperKeyFormat, parseBearerToken } from '@/lib/api-key-format'
+import { getClientIp } from '@/lib/client-ip'
+import { isBaitPath, isScannerUserAgent, buildDecoyBody, fireDeceptionAlert } from '@/lib/deception'
 import type { SessionUser } from '@/lib/session'
 
 const RATE_LIMIT_CONFIG: Record<string, string> = {
@@ -38,6 +40,23 @@ async function getSessionUser(req: NextRequest): Promise<SessionUser | null> {
 export async function middleware(req: NextRequest) {
   try {
     const pathname = req.nextUrl.pathname
+    const clientIp = getClientIp(req.headers.get('x-forwarded-for'), req.ip)
+    const userAgent = req.headers.get('user-agent')
+
+    const baitPath = isBaitPath(pathname)
+    if (baitPath) {
+      fireDeceptionAlert('bait_hit', clientIp, pathname, userAgent)
+      const method = req.method
+      const { body, contentType } = buildDecoyBody(pathname)
+      return new NextResponse(body, {
+        status: method === 'GET' || method === 'HEAD' ? 200 : 404,
+        headers: { 'content-type': contentType, 'content-length': String(new TextEncoder().encode(body).length) },
+      })
+    }
+
+    if (isScannerUserAgent(userAgent)) {
+      fireDeceptionAlert('scanner_detected', clientIp, pathname, userAgent)
+    }
 
     if (pathname.startsWith('/api/v1')) {
       const isPublic = pathname.startsWith('/api/v1/public')
@@ -59,7 +78,7 @@ export async function middleware(req: NextRequest) {
         : RATE_LIMIT_CONFIG[pathname] || pathname.split('/').slice(0, 3).join('/')
       const limiter = endpointRateLimiters[limiterKey as keyof typeof endpointRateLimiters] || endpointRateLimiters['/api/v1']
       if (limiter) {
-        const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown'
+        const ip = clientIp
         const result = limiter.check(ip, pathname)
         const response = NextResponse.next()
         response.headers.set('X-RateLimit-Limit', String(result.limit))

@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { logAuditEvent } from '@/lib/audit-logger'
 import { signupLimiter } from '@/lib/rate-limiter'
+import { getClientIp } from '@/lib/client-ip'
 
 export async function POST(req: Request) {
   try {
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
     const password = typeof body.password === 'string' ? body.password : ''
     const fullName = typeof body.fullName === 'string' ? body.fullName.trim() : ''
     const requestedRole = ['student', 'developer'].includes(body.role) ? body.role : 'student'
-    const ip = req.headers.get('x-forwarded-for') || 'unknown'
+    const ip = getClientIp(req.headers.get('x-forwarded-for'))
 
     const rateCheck = signupLimiter.check(ip, '/api/auth/signup')
     if (!rateCheck.allowed) {

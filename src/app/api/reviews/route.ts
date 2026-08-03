@@ -3,6 +3,8 @@ import { query } from '@/lib/db'
 import { logAuditEvent } from '@/lib/audit-logger'
 import { SimpleRateLimiter } from '@/lib/rate-limiter'
 import { getUserIdFromSession } from '@/lib/auth-guard'
+import { sanitizePlainText } from '@/lib/sanitize'
+import { getClientIp } from '@/lib/client-ip'
 
 const postLimiter = new SimpleRateLimiter(3600000, 5)
 
@@ -77,7 +79,7 @@ export async function POST(req: Request) {
     const userId = await getUserIdFromSession()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const ip = req.headers.get('x-forwarded-for') || 'unknown'
+    const ip = getClientIp(req.headers.get('x-forwarded-for'))
     const rateCheck = postLimiter.check(userId, '/api/reviews')
     if (!rateCheck.allowed) {
       return NextResponse.json({ error: 'Too many reviews. Try again later.' }, { status: 429 })
@@ -101,7 +103,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Review must be under 2000 characters' }, { status: 400 })
     }
 
-    const sanitized = trimmed.replace(/<[^>]*>/g, '')
+    const sanitized = sanitizePlainText(trimmed)
 
     const existingReview = await query('SELECT id FROM reviews WHERE user_id = $1 LIMIT 1', [userId])
     if (existingReview.rows.length > 0) {

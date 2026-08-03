@@ -85,6 +85,23 @@ const THREE_PATTERN = /\b(?:THREE\.|new\s+THREE\.|WebGLRenderer|WebGL2RenderingC
 const DYNAMIC_IMPORT = /\bimport\s*\(/i
 const EVAL_PATTERN = /\b(?:eval|new\s+Function)\s*\(/i
 
+export function sanitizePlainText(input: string): string {
+  const value = typeof input === 'string' ? input : ''
+  if (!value) return ''
+  try {
+    return sanitizeHtml(value, {
+      allowedTags: [],
+      allowedAttributes: {},
+      disallowedTagsMode: 'discard',
+    }).trim()
+  } catch {
+    return value
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .trim()
+  }
+}
+
 export function needsSandbox(html: string): boolean {
   return SCRIPT_TAG.test(html) ||
     HANDLER_ATTR.test(html) ||

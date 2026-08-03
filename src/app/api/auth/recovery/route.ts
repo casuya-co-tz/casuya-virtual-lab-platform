@@ -2,12 +2,13 @@ import crypto from 'crypto'
 import { NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { recoveryLimiter } from '@/lib/rate-limiter'
+import { getClientIp } from '@/lib/client-ip'
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
-    const ip = req.headers.get('x-forwarded-for') || 'unknown'
+    const ip = getClientIp(req.headers.get('x-forwarded-for'))
 
     const rateCheck = recoveryLimiter.check(ip, '/api/auth/recovery')
     if (!rateCheck.allowed) {

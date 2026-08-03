@@ -4,11 +4,12 @@ import { NextResponse, NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { logAuditEvent } from '@/lib/audit-logger'
 import { loginLimiter } from '@/lib/rate-limiter'
+import { getClientIp } from '@/lib/client-ip'
 import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for') || 'unknown'
+    const ip = getClientIp(req.headers.get('x-forwarded-for'), req.ip)
 
     const rateResult = loginLimiter.check(ip, 'login')
     if (!rateResult.allowed) {

@@ -1,5 +1,16 @@
 const LAB_SERVICE_URL = process.env.LAB_CONTENT_SERVICE_URL || 'http://localhost:3100'
-const LAB_SERVICE_KEY = process.env.LAB_CONTENT_API_KEY || 'lab-content-secret-key-change-in-production'
+const LAB_SERVICE_KEY = process.env.LAB_CONTENT_API_KEY || ''
+
+const LAB_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const LAB_ID_PREFIX = '/api/casuya/labs/'
+
+function invalidLabIdError(path: string): string | null {
+  const pathname = path.split('?')[0]
+  if (!pathname.startsWith(LAB_ID_PREFIX)) return null
+  const id = pathname.slice(LAB_ID_PREFIX.length).split('/')[0]
+  if (!LAB_ID_RE.test(id)) return `Invalid lab id: ${id}`
+  return null
+}
 
 interface LabServiceResponse {
   ok: boolean
@@ -12,6 +23,14 @@ async function request(
   path: string,
   body?: any,
 ): Promise<LabServiceResponse> {
+  const pathError = invalidLabIdError(path)
+  if (pathError) {
+    return { ok: false, status: 400, data: { error: pathError } }
+  }
+  if (!LAB_SERVICE_KEY) {
+    return { ok: false, status: 503, data: { error: 'Lab Content Service not configured' } }
+  }
+
   const url = `${LAB_SERVICE_URL}${path}`
   const headers: Record<string, string> = {
     'x-api-key': LAB_SERVICE_KEY,

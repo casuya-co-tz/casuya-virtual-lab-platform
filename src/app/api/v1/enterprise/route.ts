@@ -2,6 +2,7 @@ import { query } from '@/lib/db'
 import { NextResponse, NextRequest } from 'next/server'
 import { validateEnterpriseApiKey, trackApiUsage } from '@/lib/api-tracker'
 import { getLabs } from '@/lib/lab-manager'
+import { getClientIp } from '@/lib/client-ip'
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     if (endpoint === 'labs') {
       const result = await getLabs({ page, limit })
-      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=labs', 200, request.headers.get('x-forwarded-for') || undefined)
+      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=labs', 200, getClientIp(request.headers.get('x-forwarded-for'), request.ip))
       return NextResponse.json({ labs: result.data, pagination: { page, limit, total: result.total }, tier: 'enterprise' })
     }
 
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
          LIMIT 50`,
         [auth.credentialId]
       )
-      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=usage', 200, request.headers.get('x-forwarded-for') || undefined)
+      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=usage', 200, getClientIp(request.headers.get('x-forwarded-for'), request.ip))
       return NextResponse.json({ usage: result.rows, tier: 'enterprise' })
     }
 

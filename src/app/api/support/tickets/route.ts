@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { requireAuth } from '@/lib/auth-guard'
+import { sanitizePlainText } from '@/lib/sanitize'
 
 const ALLOWED_PRIORITIES = new Set(['low', 'normal', 'high', 'urgent'])
 
@@ -56,6 +57,12 @@ export async function POST(req: NextRequest) {
 
     const rawPriority = priority && ALLOWED_PRIORITIES.has(priority) ? priority : undefined
 
+    const subjectSanitized = sanitizePlainText(String(subject).slice(0, 200))
+    const descriptionSanitized = sanitizePlainText(String(description).slice(0, 4000))
+    if (!subjectSanitized || !descriptionSanitized) {
+      return NextResponse.json({ error: 'Subject and description required' }, { status: 400 })
+    }
+
     let assignedPriority = rawPriority || 'normal'
     if (!rawPriority) {
       if (planTier === 'enterprise') assignedPriority = 'high'
@@ -66,7 +73,7 @@ export async function POST(req: NextRequest) {
     const result = await query(
       `INSERT INTO support_tickets (user_id, subject, description, priority, plan_tier)
        VALUES ($1, $2, $3, $4, $5) RETURNING id, subject, description, priority, status, plan_tier, created_at`,
-      [userId, subject, description, assignedPriority, planTier]
+      [userId, subjectSanitized, descriptionSanitized, assignedPriority, planTier]
     )
 
     return NextResponse.json(result.rows[0], { status: 201 })

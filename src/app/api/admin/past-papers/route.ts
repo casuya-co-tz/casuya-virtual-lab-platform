@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { requireAdmin } from '@/lib/auth-guard'
+import { sanitizeSafe, needsSandbox } from '@/lib/sanitize'
 
 function parseYear(raw: string | null): number | null {
   if (!raw) return null
@@ -52,7 +53,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'year, paper_number, and sort_order must be numbers' }, { status: 400 })
     }
 
-    const questions = html_content ? JSON.stringify({ _html: html_content }) : '[]'
+    const rawHtml = html_content ? String(html_content) : ''
+    const storedHtml = needsSandbox(rawHtml) ? rawHtml : sanitizeSafe(rawHtml)
+    const questions = html_content ? JSON.stringify({ _html: storedHtml }) : '[]'
     const isPremium = is_premium === true || is_premium === 'true'
 
     const result = await query(
