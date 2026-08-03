@@ -127,7 +127,7 @@ export const PricingManager: React.FC<{ initialPlans: AdminPlan[] }> = ({ initia
                       </button>
                     </>
                   ) : (
-                    <button onClick={() => startEdit(p)} className="text-primary font-semibold text-xs hover:underline">
+                    <button onClick={() => startEdit(p)} className="text-text-primary font-semibold text-xs hover:underline">
                       Edit
                     </button>
                   )}

@@ -8,10 +8,19 @@ export async function getDeveloperUsageLastMinute(developerId: string): Promise<
   const usageResult = await query(
     `SELECT COUNT(*) as cnt FROM api_usage au
      JOIN api_credentials ac ON ac.id = au.credential_id
-     WHERE ac.developer_id = $1 AND au.created_at > NOW() - INTERVAL '1 minute'`,
+     WHERE ac.developer_id = $1 AND au.accessed_at > NOW() - INTERVAL '1 minute'`,
     [developerId]
   )
   return parseInt(usageResult.rows[0]?.cnt || '0', 10)
+}
+
+async function getFreeTierRateLimit(): Promise<number> {
+  try {
+    const result = await query(`SELECT rate_limit_per_min FROM pricing_plans WHERE slug = 'dev_free' LIMIT 1`)
+    return parseInt(result.rows[0]?.rate_limit_per_min, 10) || 10
+  } catch {
+    return 10
+  }
 }
 
 export function hasApiScope(scopes: string[], required: string): boolean {
@@ -19,11 +28,17 @@ export function hasApiScope(scopes: string[], required: string): boolean {
 }
 
 export async function enforceDeveloperQuota(developerId: string) {
-  const currentUsage = await getDeveloperUsageLastMinute(developerId)
+  let currentUsage = 0
+  try {
+    currentUsage = await getDeveloperUsageLastMinute(developerId)
+  } catch {
+    currentUsage = 0
+  }
+
   const result = await query(
-    `SELECT pp.rate_limit_per_min, pp.slug
+    `SELECT dp.api_tier, pp.rate_limit_per_min
      FROM developer_profiles dp
-     JOIN pricing_plans pp ON pp.id = dp.plan_id
+     LEFT JOIN pricing_plans pp ON pp.id = dp.plan_id
      WHERE dp.id = $1`,
     [developerId]
   )
@@ -32,9 +47,9 @@ export async function enforceDeveloperQuota(developerId: string) {
     return NextResponse.json({ error: 'UNVERIFIED_DEVELOPER_CREDENTIALS' }, { status: 403 })
   }
 
-  const limit = result.rows[0].rate_limit_per_min
+  const limit = result.rows[0].rate_limit_per_min ?? await getFreeTierRateLimit()
 
-  if (limit !== null && currentUsage >= limit) {
+  if (currentUsage >= limit) {
     return NextResponse.json(
       {
         error: 'RESOURCE_POOL_EXHAUSTED',
@@ -58,8 +73,8 @@ export async function trackApiUsage(credentialId: string, endpoint: string, stat
       'UPDATE api_credentials SET request_count = request_count + 1, last_used_at = NOW() WHERE id = $1',
       [credentialId]
     )
-  } catch {
-    // silent fail — usage tracking should never break requests
+  } catch (err) {
+    console.error('Usage tracking failed:', err)
   }
 }
 
@@ -72,12 +87,13 @@ export async function validateApiKey(authHeader: string | null): Promise<{ crede
   const [publicToken, secret] = parts
   try {
     const result = await query(
-      'SELECT id, hashed_secret, scopes, is_active, request_count FROM api_credentials WHERE public_token = $1',
+      'SELECT id, hashed_secret, scopes, is_active, expires_at, request_count FROM api_credentials WHERE public_token = $1',
       [publicToken]
     )
     if (result.rows.length === 0) return null
     const cred = result.rows[0]
     if (!cred.is_active) return null
+    if (cred.expires_at && new Date(cred.expires_at).getTime() < Date.now()) return null
 
     const bcrypt = await import('bcryptjs')
     const valid = bcrypt.default.compareSync(secret, cred.hashed_secret)

@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useEffect, useMemo, useState, useCallback } from 'react'
+import { useRef, useEffect, useMemo, useState } from 'react'
 import { sanitizeSafe, needsSandbox, hasMermaid, hasMath } from '@/lib/sanitize'
 import SandboxedContent from './SandboxedContent'
 import 'katex/dist/katex.min.css'
@@ -54,8 +54,6 @@ interface InteractiveExamProps {
 
 export default function InteractiveExam({ questions }: InteractiveExamProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [mermaidReady, setMermaidReady] = useState(false)
-  const [htmlRendered, setHtmlRendered] = useState(false)
 
   const rawContent = useMemo(() => {
     if (typeof questions === 'object' && questions && '_html' in questions) {
@@ -71,15 +69,6 @@ export default function InteractiveExam({ questions }: InteractiveExamProps) {
     if (!isHtml || requiresSandbox) return ''
     return sanitizeSafe(rawContent)
   }, [rawContent, isHtml, requiresSandbox])
-
-  useEffect(() => {
-    setMermaidReady(false)
-    setHtmlRendered(false)
-  }, [sanitizedHtml])
-
-  const handleHtmlLoad = useCallback(() => {
-    setHtmlRendered(true)
-  }, [])
 
   useEffect(() => {
     if (!isHtml || requiresSandbox || !containerRef.current) return
@@ -123,12 +112,9 @@ export default function InteractiveExam({ questions }: InteractiveExamProps) {
           try {
             mermaid.default.initialize({ startOnLoad: false })
             mermaid.default.run({ nodes: Array.from(mermaidElements) })
-            setMermaidReady(true)
           } catch {}
         }).catch(() => {})
       }
-    } else {
-      setMermaidReady(true)
     }
 
     return () => { cancelled = true }

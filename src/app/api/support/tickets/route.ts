@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { requireAuth } from '@/lib/auth-guard'
 
+const ALLOWED_PRIORITIES = new Set(['low', 'normal', 'high', 'urgent'])
+
 export async function GET() {
   const userId = await requireAuth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -52,8 +54,10 @@ export async function POST(req: NextRequest) {
     )
     const planTier = subResult.rows[0]?.tier || 'free'
 
-    let assignedPriority = priority || 'normal'
-    if (!priority || priority === 'normal') {
+    const rawPriority = priority && ALLOWED_PRIORITIES.has(priority) ? priority : undefined
+
+    let assignedPriority = rawPriority || 'normal'
+    if (!rawPriority) {
       if (planTier === 'enterprise') assignedPriority = 'high'
       else if (planTier === 'premium') assignedPriority = 'normal'
       else assignedPriority = 'low'

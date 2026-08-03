@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { pricingTranslations } from '@/lib/i18n'
 
 interface UpgradePromptProps {
@@ -13,9 +13,28 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ recommendedPlan, l
   const sectionTarget = recommendedPlan === 'developer' ? 'developer' : 'standard'
   const paymentSlug = recommendedPlan === 'developer' ? 'dev_basic' : 'basic'
 
+  useEffect(() => {
+    if (!onClose) return
+    const close = onClose
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') close()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-md p-6 overflow-hidden rounded-xl border border-border-strong bg-bg-primary shadow-2xl animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('pricing.upgradePrompt.title')}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md p-6 overflow-hidden rounded-xl border border-border-strong bg-bg-primary shadow-2xl animate-fade-in"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-500 via-yellow-500 to-blue-600" />
 
         <div className="text-center mt-2">

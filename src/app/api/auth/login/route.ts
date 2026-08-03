@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
 
     if (profileResult.rows.length === 0) {
       await query(
-        'INSERT INTO profiles (id, full_name, role, language) VALUES ($1, $2, $3, $4)',
+        `INSERT INTO profiles (id, full_name, role, language) VALUES ($1, $2, $3, $4)
+         ON CONFLICT (id) DO NOTHING`,
         [authUser.id, authUser.email.split('@')[0], authUser.role, 'en']
       )
       profileResult = await query(

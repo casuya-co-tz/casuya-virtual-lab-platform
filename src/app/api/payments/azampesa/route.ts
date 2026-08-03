@@ -24,22 +24,21 @@ export async function POST(req: NextRequest) {
     }
     const plan = planResult.rows[0]
 
+    if (!process.env.AZAMPESA_APP_NAME || !process.env.AZAMPESA_CLIENT_ID) {
+      return NextResponse.json({
+        success: false,
+        error: 'Payment gateway not configured',
+      }, { status: 503 })
+    }
+
     const txResult = await query(
       `INSERT INTO payment_transactions (user_id, plan_id, amount, currency, provider, status, metadata)
        VALUES ($1, $2, $3, $4, $5, 'pending', $6)
        RETURNING id`,
-      [userId, plan.id, plan.price, plan.currency || 'TZS', provider, JSON.stringify({ phone, source: 'payments_api' })]
+      [userId, plan.id, plan.price, plan.currency || 'TZS', provider.toLowerCase(), JSON.stringify({ phone, source: 'payments_api' })]
     )
 
     const transactionId = txResult.rows[0].id
-
-    if (!process.env.AZAMPESA_APP_NAME || !process.env.AZAMPESA_CLIENT_ID) {
-      return NextResponse.json({
-        success: false,
-        transaction_id: transactionId,
-        error: 'Payment gateway not configured',
-      }, { status: 503 })
-    }
 
     const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/azampesa/callback`
 
@@ -53,10 +52,14 @@ export async function POST(req: NextRequest) {
     })
 
     if (gatewayResult.success && gatewayResult.transactionId) {
-      await query(
-        `UPDATE payment_transactions SET provider_transaction_id = $1 WHERE id = $2`,
-        [gatewayResult.transactionId, transactionId]
-      )
+      try {
+        await query(
+          `UPDATE payment_transactions SET provider_transaction_id = $1 WHERE id = $2`,
+          [gatewayResult.transactionId, transactionId]
+        )
+      } catch (err) {
+        console.error('Failed to persist provider transaction id:', err)
+      }
     }
 
     if (!gatewayResult.success) {

@@ -7,7 +7,7 @@ import { t } from '@/lib/i18n'
 interface ProgressData {
   labs_completed: number
   average_score: number
-  total_labs: number
+  total_time: string
   recent_activity: Array<{ lab_title: string; score: number; status: string; completed_at: string }>
 }
 
@@ -24,10 +24,19 @@ export default function ProgressPage() {
       const progressArr = Array.isArray(progress) ? progress : []
       const completed = progressArr.filter((p: { status: string }) => p.status === 'completed')
       const totalScore = completed.reduce((sum: number, p: { score: number }) => sum + (p.score || 0), 0)
+
+      const totalMs = progressArr.reduce((sum: number, p: { started_at?: string; completed_at?: string; last_server_ts?: string }) => {
+        const end = new Date(p.completed_at || p.last_server_ts || Date.now()).getTime()
+        const start = new Date(p.started_at || end).getTime()
+        return sum + Math.max(0, end - start)
+      }, 0)
+      const totalHours = Math.floor(totalMs / 3600000)
+      const totalMinutes = Math.round((totalMs % 3600000) / 60000)
+
       setData({
         labs_completed: completed.length,
         average_score: completed.length > 0 ? Math.round(totalScore / completed.length) : 0,
-        total_labs: progressArr.length,
+        total_time: totalHours > 0 ? `${totalHours}h ${totalMinutes}m` : `${totalMinutes}m`,
         recent_activity: progressArr.slice(0, 10).map((p: { title?: string; title_sw?: string; score: number; status: string; completed_at?: string; started_at?: string }) => ({
           lab_title: p.title || p.title_sw || 'Lab',
           score: p.score || 0,
@@ -56,7 +65,7 @@ export default function ProgressPage() {
         </div>
         <div className="bg-bg-primary border border-border p-2">
           <p className="text-[10px] uppercase text-text-secondary">{t('progress.totalTime', lang)}</p>
-          <p className="text-[20px] sm:text-[24px] font-bold text-text-primary mt-0.5">{data?.total_labs || 0}</p>
+          <p className="text-[20px] sm:text-[24px] font-bold text-text-primary mt-0.5">{data?.total_time || '0m'}</p>
         </div>
       </div>
 

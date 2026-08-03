@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, FormEvent, Suspense } from 'react'
+import { useState, useEffect, useRef, FormEvent, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
@@ -62,6 +62,13 @@ function PaymentContent() {
   const [provider, setProvider] = useState('mpesa')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ success: boolean; message: string; transactionId?: string } | null>(null)
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     const section = searchParams.get('section') || 'standard'
@@ -176,7 +183,7 @@ function PaymentContent() {
           }
         }
       } catch {}
-      setTimeout(poll, interval)
+      pollTimerRef.current = setTimeout(poll, interval)
     }
     poll()
   }

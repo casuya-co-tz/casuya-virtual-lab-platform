@@ -8,8 +8,10 @@ import { maybeSync } from '@/lib/lab-sync'
 export async function GET(req: Request) {
   const adminId = await requireAdmin()
   const { searchParams } = new URL(req.url)
-  const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '50')
+  const parsedPage = parseInt(searchParams.get('page') || '1')
+  const page = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : Math.min(parsedPage, 10000)
+  const parsedLimit = parseInt(searchParams.get('limit') || '50')
+  const limit = Number.isNaN(parsedLimit) || parsedLimit < 1 ? 50 : Math.min(parsedLimit, 100)
   const subject = searchParams.get('subject') || undefined
 
   maybeSync()
@@ -124,7 +126,9 @@ export async function POST(req: Request) {
         [
           lab.id, lab.title, lab.title_sw, lab.description, lab.subject,
           lab.html_code, lab.subtopic_id || body.subtopic_id || null,
-          lab.thumbnail || null, body.is_published !== undefined ? body.is_published : true, lab.is_premium, lab.current_version,
+          body.is_published !== undefined ? body.is_published : true,
+          lab.is_premium, lab.current_version,
+          lab.thumbnail || null,
         ]
       )
     } catch (dbErr) {

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
-import { getUserIdFromSession } from '@/lib/auth-guard'
+import { getSessionFromCookies } from '@/lib/auth-guard'
+import { canAccessPremiumContent } from '@/lib/subscription-access'
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const userId = await getUserIdFromSession()
-    if (!userId) {
+    const session = await getSessionFromCookies()
+    if (!session) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
@@ -17,7 +18,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    return NextResponse.json(result.rows[0])
+    const paper = result.rows[0]
+    if (paper.is_premium && !(await canAccessPremiumContent(session.id, session.role))) {
+      return NextResponse.json({ error: 'Premium subscription required' }, { status: 403 })
+    }
+
+    return NextResponse.json(paper)
   } catch {
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }

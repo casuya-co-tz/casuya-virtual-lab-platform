@@ -12,19 +12,24 @@ export async function POST(req: NextRequest) {
   }
 
   const results: Record<string, string> = {}
+  let allOk = true
 
   for (const table of TABLES) {
     try {
       await query(`VACUUM ANALYZE ${table}`)
       results[table] = 'ok'
     } catch (err: any) {
-      results[table] = err.message
+      allOk = false
+      results[table] = err?.message || 'error'
     }
   }
 
-  return NextResponse.json({
-    success: true,
-    results,
-    timestamp: new Date().toISOString(),
-  })
+  return NextResponse.json(
+    {
+      success: allOk,
+      results,
+      timestamp: new Date().toISOString(),
+    },
+    { status: allOk ? 200 : 500 }
+  )
 }

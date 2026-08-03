@@ -8,8 +8,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const parsedPage = parseInt(searchParams.get('page') || '1')
+    const parsedLimit = parseInt(searchParams.get('limit') || '20')
+    const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1
+    const limit = Number.isFinite(parsedLimit) ? Math.min(100, Math.max(1, parsedLimit)) : 20
     const action = searchParams.get('action')
     const offset = (page - 1) * limit
 

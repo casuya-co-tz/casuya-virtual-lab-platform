@@ -103,7 +103,7 @@ export default async function SubjectPage({ params }: Props) {
             </div>
             <span className="text-[10px] sm:text-[11px] text-accent-blue font-medium">{unassignedLabs.length} labs</span>
           </div>
-          <div className="divide-y divide-border-DEFAULT">
+          <div className="divide-y divide-border">
             {unassignedLabs.map((lab) => (
               <Link key={lab.id} href={`/student/${params.subject}/${lab.id}`} className="flex items-center justify-between px-2 py-2 hover:bg-bg-secondary transition-colors">
                 <span className="text-[12px] sm:text-[13px] font-medium text-text-primary">{lab.title}</span>

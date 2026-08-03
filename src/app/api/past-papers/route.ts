@@ -11,7 +11,10 @@ export async function GET(req: NextRequest) {
   let idx = 1
 
   if (subject) { sql += ` AND subject = $${idx++}`; params.push(subject) }
-  if (year) { sql += ` AND year = $${idx++}`; params.push(parseInt(year)) }
+  if (year) {
+    const parsedYear = parseInt(year, 10)
+    if (!Number.isNaN(parsedYear)) { sql += ` AND year = $${idx++}`; params.push(parsedYear) }
+  }
 
   sql += ' ORDER BY year DESC, subject, paper_number'
 

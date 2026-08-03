@@ -9,11 +9,14 @@ const postLimiter = new SimpleRateLimiter(3600000, 5)
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '5')))
+    const parsedPage = parseInt(searchParams.get('page') || '1')
+    const page = Number.isNaN(parsedPage) ? 1 : Math.max(1, parsedPage)
+    const parsedLimit = parseInt(searchParams.get('limit') || '5')
+    const limit = Number.isNaN(parsedLimit) ? 5 : Math.min(50, Math.max(1, parsedLimit))
     const sort = searchParams.get('sort') || 'created_at'
     const order = searchParams.get('order') || 'desc'
-    const minRating = parseInt(searchParams.get('min_rating') || '0')
+    const parsedMinRating = parseInt(searchParams.get('min_rating') || '0')
+    const minRating = Number.isNaN(parsedMinRating) ? 0 : Math.min(5, Math.max(0, parsedMinRating))
 
     const allowedSorts: Record<string, string> = { created_at: 'r.created_at', rating: 'r.rating', helpful_count: 'r.helpful_count' }
     const safeSort = allowedSorts[sort] || 'r.created_at'

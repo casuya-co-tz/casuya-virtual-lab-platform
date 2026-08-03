@@ -38,8 +38,9 @@ export function VoicesFromTanzania() {
   const [reportReason, setReportReason] = useState('')
   const [userVotes, setUserVotes] = useState<Record<string, boolean | null>>({})
 
-  const fetchReviews = useCallback(async () => {
-    const r = await fetch(`/api/reviews?page=${page}&limit=5&sort=created_at&order=desc`)
+  const fetchReviews = useCallback(async (targetPage?: number) => {
+    const p = targetPage ?? page
+    const r = await fetch(`/api/reviews?page=${p}&limit=5&sort=created_at&order=desc`)
     if (r.ok) {
       const json = await r.json()
       setReviews(json.data)
@@ -64,7 +65,7 @@ export function VoicesFromTanzania() {
       setReviewText('')
       setIsPublic(true)
       setPage(1)
-      fetchReviews()
+      fetchReviews(1)
     }
   }
 
@@ -95,7 +96,7 @@ export function VoicesFromTanzania() {
   const deleteReview = async (id: string) => {
     const r = await fetch(`/api/reviews/${id}`, { method: 'DELETE' })
     if (r.ok) {
-      setReviews(reviews.filter(rv => rv.id !== id))
+      setReviews(prev => prev.filter(rv => rv.id !== id))
     }
   }
 
@@ -120,8 +121,8 @@ export function VoicesFromTanzania() {
     })
     if (r.ok) {
       const data = await r.json()
-      setReviews(reviews.map(rv => rv.id === id ? { ...rv, helpful_count: data.helpful_count, not_helpful_count: data.not_helpful_count } : rv))
-      setUserVotes(prev => ({ ...prev, [id]: userVotes[id] === helpful ? null : helpful }))
+      setReviews(prev => prev.map(rv => rv.id === id ? { ...rv, helpful_count: data.helpful_count, not_helpful_count: data.not_helpful_count } : rv))
+      setUserVotes(prev => ({ ...prev, [id]: prev[id] === helpful ? null : helpful }))
     }
   }
 

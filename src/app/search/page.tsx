@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
@@ -25,19 +25,25 @@ export default function SearchPage() {
   const [results, setResults] = useState<Lab[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
 
   async function handleSearch() {
     if (query.trim().length < 2) return
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     setLoading(true)
     setSearched(true)
+    setResults([])
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: controller.signal })
       const data = await res.json()
-      setResults(data.data || [])
-    } catch {
-      setResults([])
+      if (!controller.signal.aborted) setResults(data.data || [])
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return
+      if (!controller.signal.aborted) setResults([])
     }
-    setLoading(false)
+    if (!controller.signal.aborted) setLoading(false)
   }
 
   return (

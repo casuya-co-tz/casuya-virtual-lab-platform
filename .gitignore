@@ -36,3 +36,8 @@ Thumbs.db
 # uploads
 public/images/
 public/labs/
+
+# local-only documentation (consolidated 2026-08-03; keeps tracked README short)
+ARCHITECTURE.md
+PLANS.md
+FEATURES.md

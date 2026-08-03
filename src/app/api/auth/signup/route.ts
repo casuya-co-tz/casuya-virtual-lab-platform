@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { logAuditEvent } from '@/lib/audit-logger'
+import { signupLimiter } from '@/lib/rate-limiter'
 
 export async function POST(req: Request) {
   try {
@@ -14,6 +15,11 @@ export async function POST(req: Request) {
     const requestedRole = ['student', 'developer'].includes(body.role) ? body.role : 'student'
     const ip = req.headers.get('x-forwarded-for') || 'unknown'
 
+    const rateCheck = signupLimiter.check(ip, '/api/auth/signup')
+    if (!rateCheck.allowed) {
+      return NextResponse.json({ error: 'Too many signup attempts. Try again later.' }, { status: 429 })
+    }
+
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
@@ -21,15 +27,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
     }
 
-    const existing = await query('SELECT id FROM auth.users WHERE email = $1', [email])
-    if (existing.rows.length > 0) {
-      return NextResponse.json({ error: 'Email already registered' }, { status: 409 })
-    }
-
-    const hashed = bcrypt.hashSync(password, 10)
+    const hashed = await bcrypt.hash(password, 10)
     const finalName = fullName || email.split('@')[0]
 
     const signupResult = await transaction(async (q) => {
+      const existing = await q('SELECT id FROM auth.users WHERE email = $1', [email])
+      if (existing.rows.length > 0) {
+        throw Object.assign(new Error('Email already registered'), { code: 'EMAIL_EXISTS' })
+      }
+
       const userResult = await q(
         `INSERT INTO auth.users (email, encrypted_password, role)
          VALUES ($1, $2, $3) RETURNING id`,
@@ -96,6 +102,10 @@ export async function POST(req: Request) {
       user: { id: signupResult.userId, full_name: finalName, role: requestedRole },
     })
   } catch (err) {
+    const message = err instanceof Error ? err.message : ''
+    if ((err as { code?: string })?.code === 'EMAIL_EXISTS' || /duplicate key value violates unique constraint/i.test(message)) {
+      return NextResponse.json({ error: 'Email already registered' }, { status: 409 })
+    }
     console.error('Signup error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

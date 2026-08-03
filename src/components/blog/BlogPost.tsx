@@ -24,10 +24,14 @@ export function BlogPost({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setPost(null)
     fetch(`/api/blog/${slug}`)
       .then(r => r.ok ? r.json() : null)
-      .then(data => { setPost(data); setLoading(false) })
-      .catch(() => setLoading(false))
+      .then(data => { if (!cancelled) { setPost(data); setLoading(false) } })
+      .catch(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [slug])
 
   if (loading) return <p className="text-text-secondary text-center py-8">{t('common.loading', lang)}</p>

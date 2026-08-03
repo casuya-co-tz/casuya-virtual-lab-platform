@@ -4,8 +4,10 @@ import { query } from '@/lib/db'
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const limit = Math.min(20, Math.max(1, parseInt(searchParams.get('limit') || '9')))
+    const parsedPage = parseInt(searchParams.get('page') || '1')
+    const page = Number.isNaN(parsedPage) ? 1 : Math.max(1, parsedPage)
+    const parsedLimit = parseInt(searchParams.get('limit') || '9')
+    const limit = Number.isNaN(parsedLimit) ? 9 : Math.min(20, Math.max(1, parsedLimit))
     const offset = (page - 1) * limit
     const tag = searchParams.get('tag') || ''
 

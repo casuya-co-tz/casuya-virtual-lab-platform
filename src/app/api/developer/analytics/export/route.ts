@@ -29,9 +29,17 @@ export async function GET(req: NextRequest) {
     )
 
     if (format === 'csv') {
+      const escapeCsv = (value: unknown): string => {
+        const str = String(value ?? '')
+        if (/[",\r\n]/.test(str) || /^[=+\-@]/.test(str)) return `"${str.replace(/"/g, '""')}"`
+        return str
+      }
+      const fmtDate = (value: unknown): string =>
+        value instanceof Date ? value.toISOString().slice(0, 10) : String(value ?? '')
+
       const header = 'Date,Endpoint,Status Code,Request Count\n'
       const rows = result.rows.map((r: Record<string, unknown>) =>
-        `${String(r.date)},${String(r.endpoint)},${String(r.status_code)},${String(r.request_count)}`
+        [fmtDate(r.date), escapeCsv(r.endpoint), escapeCsv(r.status_code), escapeCsv(r.request_count)].join(',')
       ).join('\n')
       return new NextResponse(header + rows, {
         headers: { 'Content-Type': 'text/csv', 'Content-Disposition': `attachment; filename="api-usage-${period}.csv"` },

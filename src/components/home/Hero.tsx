@@ -11,10 +11,12 @@ export function Hero() {
   const [statsData, setStatsData] = useState({ total_students: 0, total_labs: 0, uptime: '99.97%' })
 
   useEffect(() => {
-    fetch('/api/stats')
+    const controller = new AbortController()
+    fetch('/api/stats', { signal: controller.signal })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setStatsData(d) })
       .catch(() => {})
+    return () => controller.abort()
   }, [])
 
   const stats = useMemo(() => [

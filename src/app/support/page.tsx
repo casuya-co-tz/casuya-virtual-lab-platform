@@ -87,6 +87,13 @@ export default function SupportPage() {
     return 'neutral'
   }
 
+  const statusLabel = (s: string) => {
+    if (s === 'in_progress') return t('support.inProgress', lang)
+    if (s === 'resolved') return t('support.resolved', lang)
+    if (s === 'closed') return t('support.closed', lang)
+    return t('support.open', lang)
+  }
+
   return (
     <div className="min-h-screen bg-bg-secondary px-4 py-8">
       <div className="max-w-4xl mx-auto">
@@ -137,7 +144,7 @@ export default function SupportPage() {
                 <p className="text-[12px] text-text-secondary">{new Date(selectedTicket.created_at).toLocaleString()}</p>
               </div>
               <div className="flex gap-2">
-                <Badge variant={statusVariant(selectedTicket.status) as 'info'}>{t(`support.${selectedTicket.status}`, lang)}</Badge>
+                <Badge variant={statusVariant(selectedTicket.status) as 'info'}>{statusLabel(selectedTicket.status)}</Badge>
                 <Button variant="ghost" className="!h-8 !text-[12px]" onClick={() => setSelectedTicket(null)}>X</Button>
               </div>
             </div>
@@ -182,7 +189,7 @@ export default function SupportPage() {
                   </div>
                   <div className="flex gap-2 items-center">
                     <span className="text-[11px] text-text-secondary uppercase">{ticket.priority}</span>
-                    <Badge variant={statusVariant(ticket.status) as 'info'}>{t(`support.${ticket.status}`, lang)}</Badge>
+                    <Badge variant={statusVariant(ticket.status) as 'info'}>{statusLabel(ticket.status)}</Badge>
                   </div>
                 </div>
               </Card>

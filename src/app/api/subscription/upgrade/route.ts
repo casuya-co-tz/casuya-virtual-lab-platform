@@ -37,22 +37,40 @@ export async function POST(req: Request) {
 
     const plan = planResult.rows[0]
 
-    const txResult = await query(
-      `INSERT INTO payment_transactions (user_id, plan_id, amount, currency, provider, status, metadata)
-       VALUES ($1, $2, $3, $4, $5, 'pending', $6)
-       RETURNING id`,
-      [userId, plan_id, plan.price, plan.currency, provider, JSON.stringify({ phone })]
+    const existingSub = await query(
+      `SELECT s.id, s.status, pp.slug AS current_plan_slug
+       FROM subscriptions s
+       LEFT JOIN pricing_plans pp ON pp.id = s.plan_id
+       WHERE s.user_id = $1 AND s.status = 'active'
+       LIMIT 1`,
+      [userId]
     )
 
-    const transactionId = txResult.rows[0].id
+    const PLAN_ORDER = ['free', 'basic', 'pro', 'institution']
+    const currentIdx = existingSub.rows.length > 0
+      ? PLAN_ORDER.indexOf(existingSub.rows[0].current_plan_slug || 'free')
+      : 0
+    const targetIdx = PLAN_ORDER.indexOf(plan.slug)
+
+    if (targetIdx >= 0 && targetIdx < currentIdx) {
+      return NextResponse.json({ error: 'DOWNGRADE_NOT_ALLOWED', message: 'You cannot downgrade to a lower plan.' }, { status: 400 })
+    }
 
     if (!process.env.AZAMPESA_APP_NAME || !process.env.AZAMPESA_CLIENT_ID) {
       return NextResponse.json({
         success: false,
-        transaction_id: transactionId,
         error: 'Payment gateway not configured',
       }, { status: 503 })
     }
+
+    const txResult = await query(
+      `INSERT INTO payment_transactions (user_id, plan_id, amount, currency, provider, status, metadata)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6)
+       RETURNING id`,
+      [userId, plan_id, plan.price, plan.currency, provider.toLowerCase(), JSON.stringify({ phone })]
+    )
+
+    const transactionId = txResult.rows[0].id
 
     const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payments/azampesa/callback`
 
@@ -66,10 +84,14 @@ export async function POST(req: Request) {
     })
 
     if (gatewayResult.success && gatewayResult.transactionId) {
-      await query(
-        `UPDATE payment_transactions SET provider_transaction_id = $1, metadata = jsonb_set(COALESCE(metadata, '{}'), '{gateway_ref}', $2::jsonb) WHERE id = $3`,
-        [gatewayResult.transactionId, JSON.stringify(gatewayResult.transactionId), transactionId]
-      )
+      try {
+        await query(
+          `UPDATE payment_transactions SET provider_transaction_id = $1, metadata = jsonb_set(COALESCE(metadata, '{}'), '{gateway_ref}', $2::jsonb) WHERE id = $3`,
+          [gatewayResult.transactionId, JSON.stringify(gatewayResult.transactionId), transactionId]
+        )
+      } catch (err) {
+        console.error('Failed to persist provider transaction id:', err)
+      }
     }
 
     if (!gatewayResult.success) {

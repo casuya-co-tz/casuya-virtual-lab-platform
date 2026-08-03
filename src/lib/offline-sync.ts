@@ -50,7 +50,7 @@ export async function queueProgressUpdate(update: { labId: string; status: strin
   })
 }
 
-export async function getQueuedUpdates(): Promise<Array<{ id: number; labId: string; status: string; score: number; queuedAt: number }>> {
+export async function getQueuedUpdates(): Promise<Array<{ id: number; labId: string; status: string; score: number; completionData?: unknown; queuedAt: number }>> {
   const db = await openDB()
   const tx = db.transaction(PROGRESS_STORE, 'readonly')
   const request = tx.objectStore(PROGRESS_STORE).getAll()
@@ -79,7 +79,7 @@ export async function syncQueuedUpdates() {
       const res = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lab_id: update.labId, status: update.status, score: update.score }),
+        body: JSON.stringify({ lab_id: update.labId, status: update.status, score: update.score, completion_data: update.completionData }),
       })
       if (res.ok) await clearQueuedUpdate(update.id)
     } catch {

@@ -316,6 +316,16 @@ const { results } = await res.json();
 
 ---
 
+## CASUYA Integration Status (2026-08-03)
+
+Verified during the full bug-fix audit of the main platform:
+
+- CASUYA now **falls back to its local `labs` table** when the Lab Content Service is unreachable — for the labs list (GET), a single-lab fetch (GET), and lab updates (PUT) — so the platform keeps serving known labs instead of erroring (commits `c786e0c`, `a4ebd9f`).
+- Published-lab reads still prefer this external service; `x-api-key` / `LAB_CONTENT_API_KEY` auth is unchanged.
+- CASUYA's `lab-manager.ts` and `lab-processor.ts` (sanitization with `data-*` attribute support) were both re-verified against this service's `/api/casuya/*` endpoints.
+
+---
+
 ## Setup & Deployment
 
 ### Prerequisites

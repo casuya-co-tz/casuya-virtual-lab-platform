@@ -98,7 +98,7 @@ export default async function DeveloperSubjectPage({ params }: Props) {
               </div>
 
               {labList.length > 0 ? (
-                <div className="divide-y divide-border-DEFAULT">
+                <div className="divide-y divide-border">
                   {labList.map((lab) => (
                     <div key={lab.id} className="px-3 py-2 hover:bg-bg-secondary transition-colors">
                       <div className="flex items-start justify-between gap-3">
@@ -156,7 +156,7 @@ export default async function DeveloperSubjectPage({ params }: Props) {
               </div>
               <span className="text-[11px] text-accent-blue font-medium">{unassignedLabs.length} labs</span>
             </div>
-            <div className="divide-y divide-border-DEFAULT">
+            <div className="divide-y divide-border">
               {unassignedLabs.map((lab) => (
                 <div key={lab.id} className="px-3 py-2 hover:bg-bg-secondary transition-colors">
                   <div className="flex items-start justify-between gap-3">

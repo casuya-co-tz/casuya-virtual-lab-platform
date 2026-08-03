@@ -24,18 +24,24 @@ export function LabTimer({ mode = 'stopwatch', durationMinutes = 60, onTimeUp, o
   const [seconds, setSeconds] = useState(totalSeconds)
   const [running, setRunning] = useState(autoStart)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const secondsRef = useRef(totalSeconds)
+  const timeUpFiredRef = useRef(false)
 
   const tick = useCallback(() => {
-    setSeconds(prev => {
-      const next = mode === 'countdown' ? prev - 1 : prev + 1
-      if (mode === 'countdown' && next <= 0) {
-        setRunning(false)
+    const current = secondsRef.current
+    const next = mode === 'countdown' ? Math.max(0, current - 1) : current + 1
+    secondsRef.current = next
+    setSeconds(next)
+
+    if (mode === 'countdown' && next <= 0) {
+      setRunning(false)
+      if (!timeUpFiredRef.current) {
+        timeUpFiredRef.current = true
         onTimeUp?.()
-        return 0
       }
+    } else {
       onTick?.(mode === 'countdown' ? totalSeconds - next : next)
-      return next
-    })
+    }
   }, [mode, totalSeconds, onTimeUp, onTick])
 
   useEffect(() => {
@@ -44,6 +50,15 @@ export function LabTimer({ mode = 'stopwatch', durationMinutes = 60, onTimeUp, o
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [running, tick])
+
+  useEffect(() => {
+    secondsRef.current = seconds
+  }, [seconds])
+
+  // Reset the guard when the timer is restarted.
+  useEffect(() => {
+    timeUpFiredRef.current = false
+  }, [mode, durationMinutes])
 
   const isOvertime = mode === 'stopwatch' && seconds >= durationMinutes * 60
   const isWarning = mode === 'countdown' && seconds > 0 && seconds <= 300

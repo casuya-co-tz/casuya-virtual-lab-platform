@@ -17,6 +17,8 @@ export async function GET() {
   }
 }
 
+const ALLOWED_SCOPES = new Set(['labs:read', 'labs:write', 'labs:delete'])
+
 export async function POST(req: Request) {
   const developerId = await getDeveloperId()
   if (!developerId) return NextResponse.json({ error: 'Developer access required' }, { status: 403 })
@@ -43,17 +45,23 @@ export async function POST(req: Request) {
       }
     }
 
-    const { scopes } = await req.json()
+    const body = await req.json()
+    const rawScopes = body.scopes === undefined ? ['labs:read'] : body.scopes
+    if (!Array.isArray(rawScopes) || rawScopes.length === 0 || rawScopes.some(s => !ALLOWED_SCOPES.has(s))) {
+      return NextResponse.json({ error: 'Invalid scopes. Allowed: labs:read, labs:write, labs:delete' }, { status: 400 })
+    }
+    const scopes = rawScopes
+
     const crypto = await import('crypto')
     const bcrypt = await import('bcryptjs')
     const publicToken = 'cvs_' + crypto.randomBytes(24).toString('hex')
     const secret = crypto.randomBytes(32).toString('hex')
-    const hashedSecret = bcrypt.hashSync(secret, 10)
+    const hashedSecret = await bcrypt.hash(secret, 10)
 
     const result = await query(
       `INSERT INTO api_credentials (developer_id, public_token, hashed_secret, scopes, is_active)
        VALUES ($1, $2, $3, $4, true) RETURNING id, public_token, scopes, is_active, created_at`,
-      [developerId, publicToken, hashedSecret, scopes || ['labs:read']]
+      [developerId, publicToken, hashedSecret, scopes]
     )
 
     return NextResponse.json(

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
@@ -19,6 +19,14 @@ export function DocsEditor({ initial, onSave }: DocsEditorProps) {
   const [content, setContent] = useState(initial?.content || '')
   const [category, setCategory] = useState(initial?.category || 'general')
   const [saving, setSaving] = useState(false)
+
+  // Re-sync the form when a different document is opened.
+  useEffect(() => {
+    setSlug(initial?.slug || '')
+    setTitle(initial?.title || '')
+    setContent(initial?.content || '')
+    setCategory(initial?.category || 'general')
+  }, [initial?.slug, initial?.title, initial?.content, initial?.category])
 
   async function handleSave() {
     setSaving(true)

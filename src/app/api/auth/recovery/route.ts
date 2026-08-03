@@ -1,11 +1,19 @@
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
 import { query } from '@/lib/db'
+import { recoveryLimiter } from '@/lib/rate-limiter'
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+    const ip = req.headers.get('x-forwarded-for') || 'unknown'
+
+    const rateCheck = recoveryLimiter.check(ip, '/api/auth/recovery')
+    if (!rateCheck.allowed) {
+      return NextResponse.json({ error: 'Too many reset requests. Try again later.' }, { status: 429 })
+    }
+
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
@@ -27,9 +35,13 @@ export async function POST(req: Request) {
         [userId, tokenHash]
       )
 
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const resetLink = `${baseUrl}/auth/recovery/reset?token=${token}`
       if (process.env.NODE_ENV === 'development') {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-        console.info(`[dev] Password reset link: ${baseUrl}/auth/recovery/reset?token=${token}`)
+        console.info(`[dev] Password reset link: ${resetLink}`)
+      } else if (!process.env.SMTP_HOST) {
+        // No mail provider configured — the link is only reachable by an operator.
+        console.warn(`[recovery] Reset link for ${email}: ${resetLink}`)
       }
     }
 

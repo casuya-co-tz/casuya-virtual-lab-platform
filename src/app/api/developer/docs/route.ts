@@ -1,5 +1,6 @@
 import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { sanitizeSafe } from '@/lib/sanitize'
 
 export async function GET() {
   try {
@@ -9,7 +10,8 @@ export async function GET() {
        WHERE published = true
        ORDER BY category, title`
     )
-    return NextResponse.json(result.rows)
+    const docs = result.rows.map((doc: { content: string }) => ({ ...doc, content: sanitizeSafe(doc.content) }))
+    return NextResponse.json(docs)
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

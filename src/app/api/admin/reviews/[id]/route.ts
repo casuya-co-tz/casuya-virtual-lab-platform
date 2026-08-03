@@ -16,7 +16,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     await query('DELETE FROM reviews WHERE id = $1', [id])
 
-    logAuditEvent({
+    await logAuditEvent({
       userId: adminId,
       action: 'delete',
       entityType: 'review',

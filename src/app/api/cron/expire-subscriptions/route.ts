@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query } from '@/lib/db'
+import { transaction } from '@/lib/db'
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -10,30 +10,29 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const expired = await query(
-      `UPDATE subscriptions SET status = 'expired', tier = 'free'
-       WHERE status = 'active' AND expires_at < NOW()
-       RETURNING id, user_id, tier`
-    )
-
-    const now = new Date()
-    for (const sub of expired.rows) {
-      const existingDev = await query(
-        `SELECT id FROM developer_profiles WHERE id = $1 AND plan_id IS NOT NULL`,
-        [sub.user_id]
+    const { expired } = await transaction(async (q) => {
+      const res = await q(
+        `UPDATE subscriptions SET status = 'expired', tier = 'free', plan_id = NULL
+         WHERE status = 'active' AND expires_at < NOW()
+         RETURNING id, user_id, tier`
       )
-      if (existingDev.rows.length > 0) {
-        await query(
-          `UPDATE developer_profiles SET plan_id = (SELECT id FROM pricing_plans WHERE slug = 'dev_free') WHERE id = $1`,
-          [sub.user_id]
+
+      const userIds = res.rows.map((r: { user_id: string }) => r.user_id)
+      if (userIds.length > 0) {
+        await q(
+          `UPDATE developer_profiles SET plan_id = (SELECT id FROM pricing_plans WHERE slug = 'dev_free')
+           WHERE id = ANY($1::uuid[]) AND plan_id IS NOT NULL`,
+          [userIds]
         )
       }
-    }
+
+      return { expired: res.rows }
+    })
 
     return NextResponse.json({
       success: true,
-      expired_count: expired.rows.length,
-      timestamp: now.toISOString(),
+      expired_count: expired.length,
+      timestamp: new Date().toISOString(),
     })
   } catch (err) {
     console.error('Expiry cron error:', err)

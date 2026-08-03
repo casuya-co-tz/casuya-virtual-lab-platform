@@ -23,14 +23,18 @@ export function BlogList() {
   const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
+    let cancelled = false
+    setLoading(true)
     fetch(`/api/blog?page=${page}&limit=9`)
       .then(r => r.ok ? r.json() : { data: [], pagination: { totalPages: 1 } })
       .then(json => {
+        if (cancelled) return
         setPosts(json.data)
         setTotalPages(json.pagination.totalPages)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [page])
 
   if (loading) return <p className="text-text-secondary text-center py-8">{t('common.loading', lang)}</p>

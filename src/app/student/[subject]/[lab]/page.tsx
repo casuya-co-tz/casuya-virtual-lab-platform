@@ -46,6 +46,14 @@ export default function LabPlayer({ params }: Props) {
 
   const saveRef = useRef({ saving: false, liveScore: 0, lab: '' })
   const submitRef = useRef({ saving: false, liveScore: 0, lab: '' })
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingScoreRef = useRef(0)
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     saveRef.current.lab = lab
@@ -125,9 +133,15 @@ export default function LabPlayer({ params }: Props) {
   const handleLabProgress = useCallback((event: LabProgressEvent) => {
     setLiveScore(event.score)
     if (event.status === 'completed') {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       handleSubmit(event.score)
     } else if (event.status === 'in_progress') {
-      handleSave(event.score)
+      // Debounce rapid progress events into a single save.
+      pendingScoreRef.current = event.score
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = setTimeout(() => {
+        handleSave(pendingScoreRef.current)
+      }, 2000)
     }
   }, [handleSubmit, handleSave])
 

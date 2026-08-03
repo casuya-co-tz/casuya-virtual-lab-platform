@@ -44,6 +44,23 @@ ${CSP_META}
 </head>
 <body>
 ${html}
+<script>
+  (function () {
+    function send() {
+      try {
+        var h = Math.max(document.body.scrollHeight, document.body.offsetHeight, 200);
+        parent.postMessage({ type: 'sandbox-height', height: h }, '*');
+      } catch (e) {}
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', send);
+    }
+    send();
+    setInterval(send, 1000);
+    new MutationObserver(send).observe(document.body, { childList: true, subtree: true, attributes: true });
+    window.addEventListener('resize', send);
+  })();
+</script>
 </body>
 </html>`
 }
@@ -54,51 +71,24 @@ export default function SandboxedContent({ html, title }: SandboxedContentProps)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  const measureHeight = useCallback(() => {
+  const handleHeightMessage = useCallback((event: MessageEvent) => {
     const iframe = iframeRef.current
-    if (!iframe) return
-    try {
-      const body = (iframe.contentDocument || iframe.contentWindow?.document)?.body
-      if (body) {
-        const h = Math.max(body.scrollHeight, body.offsetHeight, 200)
-        setHeight(Math.min(h, 4000))
-        setError(false)
-      }
-    } catch {
-      setHeight(600)
+    if (!iframe || event.source !== iframe.contentWindow) return
+    const data = event.data
+    if (data && data.type === 'sandbox-height' && typeof data.height === 'number') {
+      setHeight(Math.min(Math.max(data.height, 200), 4000))
+      setError(false)
     }
   }, [])
 
   const handleLoad = useCallback(() => {
     setLoading(false)
-    measureHeight()
-  }, [measureHeight])
+  }, [])
 
   useEffect(() => {
-    const iframe = iframeRef.current
-    if (!iframe || loading) return
-
-    let interval: ReturnType<typeof setInterval> | null = null
-    try {
-      const doc = iframe.contentDocument || iframe.contentWindow?.document
-      if (doc) {
-        const observer = new MutationObserver(() => {
-          measureHeight()
-        })
-        observer.observe(doc.body, { childList: true, subtree: true, attributes: true })
-
-        interval = setInterval(measureHeight, 2000)
-
-        return () => {
-          observer.disconnect()
-          if (interval) clearInterval(interval)
-        }
-      }
-    } catch {
-      interval = setInterval(measureHeight, 3000)
-      return () => { if (interval) clearInterval(interval) }
-    }
-  }, [loading, measureHeight])
+    window.addEventListener('message', handleHeightMessage)
+    return () => window.removeEventListener('message', handleHeightMessage)
+  }, [handleHeightMessage])
 
   const srcdoc = buildSandboxDoc(html)
 
@@ -133,7 +123,7 @@ export default function SandboxedContent({ html, title }: SandboxedContentProps)
         ref={iframeRef}
         srcDoc={srcdoc}
         title={title || 'Interactive content'}
-        sandbox="allow-scripts allow-same-origin"
+        sandbox="allow-scripts"
         onLoad={handleLoad}
         onError={() => { setError(true); setLoading(false) }}
         className="w-full border-0"

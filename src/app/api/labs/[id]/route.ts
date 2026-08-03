@@ -38,6 +38,15 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
     const lab = await getLab(params.id)
     if (lab) {
+      // Respect the local publish override: a locally-unpublished (draft) lab
+      // must not be served to non-admins even if the external service returns it.
+      try {
+        const localPub = await query('SELECT is_published FROM labs WHERE id = $1', [params.id])
+        if (localPub.rows[0] && localPub.rows[0].is_published === false) {
+          return NextResponse.json({ error: 'Not found' }, { status: 404 })
+        }
+      } catch {}
+
       if (lab.is_premium) {
         const session = await getSessionFromCookies()
         if (!session || !(await canAccessPremiumContent(session.id, session.role))) {

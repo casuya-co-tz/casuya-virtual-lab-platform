@@ -38,10 +38,19 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: 'title, title_sw, slug, and content are required' }, { status: 400 })
     }
 
+    const isPublished = is_published === true || is_published === 'true'
+    const isFeatured = is_featured === true || is_featured === 'true'
+
+    let resolvedPublishedAt = published_at ? new Date(published_at) : null
+    if (isPublished && !resolvedPublishedAt) {
+      const existingRow = await query('SELECT published_at FROM blog_posts WHERE id = $1', [params.id])
+      resolvedPublishedAt = existingRow.rows[0]?.published_at ? new Date(existingRow.rows[0].published_at) : new Date()
+    }
+
     const result = await query(
       `UPDATE blog_posts SET title = $1, title_sw = $2, slug = $3, content = $4, excerpt = $5, featured_image = $6, is_published = $7, is_featured = $8, tags = $9, published_at = $10, updated_at = NOW()
        WHERE id = $11 RETURNING id, title, slug, is_published, updated_at`,
-      [title, title_sw, slug, content, excerpt || null, featured_image || null, !!is_published, !!is_featured, tags || [], published_at ? new Date(published_at) : (is_published ? new Date() : null), params.id]
+      [title, title_sw, slug, content, excerpt || null, featured_image || null, isPublished, isFeatured, tags || [], resolvedPublishedAt, params.id]
     )
 
     await logAuditEvent({ userId, action: 'update', entityType: 'blog_post', entityId: params.id, newValues: { title, slug } })

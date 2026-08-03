@@ -2,6 +2,7 @@ import { getLabs, getLab } from './lab-manager'
 import { query } from './db'
 
 let lastSyncTime = 0
+let inFlightSync: Promise<void> | null = null
 const SYNC_COOLDOWN_MS = 30000
 
 export async function syncAllLabsToLocalDB() {
@@ -19,7 +20,7 @@ export async function syncAllLabsToLocalDB() {
            title = EXCLUDED.title, title_sw = EXCLUDED.title_sw,
            description = EXCLUDED.description, subject = EXCLUDED.subject,
            html_threejs_code = EXCLUDED.html_threejs_code, subtopic_id = EXCLUDED.subtopic_id,
-           is_published = EXCLUDED.is_published, is_premium = EXCLUDED.is_premium,
+           is_published = labs.is_published, is_premium = EXCLUDED.is_premium,
            version = EXCLUDED.version, updated_at = EXCLUDED.updated_at, thumbnail = EXCLUDED.thumbnail`,
         [
           detail.id,
@@ -45,8 +46,13 @@ export async function syncAllLabsToLocalDB() {
 
 export function maybeSync() {
   const now = Date.now()
-  if (now - lastSyncTime > SYNC_COOLDOWN_MS) {
-    lastSyncTime = now
-    syncAllLabsToLocalDB().catch(() => {})
-  }
+  if (now - lastSyncTime <= SYNC_COOLDOWN_MS) return
+  if (inFlightSync) return
+
+  lastSyncTime = now
+  inFlightSync = syncAllLabsToLocalDB()
+    .catch(() => {})
+    .finally(() => {
+      inFlightSync = null
+    })
 }

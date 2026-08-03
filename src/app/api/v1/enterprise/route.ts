@@ -1,6 +1,6 @@
 import { query } from '@/lib/db'
 import { NextResponse, NextRequest } from 'next/server'
-import { validateEnterpriseApiKey } from '@/lib/api-tracker'
+import { validateEnterpriseApiKey, trackApiUsage } from '@/lib/api-tracker'
 import { getLabs } from '@/lib/lab-manager'
 
 export async function GET(request: NextRequest) {
@@ -12,10 +12,15 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const endpoint = searchParams.get('endpoint') || 'labs'
+    const parsedPage = parseInt(searchParams.get('page') || '1')
+    const parsedLimit = parseInt(searchParams.get('limit') || '50')
+    const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1
+    const limit = Number.isFinite(parsedLimit) ? Math.min(100, Math.max(1, parsedLimit)) : 50
 
     if (endpoint === 'labs') {
-      const result = await getLabs({ limit: 100 })
-      return NextResponse.json({ labs: result.data, tier: 'enterprise' })
+      const result = await getLabs({ page, limit })
+      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=labs', 200, request.headers.get('x-forwarded-for') || undefined)
+      return NextResponse.json({ labs: result.data, pagination: { page, limit, total: result.total }, tier: 'enterprise' })
     }
 
     if (endpoint === 'usage') {
@@ -28,6 +33,7 @@ export async function GET(request: NextRequest) {
          LIMIT 50`,
         [auth.credentialId]
       )
+      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=usage', 200, request.headers.get('x-forwarded-for') || undefined)
       return NextResponse.json({ usage: result.rows, tier: 'enterprise' })
     }
 

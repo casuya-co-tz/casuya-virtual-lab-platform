@@ -124,7 +124,7 @@ export function APIKeyManager({ keys, developers, onCreate, onRevoke, newKeyToke
         ]}>
           {keys.length === 0 && (
             <Tr>
-              <Td>
+              <Td colSpan={7}>
                 <span className="text-text-secondary text-[13px]">
                   {lang === 'sw' ? 'Hakuna ufunguo bado' : 'No keys yet'}
                 </span>

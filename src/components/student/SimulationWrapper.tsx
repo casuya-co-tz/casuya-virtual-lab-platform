@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
 
@@ -35,9 +35,9 @@ const STYLE_INJECTION = `
 export function SimulationWrapper({ htmlCode, previewKey, onProgress }: SimulationWrapperProps) {
   const [isLoading, setIsLoading] = useState(true)
   const { lang } = useLanguage()
-  const prevBlobUrl = useRef('')
+  const [frameSrc, setFrameSrc] = useState('')
 
-  const frameSrc = useMemo(() => {
+  const modifiedHtml = useMemo(() => {
     let modified = htmlCode.replace(
       /<script\s+src=["'][^"']*three(?:\.min)?\.js["']><\/script>/gi,
       `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/js/three.min.js"></script>`
@@ -61,20 +61,22 @@ export function SimulationWrapper({ htmlCode, previewKey, onProgress }: Simulati
       modified = headInjection + modified
     }
 
-    if (prevBlobUrl.current) {
-      URL.revokeObjectURL(prevBlobUrl.current)
-    }
+    return modified
+  }, [htmlCode])
 
-    const blob = new Blob([modified], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    prevBlobUrl.current = url
+  useEffect(() => {
+    if (!modifiedHtml) return
     setIsLoading(true)
-    return url
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [htmlCode, previewKey])
+    const blob = new Blob([modifiedHtml], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    setFrameSrc(url)
+    return () => URL.revokeObjectURL(url)
+  }, [modifiedHtml, previewKey])
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      // Only trust messages from our own blob iframe.
+      if (typeof event.origin === 'string' && event.origin !== window.location.origin) return
       const data = event.data
       if (data && data.type === 'lab-progress' && typeof data.status === 'string' && typeof data.score === 'number') {
         onProgress?.({
@@ -88,14 +90,6 @@ export function SimulationWrapper({ htmlCode, previewKey, onProgress }: Simulati
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
   }, [onProgress])
-
-  useEffect(() => {
-    return () => {
-      if (prevBlobUrl.current) {
-        URL.revokeObjectURL(prevBlobUrl.current)
-      }
-    }
-  }, [])
 
   return (
     <div className="relative w-full h-[60vh] max-h-[500px] bg-bg-primary overflow-hidden rounded-b-2xl">

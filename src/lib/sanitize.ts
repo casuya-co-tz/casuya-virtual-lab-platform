@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify'
+import sanitizeHtml from 'sanitize-html'
 
 export const SAFE_TAGS = [
   'p', 'div', 'span', 'br', 'hr',
@@ -17,7 +18,7 @@ export const SAFE_TAGS = [
   'math', 'mi', 'mo', 'mn', 'ms', 'mover', 'munder', 'munderover',
   'msup', 'msub', 'msubsup', 'mfrac', 'msqrt', 'mroot', 'mspace',
   'mpadded', 'mphantom', 'merror', 'menclose', 'mtable', 'mtr', 'mtd',
-  'canvas', 'iframe', 'style',
+  'canvas',
 ]
 
 export const SAFE_ATTRS = [
@@ -38,7 +39,6 @@ export const SANITIZE_CONFIG = DOMPurify.isSupported
       ALLOWED_ATTR: SAFE_ATTRS,
       ALLOW_DATA_ATTR: true,
       ALLOWED_URI_REGEXP: /^(?:(?:https?|ftp|mailto|tel|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
-      ADD_TAGS: ['style'],
       WHOLE_DOCUMENT: false,
       FORBID_TAGS: ['script', 'noscript'],
       FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onmouseout',
@@ -55,8 +55,27 @@ export const SANITIZE_CONFIG = DOMPurify.isSupported
   : undefined
 
 export function sanitizeSafe(html: string): string {
-  if (!DOMPurify.isSupported || !SANITIZE_CONFIG) return html
-  return DOMPurify.sanitize(html, SANITIZE_CONFIG)
+  if (DOMPurify.isSupported && SANITIZE_CONFIG) {
+    return DOMPurify.sanitize(html, SANITIZE_CONFIG)
+  }
+
+  // Server-side (no DOM): fail closed by stripping anything not in the allowlist.
+  try {
+    return sanitizeHtml(html, {
+      allowedTags: SAFE_TAGS,
+      allowedAttributes: {
+        '*': SAFE_ATTRS,
+      },
+      allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+      allowedSchemesByTag: { img: ['http', 'https', 'data'] },
+      disallowedTagsMode: 'discard',
+    })
+  } catch {
+    return html
+      .replace(/<script[\s>]/gi, '')
+      .replace(/\son\w+\s*=/gi, '')
+      .replace(/javascript:/gi, '')
+  }
 }
 
 const SCRIPT_TAG = /<script[\s>]/i

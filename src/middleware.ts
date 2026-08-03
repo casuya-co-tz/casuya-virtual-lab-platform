@@ -5,9 +5,8 @@ import { isDeveloperKeyFormat, parseBearerToken } from '@/lib/api-key-format'
 import type { SessionUser } from '@/lib/session'
 
 const RATE_LIMIT_CONFIG: Record<string, string> = {
-  '/api/v1/labs/[id]': '/api/v1/labs',
   '/api/v1/search': '/api/v1/search',
-  '/api/v1/public': '/api/v1/search',
+  '/api/v1/public': '/api/v1/public',
 }
 
 function addCspHeaders(response: NextResponse): NextResponse {

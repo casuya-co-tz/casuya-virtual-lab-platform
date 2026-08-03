@@ -8,9 +8,10 @@ export async function GET() {
 
   try {
     const result = await query(
-      `SELECT dp.*, pp.max_api_keys
+      `SELECT dp.id, dp.company_or_school, dp.api_tier, dp.monthly_request_limit, dp.plan_id, dp.created_at,
+              pp.name AS plan_name, pp.slug AS plan_slug, pp.max_api_keys, pp.rate_limit_per_min
        FROM developer_profiles dp
-       LEFT JOIN pricing_plans pp ON pp.slug = dp.api_tier
+       LEFT JOIN pricing_plans pp ON pp.id = dp.plan_id
        WHERE dp.id = $1`,
       [developerId]
     )

@@ -106,7 +106,7 @@ export default async function TeacherSubjectPage({ params }: Props) {
             </div>
             <span className="text-[12px] text-accent-blue font-medium">{unassignedLabs.length} labs</span>
           </div>
-          <div className="divide-y divide-border-DEFAULT">
+          <div className="divide-y divide-border">
             {unassignedLabs.map((lab) => (
               <Link
                 key={lab.id}

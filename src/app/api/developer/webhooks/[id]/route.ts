@@ -30,7 +30,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   if (!developerId) return NextResponse.json({ error: 'Developer access required' }, { status: 403 })
 
   try {
-    await query(`DELETE FROM webhook_subscriptions WHERE id = $1 AND developer_id = $2`, [params.id, developerId])
+    const result = await query(`DELETE FROM webhook_subscriptions WHERE id = $1 AND developer_id = $2 RETURNING id`, [params.id, developerId])
+    if (result.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json({ deleted: true })
   } catch {
     return NextResponse.json({ error: 'Failed' }, { status: 500 })

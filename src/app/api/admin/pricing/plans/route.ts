@@ -33,16 +33,21 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'MISSING_PLAN_IDENTIFIER' }, { status: 400 })
     }
 
-    await query(
+    const result = await query(
       `UPDATE pricing_plans
        SET name = COALESCE($2, name),
            name_sw = COALESCE($3, name_sw),
            price = COALESCE($4, price),
            is_active = COALESCE($5, is_active),
            updated_at = NOW()
-       WHERE id = $1`,
+       WHERE id = $1
+       RETURNING id`,
       [id, name, name_sw, price, is_active]
     )
+
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: 'PLAN_NOT_FOUND' }, { status: 404 })
+    }
 
     return NextResponse.json({ message: 'PLAN_UPDATED' }, { status: 200 })
   } catch {

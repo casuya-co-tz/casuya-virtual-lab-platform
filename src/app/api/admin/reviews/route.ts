@@ -9,8 +9,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url)
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
+    const parsedPage = parseInt(searchParams.get('page') || '1')
+    const parsedLimit = parseInt(searchParams.get('limit') || '20')
+    const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1
+    const limit = Number.isFinite(parsedLimit) ? Math.min(100, Math.max(1, parsedLimit)) : 20
     const status = searchParams.get('status') || 'all'
     const offset = (page - 1) * limit
 
@@ -65,7 +67,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Review not found' }, { status: 404 })
     }
 
-    logAuditEvent({
+    await logAuditEvent({
       userId: adminId,
       action: 'update',
       entityType: 'review',

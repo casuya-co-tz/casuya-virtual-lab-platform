@@ -66,8 +66,9 @@ export const endpointRateLimiters = {
   '/api/v1': new SimpleRateLimiter(60000, 100),
   '/api/v1/labs': new SimpleRateLimiter(60000, 200),
   '/api/v1/search': new SimpleRateLimiter(60000, 200),
-  '/api/v1/labs/[id]': new SimpleRateLimiter(60000, 200),
   '/api/v1/public': new SimpleRateLimiter(60000, 30),
 }
 
 export const loginLimiter = new SimpleRateLimiter(60000, 10) // 10 attempts per minute per IP
+export const signupLimiter = new SimpleRateLimiter(60000, 5) // 5 signups per minute per IP
+export const recoveryLimiter = new SimpleRateLimiter(60000, 5) // 5 password resets per minute per IP

@@ -1,24 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query } from '@/lib/db'
+import { query, transaction } from '@/lib/db'
 import { verifyWebhookChecksum } from '@/lib/azampay'
+import { activateSubscriptionForTransaction } from '@/lib/subscription-access'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    if (process.env.AZAMPESA_APP_NAME) {
-      const apiKey = process.env.AZAMPESA_API_KEY
-      if (!apiKey) {
-        return NextResponse.json({ error: 'Webhook verification not configured' }, { status: 503 })
-      }
-      const signature = req.headers.get('x-checksum') || body.checksum
-      if (!signature || typeof signature !== 'string') {
-        return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
-      }
-      const { checksum: _checksum, ...payloadForVerify } = body
-      if (!verifyWebhookChecksum(apiKey, payloadForVerify, signature)) {
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-      }
+    const apiKey = process.env.AZAMPESA_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Webhook verification not configured' }, { status: 503 })
+    }
+    const signature = req.headers.get('x-checksum') || body.checksum
+    if (!signature || typeof signature !== 'string') {
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+    }
+    const { checksum: _checksum, ...payloadForVerify } = body
+    if (!verifyWebhookChecksum(apiKey, payloadForVerify, signature)) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
     const {
@@ -36,7 +37,9 @@ export async function POST(req: NextRequest) {
     }
 
     const txResult = await query(
-      `SELECT id, user_id, plan_id FROM payment_transactions WHERE id = $1 OR provider_transaction_id = $1`,
+      UUID_RE.test(String(refId))
+        ? `SELECT id, user_id, plan_id, amount FROM payment_transactions WHERE id = $1 OR provider_transaction_id = $1`
+        : `SELECT id, user_id, plan_id, amount FROM payment_transactions WHERE provider_transaction_id = $1`,
       [refId]
     )
 
@@ -46,66 +49,38 @@ export async function POST(req: NextRequest) {
 
     const tx = txResult.rows[0]
 
+    if (amount !== undefined && amount !== null && Number(amount) !== Number(tx.amount)) {
+      return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 })
+    }
+
     const success = status === 'Completed' || status === 'completed' || resultCode === 0 || resultCode === '0'
 
     if (success) {
-      await query(
-        `UPDATE payment_transactions SET status = 'completed', completed_at = NOW(),
-         provider_transaction_id = COALESCE(provider_transaction_id, $1) WHERE id = $2`,
-        [providerTxId, tx.id]
-      )
-
-      const planResult = await query(
-        `SELECT slug, interval FROM pricing_plans WHERE id = $1`,
-        [tx.plan_id]
-      )
-
-      if (planResult.rows.length > 0) {
-        const plan = planResult.rows[0]
-        const intervalDays = plan.interval === 'yearly' ? 365 : 30
-        const expiresAt = new Date(Date.now() + intervalDays * 24 * 60 * 60 * 1000)
-
-        const existingSub = await query(
-          `SELECT id, status FROM subscriptions WHERE user_id = $1 AND status = 'active'`,
-          [tx.user_id]
+      let marked = false
+      await transaction(async (q) => {
+        const upd = await q(
+          `UPDATE payment_transactions SET status = 'completed', completed_at = NOW(),
+           provider_transaction_id = COALESCE(provider_transaction_id, $1)
+           WHERE id = $2 AND status = 'pending'
+           RETURNING id`,
+          [providerTxId, tx.id]
         )
+        if (upd.rows.length === 0) return
+        marked = true
+        await activateSubscriptionForTransaction(tx.user_id, tx.id, q)
+      })
 
-        if (existingSub.rows.length > 0) {
-          await query(
-            `UPDATE subscriptions SET tier = CASE
-              WHEN $2 = 'free' THEN 'free'
-              WHEN $2 = 'basic' THEN 'premium'
-              WHEN $2 = 'pro' THEN 'premium'
-              WHEN $2 = 'institution' THEN 'enterprise'
-              ELSE tier END,
-              plan_id = $3, status = 'active', expires_at = $4,
-              provider = 'Azampesa', transaction_id = $5, amount = $6
-            WHERE id = $1`,
-            [existingSub.rows[0].id, plan.slug, tx.plan_id, expiresAt, providerTxId, amount]
-          )
-        } else {
-          const tierMapping: Record<string, string> = {
-            free: 'free', basic: 'premium', pro: 'premium', institution: 'enterprise'
-          }
-          await query(
-            `INSERT INTO subscriptions (user_id, tier, status, plan_id, expires_at, provider, transaction_id, amount, currency)
-             VALUES ($1, $2, 'active', $3, $4, 'Azampesa', $5, $6, 'TZS')`,
-            [tx.user_id, tierMapping[plan.slug] || 'premium', tx.plan_id, expiresAt, providerTxId, amount]
-          )
-        }
-
-        if (plan.slug.startsWith('dev_')) {
-          await query(
-            `UPDATE developer_profiles SET plan_id = (SELECT id FROM pricing_plans WHERE slug = $1) WHERE id = $2`,
-            [plan.slug, tx.user_id]
-          )
-        }
+      if (!marked) {
+        // Duplicate/late callback for an already-finalized transaction — ack idempotently.
+        return NextResponse.json({ success: true, message: 'Payment already processed' })
       }
 
       return NextResponse.json({ success: true, message: 'Payment confirmed' })
     } else {
       await query(
-        `UPDATE payment_transactions SET status = 'failed', metadata = jsonb_set(COALESCE(metadata, '{}'), '{error}', $1::jsonb) WHERE id = $2`,
+        `UPDATE payment_transactions SET status = 'failed', completed_at = COALESCE(completed_at, NOW()),
+         metadata = jsonb_set(COALESCE(metadata, '{}'), '{error}', $1::jsonb)
+         WHERE id = $2 AND status = 'pending'`,
         [JSON.stringify(resultDesc || 'Payment failed'), tx.id]
       )
       return NextResponse.json({ success: false, message: resultDesc || 'Payment failed' })
