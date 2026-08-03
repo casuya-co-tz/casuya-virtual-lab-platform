@@ -4,7 +4,8 @@ import { logAuditEvent } from '@/lib/audit-logger'
 import { getUserIdFromSession } from '@/lib/auth-guard'
 import { sanitizePlainText } from '@/lib/sanitize'
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const userId = await getUserIdFromSession()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -61,7 +62,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const userId = await getUserIdFromSession()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

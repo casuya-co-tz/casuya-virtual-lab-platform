@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, use } from 'react';
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -27,10 +27,11 @@ interface Progress {
 }
 
 interface Props {
-  params: { subject: string; lab: string }
+  params: Promise<{ subject: string; lab: string }>
 }
 
-export default function LabPlayer({ params }: Props) {
+export default function LabPlayer(props: Props) {
+  const params = use(props.params);
   const { subject, lab } = params
   const router = useRouter()
   const { lang } = useLanguage()

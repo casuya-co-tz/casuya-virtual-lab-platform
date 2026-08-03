@@ -5,7 +5,8 @@ import { getLab, updateLab, deleteLab } from '@/lib/lab-manager'
 import { dispatchEventToAllDevelopers } from '@/lib/webhook-dispatcher'
 import { query } from '@/lib/db'
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const adminId = await requireAdmin()
 
   async function fetchLocal() {
@@ -65,7 +66,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const userId = await requireAdmin()
   if (!userId) {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
@@ -144,7 +146,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const userId = await requireAdmin()
   if (!userId) {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 })

@@ -3,7 +3,8 @@ import { query } from '@/lib/db'
 import { getSessionFromCookies } from '@/lib/auth-guard'
 import { canAccessPremiumContent } from '@/lib/subscription-access'
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const session = await getSessionFromCookies()
     if (!session) {

@@ -40,7 +40,7 @@ async function getSessionUser(req: NextRequest): Promise<SessionUser | null> {
 export async function middleware(req: NextRequest) {
   try {
     const pathname = req.nextUrl.pathname
-    const clientIp = getClientIp(req.headers.get('x-forwarded-for'), req.ip)
+    const clientIp = getClientIp(req.headers.get('x-forwarded-for'))
     const userAgent = req.headers.get('user-agent')
 
     const baitPath = isBaitPath(pathname)

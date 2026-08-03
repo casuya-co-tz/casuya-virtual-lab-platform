@@ -4,7 +4,8 @@ import { requireAuth } from '@/lib/auth-guard'
 import { getTransactionStatus } from '@/lib/azampay'
 import { activateSubscriptionForTransaction } from '@/lib/subscription-access'
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const userId = await requireAuth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

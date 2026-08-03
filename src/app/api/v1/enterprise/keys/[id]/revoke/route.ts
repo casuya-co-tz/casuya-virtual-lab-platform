@@ -2,7 +2,8 @@ import { query } from '@/lib/db'
 import { NextResponse, NextRequest } from 'next/server'
 import { validateEnterpriseApiKey } from '@/lib/api-tracker'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const auth = await validateEnterpriseApiKey(request.headers.get('authorization'))
     if (!auth) {

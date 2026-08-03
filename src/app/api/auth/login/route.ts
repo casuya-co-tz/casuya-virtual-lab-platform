@@ -9,7 +9,7 @@ import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = getClientIp(req.headers.get('x-forwarded-for'), req.ip)
+    const ip = getClientIp(req.headers.get('x-forwarded-for'))
 
     const rateResult = loginLimiter.check(ip, 'login')
     if (!rateResult.allowed) {

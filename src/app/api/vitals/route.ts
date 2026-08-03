@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = getClientIp(req.headers.get('x-forwarded-for'), req.ip)
+    const ip = getClientIp(req.headers.get('x-forwarded-for'))
     const rateCheck = vitalsLimiter.check(ip, '/api/vitals')
     if (!rateCheck.allowed) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })

@@ -3,7 +3,8 @@ import { validateApiKey, trackApiUsage, enforceDeveloperQuota, hasApiScope } fro
 import { getLab } from '@/lib/lab-manager'
 import { getClientIp } from '@/lib/client-ip'
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const auth = await validateApiKey(req.headers.get('authorization'))
   if (!auth) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       auth.credentialId,
       `/api/v1/labs/${params.id}`,
       lab ? 200 : 404,
-      getClientIp(req.headers.get('x-forwarded-for'), req.ip)
+      getClientIp(req.headers.get('x-forwarded-for'))
     )
 
     if (!lab) {
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json(lab)
   } catch {
-    await trackApiUsage(auth.credentialId, `/api/v1/labs/${params.id}`, 500, getClientIp(req.headers.get('x-forwarded-for'), req.ip))
+    await trackApiUsage(auth.credentialId, `/api/v1/labs/${params.id}`, 500, getClientIp(req.headers.get('x-forwarded-for')))
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

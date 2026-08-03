@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { maybeSync } from '@/lib/lab-sync'
 
 interface Props {
-  params: { subject: string }
+  params: Promise<{ subject: string }>
 }
 
 interface LabRow {
@@ -22,7 +22,8 @@ interface TopicRow {
   labs: LabRow[] | null
 }
 
-export default async function TeacherSubjectPage({ params }: Props) {
+export default async function TeacherSubjectPage(props: Props) {
+  const params = await props.params;
   maybeSync()
 
   const subjectResult = await query(

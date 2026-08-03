@@ -28,11 +28,11 @@ export async function GET(req: NextRequest) {
 
     const result = await getLabs({ subject, page, limit })
 
-    await trackApiUsage(auth.credentialId, '/api/v1/labs', 200, getClientIp(req.headers.get('x-forwarded-for'), req.ip))
+    await trackApiUsage(auth.credentialId, '/api/v1/labs', 200, getClientIp(req.headers.get('x-forwarded-for')))
 
     return NextResponse.json(result)
   } catch {
-    await trackApiUsage(auth.credentialId, '/api/v1/labs', 500, getClientIp(req.headers.get('x-forwarded-for'), req.ip))
+    await trackApiUsage(auth.credentialId, '/api/v1/labs', 500, getClientIp(req.headers.get('x-forwarded-for')))
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

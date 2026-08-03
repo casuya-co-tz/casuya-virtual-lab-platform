@@ -29,11 +29,11 @@ export async function GET(req: NextRequest) {
 
       const result = await searchLabs(q, subject)
 
-    await trackApiUsage(auth.credentialId, '/api/v1/search', 200, getClientIp(req.headers.get('x-forwarded-for'), req.ip))
+    await trackApiUsage(auth.credentialId, '/api/v1/search', 200, getClientIp(req.headers.get('x-forwarded-for')))
 
     return NextResponse.json({ data: result.results, total: result.results.length })
   } catch {
-    await trackApiUsage(auth.credentialId, '/api/v1/search', 500, getClientIp(req.headers.get('x-forwarded-for'), req.ip))
+    await trackApiUsage(auth.credentialId, '/api/v1/search', 500, getClientIp(req.headers.get('x-forwarded-for')))
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

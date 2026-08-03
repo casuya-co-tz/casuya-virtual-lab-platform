@@ -3,7 +3,8 @@ import { Footer } from '@/components/layout/Footer'
 import { UserProvider } from '@/contexts/UserContext'
 import { BlogPost } from '@/components/blog/BlogPost'
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   return (
     <UserProvider>
       <Navbar />

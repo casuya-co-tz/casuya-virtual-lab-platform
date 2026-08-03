@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { getDeveloperId } from '@/lib/developer-auth'
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const developerId = await getDeveloperId()
   if (!developerId) return NextResponse.json({ error: 'Developer access required' }, { status: 403 })
 

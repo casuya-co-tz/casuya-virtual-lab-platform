@@ -5,10 +5,11 @@ import { canAccessPremiumContent } from '@/lib/subscription-access'
 import { getLab } from '@/lib/lab-manager'
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export async function GET(_request: NextRequest, { params }: Props) {
+export async function GET(_request: NextRequest, props: Props) {
+  const params = await props.params;
   try {
     const { id } = params
     const lab = await getLab(id)

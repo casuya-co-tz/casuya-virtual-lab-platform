@@ -6,7 +6,7 @@ import { maybeSync } from '@/lib/lab-sync'
 export const revalidate = 60
 
 interface Props {
-  params: { subject: string }
+  params: Promise<{ subject: string }>
 }
 
 interface TopicRow {
@@ -24,7 +24,8 @@ interface LabRow {
   title_sw: string
 }
 
-export default async function SubjectPage({ params }: Props) {
+export default async function SubjectPage(props: Props) {
+  const params = await props.params;
   maybeSync()
 
   const subjectResult = await query(

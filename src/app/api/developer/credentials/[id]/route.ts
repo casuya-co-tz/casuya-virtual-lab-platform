@@ -2,7 +2,8 @@ import { query } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { getDeveloperId } from '@/lib/developer-auth'
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const developerId = await getDeveloperId()
   if (!developerId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

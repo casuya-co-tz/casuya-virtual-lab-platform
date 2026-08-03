@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     if (endpoint === 'labs') {
       const result = await getLabs({ page, limit })
-      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=labs', 200, getClientIp(request.headers.get('x-forwarded-for'), request.ip))
+      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=labs', 200, getClientIp(request.headers.get('x-forwarded-for')))
       return NextResponse.json({ labs: result.data, pagination: { page, limit, total: result.total }, tier: 'enterprise' })
     }
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
          LIMIT 50`,
         [auth.credentialId]
       )
-      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=usage', 200, getClientIp(request.headers.get('x-forwarded-for'), request.ip))
+      await trackApiUsage(auth.credentialId, '/api/v1/enterprise?endpoint=usage', 200, getClientIp(request.headers.get('x-forwarded-for')))
       return NextResponse.json({ usage: result.rows, tier: 'enterprise' })
     }
 

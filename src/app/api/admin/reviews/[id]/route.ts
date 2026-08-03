@@ -3,7 +3,8 @@ import { query } from '@/lib/db'
 import { requireAdmin } from '@/lib/auth-guard'
 import { logAuditEvent } from '@/lib/audit-logger'
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const adminId = await requireAdmin()
   if (!adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

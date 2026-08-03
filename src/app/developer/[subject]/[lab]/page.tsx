@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react';
 import { useRouter, useParams } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
@@ -19,10 +19,11 @@ interface Lab {
 }
 
 interface Props {
-  params: { subject: string; lab: string }
+  params: Promise<{ subject: string; lab: string }>
 }
 
-export default function DeveloperLabPage({ params }: Props) {
+export default function DeveloperLabPage(props: Props) {
+  const params = use(props.params);
   const { subject, lab } = params
   const router = useRouter()
   const { lang } = useLanguage()
